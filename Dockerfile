@@ -14,4 +14,4 @@ COPY --from=build /app/target/*.jar app.jar
 RUN mkdir -p /app/uploads
 EXPOSE 8081
 ENV PORT=8081
-ENTRYPOINT ["java", "-Dserver.port=${PORT}", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar app.jar"]
