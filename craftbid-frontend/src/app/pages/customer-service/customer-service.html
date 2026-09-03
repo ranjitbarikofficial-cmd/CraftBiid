@@ -1,0 +1,176 @@
+<app-topbar></app-topbar>
+<app-navbar></app-navbar>
+
+<div class="support-page-wrapper">
+  <!-- ================= HERO SECTION ================= -->
+  <section class="support-hero">
+    <div class="support-hero-container">
+      <span class="support-pill">🎧 24/7 CUSTOMER CARE</span>
+      <h1>How can we assist you today?</h1>
+      <p>Instant answers on live turn bidding, auto-refunds, artisan shipping, and direct support.</p>
+
+      <div class="support-search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          placeholder="Search topics (e.g. 100% refunds, 60s turn timer, shipping, payouts)..."
+          [(ngModel)]="searchQuery"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DIRECT CONTACT CHANNELS ================= -->
+  <section class="support-channels-section">
+    <div class="support-content-container">
+      <div class="channels-grid">
+        <div class="channel-card">
+          <div class="channel-icon">📞</div>
+          <h3>24/7 Phone Support</h3>
+          <p>Talk directly with our dedicated customer assistance desk.</p>
+          <a href="tel:+919040408690" class="channel-link">+91 90404 08690</a>
+        </div>
+
+        <div class="channel-card">
+          <div class="channel-icon">💬</div>
+          <h3>WhatsApp Support</h3>
+          <p>Instant live chat on WhatsApp for urgent dispatch queries.</p>
+          <a href="https://wa.me/919040408690" target="_blank" class="channel-link">Chat on WhatsApp →</a>
+        </div>
+
+        <div class="channel-card">
+          <div class="channel-icon">✉️</div>
+          <h3>Email Desk</h3>
+          <p>Send documentation, receipts, or artisan dispute inquiries.</p>
+          <a href="mailto:support@craftbid.in" class="channel-link">support&#64;craftbid.in</a>
+        </div>
+
+        <div class="channel-card">
+          <div class="channel-icon">📍</div>
+          <h3>CraftBid HQ</h3>
+          <p>Technology & Artisan Empowerment Center.</p>
+          <span class="channel-info-text">Bhubaneswar, Odisha, India</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQS & TICKET FORM ================= -->
+  <section class="support-main-content">
+    <div class="support-content-container content-grid">
+      <!-- LEFT: FAQ ACCORDION -->
+      <div class="faq-column">
+        <div class="section-badge">FREQUENTLY ASKED QUESTIONS</div>
+        <h2>Common Questions & Solutions</h2>
+
+        <div class="faq-accordion-list">
+          @for (faq of filteredFaqs; track $index) {
+            <div class="faq-accordion-item" [class.active]="faq.open" (click)="toggleFaq(faq)">
+              <div class="faq-question-header">
+                <strong>{{ faq.q }}</strong>
+                <span class="faq-toggle-icon">{{ faq.open ? '▲' : '▼' }}</span>
+              </div>
+              @if (faq.open) {
+                <div class="faq-answer-body">
+                  <p>{{ faq.a }}</p>
+                </div>
+              }
+            </div>
+          }
+
+          @if (filteredFaqs.length === 0) {
+            <div class="empty-faq-results">
+              <p>No FAQ articles matched your search. Submit a support ticket below for immediate assistance!</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- RIGHT: SUBMIT TICKET FORM -->
+      <div class="ticket-column">
+        <div class="ticket-card-box">
+          <div class="ticket-header">
+            <h3>🎫 Open a Support Ticket</h3>
+            <p>Our executive team typically replies within 30 minutes.</p>
+          </div>
+
+          @if (!submittedTicket) {
+            <div class="ticket-form-body">
+              <div class="form-group">
+                <label>Your Name</label>
+                <input type="text" [(ngModel)]="ticketForm.name" placeholder="Full Name" />
+              </div>
+
+              <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" [(ngModel)]="ticketForm.email" placeholder="email@example.com" />
+              </div>
+
+              <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" [(ngModel)]="ticketForm.phone" placeholder="+91 98765 43210" />
+              </div>
+
+              <div class="form-group">
+                <label>Inquiry Category</label>
+                <select [(ngModel)]="ticketForm.category">
+                  <option value="AUCTION_BIDDING">🔨 Live Turn Auctions & Turn Timer</option>
+                  <option value="PAYMENT_REFUND">💳 Deposit Escrow & Auto-Refunds</option>
+                  <option value="SHIPPING_ORDER">📦 Shipping Address & Order Tracking</option>
+                  <option value="ARTISAN_QUERY">🎨 Artisan Studio, Listings & 90% Payouts</option>
+                  <option value="OTHER">⚡ General Inquiries</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Subject</label>
+                <input type="text" [(ngModel)]="ticketForm.subject" placeholder="What can we help you with?" />
+              </div>
+
+              <div class="form-group">
+                <label>Detailed Message</label>
+                <textarea rows="4" [(ngModel)]="ticketForm.message" placeholder="Provide any details, auction numbers, or order references..."></textarea>
+              </div>
+
+              <button class="btn-submit-ticket-form" (click)="submitTicket()" [disabled]="submittingTicket">
+                {{ submittingTicket ? 'Submitting...' : '🚀 Submit Ticket' }}
+              </button>
+            </div>
+          } @else {
+            <div class="ticket-success-view">
+              <div class="success-glyph">✅</div>
+              <h4>Ticket Created Successfully!</h4>
+              <p>Your support request has been logged and assigned to our priority queue.</p>
+              <div class="ref-badge-wrap">
+                <span>Tracking Ref:</span>
+                <strong>{{ submittedTicket.ticketRef }}</strong>
+              </div>
+              <p class="resolution-sla">Guaranteed Response Time: <strong>&lt; 30 mins</strong></p>
+              <button class="btn-another-ticket" (click)="resetForm()">+ Submit Another Ticket</button>
+            </div>
+          }
+        </div>
+
+        <!-- My Recent Tickets -->
+        @if (myTickets.length > 0) {
+          <div class="my-tickets-card">
+            <h4>📋 My Support History</h4>
+            <div class="tickets-list">
+              @for (t of myTickets; track t.id) {
+                <div class="ticket-mini-item">
+                  <div>
+                    <strong>{{ t.subject }}</strong>
+                    <small class="ticket-ref-small">{{ t.ticketRef }}</small>
+                  </div>
+                  <span class="status-pill" [class.open]="t.status === 'OPEN'">{{ t.status }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+</div>
+
+<app-footer></app-footer>

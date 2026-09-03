@@ -1,0 +1,79 @@
+<app-topbar></app-topbar>
+<app-navbar></app-navbar>
+
+<div class="search-page-container">
+  <div class="search-header">
+    <h1>Search Results</h1>
+    <p>
+      @if (keyword) {
+        Showing results for "<strong>{{ keyword }}</strong>" ({{ crafts.length }} crafts found)
+      } @else {
+        Browse all craft items in the marketplace
+      }
+    </p>
+  </div>
+
+  <div class="search-layout">
+    <!-- Filter Sidebar -->
+    <aside class="filter-sidebar">
+      <h3>Filter Crafts</h3>
+      <div class="filter-group">
+        <label>Keyword</label>
+        <input type="text" [(ngModel)]="keyword" placeholder="Search crafts..." (keyup.enter)="performSearch()" />
+      </div>
+
+      <div class="filter-group">
+        <label>Min Price (₹)</label>
+        <input type="number" [(ngModel)]="minPrice" placeholder="0" min="0" />
+      </div>
+
+      <div class="filter-group">
+        <label>Max Price (₹)</label>
+        <input type="number" [(ngModel)]="maxPrice" placeholder="Any" min="0" />
+      </div>
+
+      <button class="btn-apply-filters" (click)="performSearch()">Apply Filters</button>
+    </aside>
+
+    <!-- Results Section -->
+    <main class="results-main">
+      @if (loading) {
+        <div class="loading-state">
+          <p>⏳ Searching crafts...</p>
+        </div>
+      }
+
+      @if (!loading && crafts.length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <h2>No matching crafts found</h2>
+          <p>Try searching with different keywords or clearing your price filters.</p>
+        </div>
+      }
+
+      @if (!loading && crafts.length > 0) {
+        <div class="crafts-grid">
+          @for (craft of crafts; track craft.id) {
+            <article class="craft-card" [routerLink]="['/crafts', craft.id]">
+              <div class="image-wrap">
+                <img [src]="craft.imageUrl" [alt]="craft.title" (error)="onImageError($event)" />
+                <span class="price-tag">{{ formatPrice(craft.basePrice) }}</span>
+              </div>
+              <div class="card-info">
+                <span class="category">{{ craft.category?.name || 'Craft' }}</span>
+                <h3>{{ craft.title }}</h3>
+                <p class="description">{{ craft.description }}</p>
+                <div class="card-footer">
+                  <span class="seller">👨‍🎨 {{ craft.seller?.name }}</span>
+                  <span class="explore-link">Explore →</span>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </main>
+  </div>
+</div>
+
+<app-footer></app-footer>

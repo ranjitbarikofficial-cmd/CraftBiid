@@ -1,0 +1,408 @@
+/* =========================================================
+   ARTISAN STUDIO ONBOARDING & CREATOR ACCELERATOR STYLES
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+.artisan-landing-container {
+  min-height: calc(100vh - 140px);
+  background: #090d16;
+  background-image: 
+    radial-gradient(at 10% 20%, rgba(234, 88, 12, 0.08) 0px, transparent 50%),
+    radial-gradient(at 90% 80%, rgba(217, 119, 6, 0.06) 0px, transparent 50%),
+    linear-gradient(to bottom, #090d16 0%, #0f172a 100%);
+  padding: 48px 24px 80px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #ffffff;
+}
+
+.artisan-shell-grid {
+  width: 100%;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 36px;
+  align-items: start;
+}
+
+/* ==========================================
+   LEFT COLUMN: FORM CARD
+   ========================================== */
+.onboarding-form-card {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  padding: 40px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+}
+
+.form-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(234, 88, 12, 0.15);
+  border: 1px solid rgba(234, 88, 12, 0.4);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  margin-bottom: 16px;
+}
+
+.badge-icon {
+  font-size: 14px;
+}
+
+.badge-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fed7aa;
+}
+
+.onboarding-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.5px;
+}
+
+.onboarding-subtitle {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0 0 28px 0;
+}
+
+/* FORM BODY */
+.artisan-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-field-group label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.field-hint {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-icon {
+  position: absolute;
+  left: 14px;
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+.input-wrapper input {
+  width: 100%;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 13px 14px 13px 44px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.input-wrapper input:focus {
+  border-color: #ea580c;
+  background: rgba(30, 41, 59, 0.95);
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.2);
+}
+
+/* CRAFT SPECIALTY PILLS */
+.craft-pills-wrap {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.craft-pill-btn {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: #cbd5e1;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.craft-pill-btn:hover {
+  background: rgba(234, 88, 12, 0.15);
+  border-color: rgba(234, 88, 12, 0.4);
+  color: #ffffff;
+}
+
+.craft-pill-btn.selected {
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.3) 0%, rgba(194, 65, 12, 0.3) 100%);
+  border-color: #ea580c;
+  color: #fed7aa;
+  box-shadow: 0 0 12px rgba(234, 88, 12, 0.3);
+}
+
+.craft-pill-btn span:first-child {
+  font-size: 1.2rem;
+}
+
+/* BUTTON */
+.btn-activate-studio {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  border: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 800;
+  padding: 16px 24px;
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  box-shadow: 0 10px 25px -5px rgba(234, 88, 12, 0.5);
+  transition: all 0.2s ease;
+}
+
+.btn-activate-studio:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px -5px rgba(234, 88, 12, 0.6);
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+.btn-activate-studio:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.terms-note {
+  font-size: 0.76rem;
+  color: #64748b;
+  text-align: center;
+  margin: 4px 0 0 0;
+  line-height: 1.4;
+}
+
+/* ==========================================
+   RIGHT COLUMN: PREVIEW & PERKS
+   ========================================== */
+.onboarding-preview-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Real-time Studio Preview */
+.live-preview-box {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(234, 88, 12, 0.35);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.preview-tag {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fdba74;
+  letter-spacing: 0.8px;
+}
+
+.preview-status {
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.preview-studio-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.preview-avatar-circle {
+  font-size: 2rem;
+  background: rgba(234, 88, 12, 0.25);
+  border: 1px solid rgba(234, 88, 12, 0.5);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.preview-info-stack {
+  flex: 1;
+  min-width: 0;
+}
+
+.preview-info-stack h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-location {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 0 0 10px 0;
+}
+
+.preview-stats-row {
+  display: flex;
+  gap: 14px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-item strong {
+  font-size: 0.85rem;
+  color: #fed7aa;
+}
+
+.stat-item small {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+/* PERKS CARD */
+.perks-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.perks-card h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.perk-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.perk-icon {
+  font-size: 1.3rem;
+  background: rgba(234, 88, 12, 0.15);
+  border: 1px solid rgba(234, 88, 12, 0.3);
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.perk-text strong {
+  font-size: 0.88rem;
+  color: #ffffff;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.perk-text p {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* ALERTS */
+.auth-alert.error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  padding: 12px 16px;
+  border-radius: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  .artisan-shell-grid {
+    grid-template-columns: 1fr;
+  }
+}

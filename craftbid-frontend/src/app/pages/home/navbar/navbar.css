@@ -1,0 +1,66 @@
+.sub-navbar {
+  background: #ffffff;
+  border-bottom: 1px solid #ede8e1;
+  width: 100%;
+}
+
+.sub-navbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.sub-navbar-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  color: #52525b;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.tab-icon {
+  font-size: 1rem;
+}
+
+.nav-tab:hover {
+  color: #18181b;
+  background-color: #faf8f5;
+}
+
+.nav-tab.active {
+  color: #ea580c;
+  font-weight: 700;
+  border-bottom-color: #ea580c;
+  background-color: #fff7ed;
+}
+
+.tab-badge {
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.artisan-tab {
+  margin-left: auto;
+  color: #ea580c;
+  font-weight: 600;
+}

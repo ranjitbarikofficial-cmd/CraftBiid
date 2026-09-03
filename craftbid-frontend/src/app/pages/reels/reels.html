@@ -1,0 +1,239 @@
+<app-topbar></app-topbar>
+<app-navbar></app-navbar>
+
+<div class="shorts-page-container">
+  
+  <!-- FLOATING FEED TABS (FOR YOU vs FOLLOWING + CREATE BUTTON) -->
+  <header class="reels-header-nav">
+    <div class="feed-tabs-cluster">
+      <button
+        type="button"
+        class="feed-tab-pill"
+        [class.active]="feedType === 'for-you'"
+        (click)="switchFeed('for-you')"
+      >
+        🔥 For You
+      </button>
+      <button
+        type="button"
+        class="feed-tab-pill"
+        [class.active]="feedType === 'following'"
+        (click)="switchFeed('following')"
+      >
+        👥 Following
+      </button>
+    </div>
+
+    <button type="button" class="btn-creator-action" (click)="goToUpload()">
+      <span class="plus-icon">✨</span>
+      <span>Upload Craft / Reel</span>
+    </button>
+  </header>
+
+  <!-- Shorts Feed Viewport -->
+  <div class="shorts-feed-viewport">
+    @if (loading) {
+      <div class="shorts-loading-box">
+        <div class="shorts-spinner"></div>
+        <p>Loading craft process reels...</p>
+      </div>
+    }
+
+    @if (!loading && reels.length === 0) {
+      <div class="shorts-empty-box">
+        <div class="empty-icon">🎥</div>
+        @if (feedType === 'following') {
+          <h2>No reels from followed artisans yet</h2>
+          <p>Follow your favorite master artisans to see their latest craft process videos and new releases here!</p>
+          <button type="button" class="btn-upload-reel" (click)="switchFeed('for-you')">
+            🔥 Explore "For You" Feed
+          </button>
+        } @else {
+          <h2>No craft reels available yet</h2>
+          <p>Be the first artisan to share your handcrafted process video with the community!</p>
+          <button type="button" class="btn-upload-reel" (click)="goToUpload()">
+            + Upload Your 1st Craft Reel
+          </button>
+        }
+      </div>
+    }
+
+    @if (!loading && reels.length > 0) {
+      <div class="shorts-stream-list">
+        @for (reel of reels; track reel.id; let i = $index) {
+          <article
+            #reelCard
+            class="short-video-card"
+            [class.active-short]="i === activeIndex"
+          >
+            <div class="video-wrapper">
+              <video
+                #videoElement
+                [src]="reel.videoUrl"
+                [poster]="reel.thumbnailUrl"
+                playsinline
+                (ended)="onVideoEnded(i)"
+                (click)="togglePlayPause(videoElement)"
+                preload="metadata"
+              ></video>
+
+              <!-- Top Scrim & Badges -->
+              <div class="short-top-bar">
+                <span class="shorts-pill">🎥 CRAFT REEL #{{ i + 1 }}</span>
+                @if (getAuctionIdForCraft(reel.craft?.id)) {
+                  <span class="live-auction-pulse-tag">⚡ LIVE AUCTION NOW</span>
+                } @else {
+                  <span class="auto-scroll-badge">⚡ Auto-Scroll</span>
+                }
+              </div>
+
+              <!-- Right Vertical Action Sidebar (Shorts / TikTok Style) -->
+              <aside class="short-sidebar-actions">
+                <!-- Like Button -->
+                <button
+                  type="button"
+                  class="btn-action-bubble"
+                  [class.liked]="isLiked(reel.id)"
+                  (click)="likeReel(reel, $event)"
+                  title="Like Craft Reel"
+                >
+                  <span class="action-glyph">{{ isLiked(reel.id) ? '❤️' : '🤍' }}</span>
+                  <span class="action-count">{{ reel.likes || 0 }}</span>
+                </button>
+
+                <!-- Interested Button (Bookmark/Intent) -->
+                <button
+                  type="button"
+                  class="btn-action-bubble"
+                  [class.interested]="isInterested(reel.id)"
+                  (click)="toggleInterested(reel, $event)"
+                  title="Mark as Interested"
+                >
+                  <span class="action-glyph">{{ isInterested(reel.id) ? '😍' : '🤍' }}</span>
+                  <span class="action-count">{{ isInterested(reel.id) ? 'Saved' : 'Interest' }}</span>
+                </button>
+
+                <!-- Live Bid Quick Action (If Craft is in Live Auction) -->
+                @if (getAuctionIdForCraft(reel.craft?.id)) {
+                  <a
+                    [routerLink]="['/auctions', getAuctionIdForCraft(reel.craft?.id)]"
+                    class="btn-action-bubble bid-action-pulse"
+                    title="Join Live Auction"
+                  >
+                    <span class="action-glyph">🔨</span>
+                    <span class="action-count">Bid Live</span>
+                  </a>
+                }
+
+                <!-- Views Count -->
+                <div class="btn-action-bubble views-only" title="Total Views">
+                  <span class="action-glyph">👁️</span>
+                  <span class="action-count">{{ reel.views || 0 }}</span>
+                </div>
+
+                <!-- Sound Mute / Unmute -->
+                <button
+                  type="button"
+                  class="btn-action-bubble"
+                  (click)="toggleMute()"
+                  title="Toggle Audio"
+                >
+                  <span class="action-glyph">{{ isMuted ? '🔇' : '🔊' }}</span>
+                  <span class="action-count">{{ isMuted ? 'Muted' : 'Sound' }}</span>
+                </button>
+
+                <!-- Previous Reel -->
+                <button
+                  type="button"
+                  class="btn-nav-bubble"
+                  (click)="goToPrevReel()"
+                  [disabled]="i === 0"
+                  title="Previous Reel"
+                >
+                  ▲
+                </button>
+
+                <!-- Next Reel -->
+                <button
+                  type="button"
+                  class="btn-nav-bubble"
+                  (click)="goToNextReel()"
+                  [disabled]="i === reels.length - 1"
+                  title="Next Reel"
+                >
+                  ▼
+                </button>
+              </aside>
+
+              <!-- Bottom Content Overlay (Artisan & Product Details) -->
+              <div class="short-bottom-overlay">
+                <!-- Artisan Info + Dynamic Follow Button -->
+                <div class="artisan-badge-row">
+                  <span class="artisan-avatar-bubble">👨‍🎨</span>
+                  <div class="artisan-name-stack">
+                    <strong>{{ reel.artisan?.shopName || 'Master Artisan Studio' }}</strong>
+                    <span class="artisan-city-text">
+                      📍 {{ reel.artisan?.city || 'India' }} • {{ getFollowerCount(reel.artisan?.user?.id) }} followers
+                    </span>
+                  </div>
+
+                  <!-- Follow / Following Button -->
+                  @if (reel.artisan?.user?.id && (!authService.getCurrentUser() || authService.getCurrentUser()?.userId !== reel.artisan?.user?.id)) {
+                    <button
+                      type="button"
+                      class="btn-follow-artisan"
+                      [class.following]="isFollowingArtisan(reel.artisan?.user?.id)"
+                      (click)="toggleFollow(reel.artisan?.user?.id, $event)"
+                    >
+                      {{ isFollowingArtisan(reel.artisan?.user?.id) ? '✓ Following' : '+ Follow' }}
+                    </button>
+                  }
+                </div>
+
+                <!-- Reel Caption -->
+                <h2 class="short-caption-title">{{ reel.title }}</h2>
+                @if (reel.description) {
+                  <p class="short-caption-desc">{{ reel.description }}</p>
+                }
+
+                <!-- Linked Craft Purchase / Bid Box -->
+                @if (reel.craft) {
+                  <div class="linked-craft-card">
+                    <img
+                      [src]="reel.craft.imageUrl"
+                      [alt]="reel.craft.title"
+                      (error)="onImageError($event)"
+                    />
+                    <div class="craft-mini-info">
+                      <span class="craft-tag-pill">🏺 Featured Craft</span>
+                      <h4>{{ reel.craft.title }}</h4>
+                      <strong class="craft-base-price">Base Price: {{ formatPrice(reel.craft.basePrice) }}</strong>
+                    </div>
+
+                    <div class="craft-actions-row">
+                      @if (getAuctionIdForCraft(reel.craft.id)) {
+                        <a [routerLink]="['/auctions', getAuctionIdForCraft(reel.craft.id)]" class="btn-bid-live-cta">
+                          ⚡ 1-Min Live Bid →
+                        </a>
+                      }
+                      <a [routerLink]="['/crafts', reel.craft.id]" class="btn-buy-craft">
+                        🛍️ View Craft →
+                      </a>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Navigation Helper Bar -->
+  <aside class="shorts-helper-bar">
+    <p>💡 <strong>Shortcuts:</strong> Use <strong>[↑]</strong> and <strong>[↓]</strong> arrow keys to scroll, <strong>[M]</strong> to mute. Click <strong>+ Follow</strong> to track your favorite master artisans' new craft uploads!</p>
+  </aside>
+</div>
+
+<app-footer></app-footer>

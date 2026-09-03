@@ -1,0 +1,322 @@
+<app-topbar></app-topbar>
+<app-navbar></app-navbar>
+
+<div class="auction-page-container">
+  @if (loading) {
+    <div class="loading-state">
+      <p>⏳ Loading live auction room...</p>
+    </div>
+  }
+
+  @if (!loading && auction) {
+    <nav class="breadcrumb">
+      <a routerLink="/home">Home</a> &gt;
+      <a routerLink="/auctions">Auctions</a> &gt;
+      <span>{{ auction.craft.title }}</span>
+    </nav>
+
+    <!-- ================= WINNER CELEBRATION BANNER ================= -->
+    @if (isCurrentUserWinner()) {
+      <div class="winner-alert-card">
+        <div class="winner-icon">🏆</div>
+        <div class="winner-info">
+          <h2>🎉 CONGRATULATIONS! You Won This Auction!</h2>
+          <p>
+            Final Winning Price: <strong>{{ formatPrice(auction.currentHighestBid) }}</strong>.
+            @if (auctionOrder) {
+              <span> Delivery address confirmed. Preparing for shipment!</span>
+            } @else {
+              <span> Please provide your shipping address for artisan dispatch.</span>
+            }
+          </p>
+        </div>
+        @if (!auctionOrder) {
+          <button class="btn-address-action" (click)="openAddressModal()">📦 Enter Shipping Address</button>
+        } @else {
+          <span class="badge-confirmed">✅ Address Submitted</span>
+        }
+      </div>
+    }
+
+    <!-- ================= REFUND NOTICE BANNER ================= -->
+    @if (isCurrentUserRefunded()) {
+      <div class="refund-alert-card">
+        <div class="refund-icon">💳</div>
+        <div class="refund-info">
+          <h3>100% Refund Initiated</h3>
+          <p>
+            This auction has ended. Your total deposited & bid amount of
+            <strong>{{ formatPrice(currentParticipant?.refundAmount || currentParticipant?.totalAmountPaid || 0) }}</strong>
+            has been fully refunded to your original payment source.
+          </p>
+        </div>
+        <span class="badge-refunded">✅ REFUNDED</span>
+      </div>
+    }
+
+    <div class="auction-grid">
+      <!-- LEFT: CRAFT SHOWCASE -->
+      <section class="craft-showcase-card">
+        <div class="image-wrapper">
+          <img [src]="auction.craft.imageUrl" [alt]="auction.craft.title" (error)="onImageError($event)" />
+        </div>
+        <div class="craft-content">
+          <div class="badge-row">
+            <span class="status-badge" [class.active]="auction.status === 'ACTIVE'">
+              {{ auction.status }}
+            </span>
+            <span class="category-pill">{{ auction.craft.category?.name || 'Handmade' }}</span>
+          </div>
+          <h1>{{ auction.craft.title }}</h1>
+          <p class="description">{{ auction.craft.description }}</p>
+
+          <div class="artisan-chip">
+            <span class="avatar">👨‍🎨</span>
+            <div>
+              <span class="label">Crafted by Artisan</span>
+              <strong>{{ auction.seller.name }}</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: LIVE BIDDING & PAYMENT CONSOLE -->
+      <section class="bidding-console-card">
+        <!-- 1. PARTICIPANT ROOM LOBBY -->
+        <div class="room-lobby-banner">
+          <div class="room-info">
+            <span class="room-label">👥 Auction Room Lobby</span>
+            <strong>{{ participants.length }} / {{ auction.maxParticipants || 10 }} Participants Joined</strong>
+          </div>
+
+          @if (currentParticipant) {
+            <span class="badge-joined">✅ You Joined (Deposit: {{ formatPrice(currentParticipant.basePricePaid) }})</span>
+          } @else if (auction.status === 'ACTIVE') {
+            <button class="btn-join-room" (click)="openJoinModal()">
+              💳 Pay Base Deposit ({{ formatPrice(auction.startingPrice) }}) to Enter
+            </button>
+          }
+        </div>
+
+        <!-- 2. 1-MINUTE LIVE TURN COUNTDOWN -->
+        @if (auction.status === 'ACTIVE') {
+          <div class="turn-timer-card" [class.urgent]="secondsRemainingInTurn <= 20">
+            <div class="turn-timer-header">
+              <span>⏱️ Live 1-Minute Turn Timer</span>
+              <strong class="seconds-digits">{{ secondsRemainingInTurn }}s</strong>
+            </div>
+            <div class="turn-progress-track">
+              <div class="turn-progress-bar" [style.width.%]="(secondsRemainingInTurn / 60) * 100"></div>
+            </div>
+            <small class="turn-hint">
+              If no higher bid is placed before the timer reaches 0s, the current highest bidder wins!
+            </small>
+          </div>
+        }
+
+        <!-- 3. CURRENT HIGHEST PRICE -->
+        <div class="price-hero-box">
+          <span class="label">Current Highest Bid</span>
+          <div class="hero-amount">{{ formatPrice(auction.currentHighestBid) }}</div>
+          <div class="min-increment-text">
+            Minimum increment: <strong>{{ formatPrice(auction.minBidIncrement) }}</strong> | Base Price: <strong>{{ formatPrice(auction.startingPrice) }}</strong>
+          </div>
+        </div>
+
+        <!-- 4. DIFFERENTIAL BIDDING FORM -->
+        @if (auction.status === 'ACTIVE') {
+          <div class="differential-bid-form">
+            <label>Your Target Bid Amount (₹)</label>
+            <div class="bid-input-wrap">
+              <span class="currency-symbol">₹</span>
+              <input
+                type="number"
+                [(ngModel)]="bidAmount"
+                [min]="minNextBid"
+                [step]="auction.minBidIncrement || 50"
+                (ngModelChange)="onBidAmountChange()"
+                placeholder="Enter bid amount"
+              />
+            </div>
+
+            <!-- PAYMENT BREAKDOWN -->
+            <div class="differential-summary-card">
+              <div class="summary-line">
+                <span>Target Bid Amount:</span>
+                <strong>{{ formatPrice(bidAmount || minNextBid) }}</strong>
+              </div>
+              <div class="summary-line">
+                <span>Already Paid by You:</span>
+                <span>- {{ formatPrice(currentParticipant?.totalAmountPaid || 0) }}</span>
+              </div>
+              <div class="summary-line highlight">
+                <span>Instant Payment Required Now:</span>
+                <strong class="amount-to-pay">{{ formatPrice(differentialToPay) }}</strong>
+              </div>
+            </div>
+
+            @if (currentParticipant) {
+              <button class="btn-place-bid" (click)="placeBid()" [disabled]="bidding">
+                {{ bidding ? 'Processing Payment...' : '💳 Pay ' + formatPrice(differentialToPay) + ' & Place Bid' }}
+              </button>
+            } @else {
+              <button class="btn-place-bid join-first" (click)="openJoinModal()">
+                🔒 Join & Pay Base Deposit ({{ formatPrice(auction.startingPrice) }}) to Bid
+              </button>
+            }
+          </div>
+        }
+
+        <!-- 5. FINANCIAL SETTLEMENT SUMMARY (When Ended) -->
+        @if (auction.status === 'ENDED' && auction.adminFeeAmount) {
+          <div class="settlement-summary-box">
+            <h4>💰 Auction Settlement Summary</h4>
+            <div class="settlement-row">
+              <span>Winning Bid Amount:</span>
+              <strong>{{ formatPrice(auction.currentHighestBid) }}</strong>
+            </div>
+            <div class="settlement-row fee">
+              <span>Platform Commission (10%):</span>
+              <strong>- {{ formatPrice(auction.adminFeeAmount) }}</strong>
+            </div>
+            <div class="settlement-row payout">
+              <span>Artisan Net Payout (90%):</span>
+              <strong class="payout-val">{{ formatPrice(auction.artisanPayoutAmount || 0) }}</strong>
+            </div>
+          </div>
+        }
+
+        <!-- 6. PARTICIPANTS LIST -->
+        <div class="participants-list-section">
+          <h3>Room Participants ({{ participants.length }})</h3>
+          <div class="participant-tags">
+            @for (p of participants; track p.id) {
+              <div class="participant-tag" [class.me]="p.user.id === currentUser?.userId">
+                <span class="user-avatar">👤</span>
+                <div class="p-details">
+                  <strong>{{ p.user.name }} {{ p.user.id === currentUser?.userId ? '(You)' : '' }}</strong>
+                  <small>Paid: {{ formatPrice(p.totalAmountPaid) }} | {{ p.status }}</small>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- 7. RECENT BIDS FEED -->
+        <div class="bids-history-section">
+          <h3>Recent Bids ({{ bids.length }})</h3>
+          @if (bids.length > 0) {
+            <div class="bids-stream">
+              @for (b of bids; track b.id) {
+                <div class="bid-item">
+                  <div class="bid-user">
+                    <strong>{{ b.bidder.name || 'Bidder' }}</strong>
+                    <small>{{ formatDate(b.bidTime) }}</small>
+                  </div>
+                  <div class="bid-val">{{ formatPrice(b.amount) }}</div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="no-bids-text">No bids placed yet in this round.</p>
+          }
+        </div>
+      </section>
+    </div>
+  }
+</div>
+
+<!-- ================= JOIN & PAY BASE DEPOSIT MODAL ================= -->
+@if (isJoinModalOpen && auction) {
+  <div class="modal-backdrop" (click)="closeJoinModal()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>💳 Pay Base Deposit to Join Auction</h2>
+        <button class="btn-close" (click)="closeJoinModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="deposit-summary-box">
+          <p>Product Base Price: <strong>{{ formatPrice(auction.startingPrice) }}</strong></p>
+          <p class="refund-policy-note">
+            🛡️ <strong>100% Refund Guarantee:</strong> If another customer wins the auction, your full deposit + differential payments will be automatically refunded.
+          </p>
+        </div>
+
+        <div class="payment-method-selector">
+          <label>Select Payment Method:</label>
+          <div class="payment-options">
+            <label class="pay-option" [class.selected]="selectedPaymentMethod === 'UPI'">
+              <input type="radio" name="payMethod" value="UPI" [(ngModel)]="selectedPaymentMethod" />
+              <span>📱 UPI (GPay / PhonePe / Paytm)</span>
+            </label>
+            <label class="pay-option" [class.selected]="selectedPaymentMethod === 'CARD'">
+              <input type="radio" name="payMethod" value="CARD" [(ngModel)]="selectedPaymentMethod" />
+              <span>💳 Credit / Debit Card</span>
+            </label>
+            <label class="pay-option" [class.selected]="selectedPaymentMethod === 'NETBANKING'">
+              <input type="radio" name="payMethod" value="NETBANKING" [(ngModel)]="selectedPaymentMethod" />
+              <span>🏦 Net Banking</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeJoinModal()">Cancel</button>
+        <button class="btn-primary" (click)="confirmJoinAuction()" [disabled]="joining">
+          {{ joining ? 'Processing Deposit...' : 'Pay ' + formatPrice(auction.startingPrice) + ' & Join Room' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ================= WINNER SHIPPING ADDRESS MODAL ================= -->
+@if (isAddressModalOpen && auction) {
+  <div class="modal-backdrop" (click)="closeAddressModal()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>📦 Enter Delivery Address</h2>
+        <button class="btn-close" (click)="closeAddressModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="address-desc">The artisan will dispatch your winning handmade craft to this address.</p>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" [(ngModel)]="addressForm.fullName" placeholder="Recipient's Name" />
+        </div>
+        <div class="form-group">
+          <label>Street Address / House No.</label>
+          <input type="text" [(ngModel)]="addressForm.streetAddress" placeholder="123 Street Name, Flat / Area" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>City</label>
+            <input type="text" [(ngModel)]="addressForm.city" placeholder="City" />
+          </div>
+          <div class="form-group">
+            <label>State</label>
+            <input type="text" [(ngModel)]="addressForm.state" placeholder="State" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Pincode / Postal Code</label>
+            <input type="text" [(ngModel)]="addressForm.pincode" placeholder="6-digit Pincode" />
+          </div>
+          <div class="form-group">
+            <label>Contact Phone</label>
+            <input type="text" [(ngModel)]="addressForm.phone" placeholder="10-digit Phone" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeAddressModal()">Cancel</button>
+        <button class="btn-primary" (click)="submitAddress()" [disabled]="submittingAddress">
+          {{ submittingAddress ? 'Saving Address...' : 'Confirm Delivery Address' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<app-footer></app-footer>

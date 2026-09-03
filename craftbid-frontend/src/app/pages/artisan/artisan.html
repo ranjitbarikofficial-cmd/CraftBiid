@@ -1,0 +1,173 @@
+<app-topbar></app-topbar>
+<app-navbar></app-navbar>
+
+<div class="artisan-landing-container">
+  <div class="artisan-shell-grid">
+    
+    <!-- LEFT COLUMN: CREATOR ONBOARDING FORM -->
+    <div class="onboarding-form-card">
+      <div class="form-header-badge">
+        <span class="badge-icon">✨</span>
+        <span class="badge-text">CREATOR ACCELERATOR</span>
+      </div>
+
+      <h1 class="onboarding-title">Launch Your Artisan Studio</h1>
+      <p class="onboarding-subtitle">
+        Showcase your handcrafted creations, run live 1-minute auctions, and connect directly with collectors across India.
+      </p>
+
+      <!-- ALERTS -->
+      @if (errorMessage) {
+        <div class="auth-alert error">
+          <span class="alert-icon">⚠️</span>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+
+      <form (ngSubmit)="enableSellerAccount()" class="artisan-form-body">
+        
+        <!-- Shop / Studio Name -->
+        <div class="input-field-group">
+          <label for="shopName">Studio / Workshop Name *</label>
+          <div class="input-wrapper">
+            <span class="field-icon">🏺</span>
+            <input
+              id="shopName"
+              type="text"
+              name="shopName"
+              [(ngModel)]="shopName"
+              placeholder="e.g. Heritage Clay Creations"
+              required
+            />
+          </div>
+          <small class="field-hint">This name will appear on all your crafts, reels, and live auctions.</small>
+        </div>
+
+        <!-- Craft Specialty Selector -->
+        <div class="input-field-group">
+          <label>Primary Craft Specialty *</label>
+          <div class="craft-pills-wrap">
+            @for (c of popularCrafts; track c.name) {
+              <button
+                type="button"
+                class="craft-pill-btn"
+                [class.selected]="craftType === c.name"
+                (click)="selectCraftType(c.name)"
+              >
+                <span>{{ c.icon }}</span>
+                <span>{{ c.name }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Workshop City / Region -->
+        <div class="input-field-group">
+          <label for="city">Workshop Location / City *</label>
+          <div class="input-wrapper">
+            <span class="field-icon">📍</span>
+            <input
+              id="city"
+              type="text"
+              name="city"
+              [(ngModel)]="city"
+              placeholder="e.g. Bhubaneswar, Odisha"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-activate-studio" [disabled]="loading">
+          @if (loading) {
+            <span class="btn-spinner"></span>
+            <span>Activating Studio Console...</span>
+          } @else {
+            <span>🚀 Activate Artisan Studio & Upload Craft →</span>
+          }
+        </button>
+
+        <p class="terms-note">
+          🔒 By activating, you agree to our transparent fair pricing & authentic handmade verification guidelines.
+        </p>
+      </form>
+    </div>
+
+    <!-- RIGHT COLUMN: LIVE STUDIO PREVIEW & SELLER PERKS -->
+    <div class="onboarding-preview-column">
+      
+      <!-- Real-time Live Studio Preview Card -->
+      <div class="live-preview-box">
+        <div class="preview-header">
+          <span class="preview-tag">LIVE BUYER VIEW</span>
+          <span class="preview-status">🟢 Verified Maker</span>
+        </div>
+
+        <div class="preview-studio-card">
+          <div class="preview-avatar-circle">👨‍🎨</div>
+          <div class="preview-info-stack">
+            <h3>{{ shopName || 'Your Studio Name' }}</h3>
+            <p class="preview-location">
+              📍 {{ city || 'Your City, State' }} • {{ craftType || 'Handmade Craft' }} Specialist
+            </p>
+            <div class="preview-stats-row">
+              <div class="stat-item">
+                <strong>0</strong>
+                <small>Followers</small>
+              </div>
+              <div class="stat-item">
+                <strong>100%</strong>
+                <small>Handmade</small>
+              </div>
+              <div class="stat-item">
+                <strong>4.9 ★</strong>
+                <small>Rating</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Creator Perks Grid -->
+      <div class="perks-card">
+        <h3>Why sell on CraftBid?</h3>
+        
+        <div class="perk-item">
+          <div class="perk-icon">⚡</div>
+          <div class="perk-text">
+            <strong>1-Minute Live Turn Auctions</strong>
+            <p>Maximize your craft's true market value with thrilling differential bidding rooms.</p>
+          </div>
+        </div>
+
+        <div class="perk-item">
+          <div class="perk-icon">🎥</div>
+          <div class="perk-text">
+            <strong>Craft Process Reels & Shorts</strong>
+            <p>Showcase your behind-the-scenes craft videos to reach thousands of collectors.</p>
+          </div>
+        </div>
+
+        <div class="perk-item">
+          <div class="perk-icon">👥</div>
+          <div class="perk-text">
+            <strong>Direct Follower Network</strong>
+            <p>Buyers follow your studio and get notified the moment you drop new crafts.</p>
+          </div>
+        </div>
+
+        <div class="perk-item">
+          <div class="perk-icon">💰</div>
+          <div class="perk-text">
+            <strong>90% Creator Payouts</strong>
+            <p>Keep 90% of your hammer price with automatic escrow bank settlements.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<app-footer></app-footer>

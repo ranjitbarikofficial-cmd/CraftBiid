@@ -1,0 +1,379 @@
+<div class="studio-app-container">
+  <!-- ================= 1. DARK OBSIDIAN SIDEBAR ================= -->
+  <aside class="studio-sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-badge">✨</div>
+      <div>
+        <span class="brand-title">Craft<span class="brand-accent">Bid</span></span>
+        <span class="studio-tag">ARTISAN STUDIO</span>
+      </div>
+    </div>
+
+    <!-- Artisan Profile Summary -->
+    <div class="artisan-user-card">
+      <div class="artisan-avatar">👨‍🎨</div>
+      <div class="artisan-info">
+        <strong>{{ currentUser?.name || 'Master Artisan' }}</strong>
+        <span class="verified-pill">🛡️ Verified Maker</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/artisan-dashboard" class="nav-item active">
+        <span class="nav-icon">📊</span>
+        <span>Studio Console</span>
+      </a>
+
+      <a routerLink="/artisan/upload-craft" class="nav-item">
+        <span class="nav-icon">➕</span>
+        <span>Upload Craft & Reel</span>
+      </a>
+
+      <a routerLink="/reels" class="nav-item">
+        <span class="nav-icon">🎥</span>
+        <span>Reels Studio</span>
+      </a>
+
+      <a routerLink="/auctions" class="nav-item">
+        <span class="nav-icon">🔨</span>
+        <span>Live Auctions</span>
+      </a>
+
+      <a routerLink="/home" class="nav-item">
+        <span class="nav-icon">🌐</span>
+        <span>Public Marketplace</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-sidebar-logout" (click)="logout()">
+        <span>🚪</span>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ================= 2. MAIN CONSOLE CONTENT ================= -->
+  <main class="studio-main-viewport">
+    <!-- TOP BAR -->
+    <header class="studio-topbar">
+      <div>
+        <div class="breadcrumb-chip">Studio Workspace &gt; Overview</div>
+        <h1>Welcome, {{ currentUser?.name || 'Artisan' }} 👋</h1>
+        <p class="subtitle-text">Manage your handcrafted catalog, process reels, and fulfill winner orders.</p>
+      </div>
+
+      <div class="topbar-actions">
+        <a routerLink="/artisan/upload-craft" class="btn-create-craft">
+          <span>+ Upload New Craft</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- ================= 3. KPI METRIC TILES ================= -->
+    <section class="kpi-grid">
+      <!-- Revenue -->
+      <div class="kpi-tile revenue">
+        <div class="kpi-top">
+          <span class="kpi-label">NET REVENUE EARNED (90%)</span>
+          <span class="kpi-icon">💰</span>
+        </div>
+        <div class="kpi-value">{{ formatPrice(totalRevenue) }}</div>
+        <div class="kpi-subtext">10% Platform fee deducted | Direct payout</div>
+      </div>
+
+      <!-- Crafts -->
+      <div class="kpi-tile crafts">
+        <div class="kpi-top">
+          <span class="kpi-label">ACTIVE CREATIONS</span>
+          <span class="kpi-icon">🎨</span>
+        </div>
+        <div class="kpi-value">{{ totalCrafts }}</div>
+        <div class="kpi-subtext">Listed on CraftBid Marketplace</div>
+      </div>
+
+      <!-- Reels Views -->
+      <div class="kpi-tile reels">
+        <div class="kpi-top">
+          <span class="kpi-label">REELS ENGAGEMENT</span>
+          <span class="kpi-icon">🎥</span>
+        </div>
+        <div class="kpi-value">{{ totalViews }} <span class="unit">views</span></div>
+        <div class="kpi-subtext">❤️ {{ totalLikes }} total likes across {{ totalReels }} reels</div>
+      </div>
+
+      <!-- Followers -->
+      <div class="kpi-tile followers" style="border-top-color: #8b5cf6;">
+        <div class="kpi-top">
+          <span class="kpi-label">COMMUNITY FOLLOWERS</span>
+          <span class="kpi-icon">👥</span>
+        </div>
+        <div class="kpi-value">{{ totalFollowers }}</div>
+        <div class="kpi-subtext">Buyers tracking your new craft releases</div>
+      </div>
+
+      <!-- Orders -->
+      <div class="kpi-tile orders">
+        <div class="kpi-top">
+          <span class="kpi-label">ORDERS TO SHIP</span>
+          <span class="kpi-icon">📦</span>
+        </div>
+        <div class="kpi-value">{{ orders.length }}</div>
+        <div class="kpi-subtext">Auction winner delivery addresses</div>
+      </div>
+    </section>
+
+    <!-- ================= 4. SEGMENTED TAB SWITCHER ================= -->
+    <div class="studio-segmented-tabs">
+      <button
+        class="tab-btn"
+        [class.active]="activeTab === 'crafts'"
+        (click)="activeTab = 'crafts'"
+      >
+        <span>🎨 Studio Catalog</span>
+        <span class="pill-count">{{ totalCrafts }}</span>
+      </button>
+
+      <button
+        class="tab-btn"
+        [class.active]="activeTab === 'reels'"
+        (click)="activeTab = 'reels'"
+      >
+        <span>🎥 Process Reels</span>
+        <span class="pill-count">{{ totalReels }}</span>
+      </button>
+
+      <button
+        class="tab-btn"
+        [class.active]="activeTab === 'orders'"
+        (click)="activeTab = 'orders'"
+      >
+        <span>📦 Orders & Dispatch</span>
+        <span class="pill-count">{{ orders.length }}</span>
+      </button>
+    </div>
+
+    @if (loading) {
+      <div class="studio-loading-state">
+        <p>⏳ Syncing your studio catalog...</p>
+      </div>
+    }
+
+    <!-- ================= TAB 1: CRAFTS CATALOG ================= -->
+    @if (!loading && activeTab === 'crafts') {
+      <section class="tab-content-area">
+        @if (crafts.length > 0) {
+          <div class="catalog-grid">
+            @for (craft of crafts; track craft.id) {
+              <div class="catalog-card" [class.offline-craft]="craft.status === 'OFFLINE'">
+                <div class="card-thumbnail-wrap">
+                  <img [src]="craft.imageUrl" [alt]="craft.title" (error)="onImageError($event)" />
+                  <span class="craft-category-badge">{{ craft.category?.name || 'Craft' }}</span>
+                  <span class="craft-live-status-pill" [class.live]="craft.status === 'ACTIVE'" [class.offline]="craft.status === 'OFFLINE'">
+                    {{ craft.status === 'ACTIVE' ? '🟢 LIVE FOR AUCTION' : '🔴 OFFLINE / SOLD' }}
+                  </span>
+                </div>
+
+                <div class="card-details-wrap">
+                  <h3>{{ craft.title }}</h3>
+                  <p class="description-snippet">{{ craft.description }}</p>
+
+                  <div class="availability-toggle-row">
+                    <span class="toggle-help-text">
+                      {{ craft.status === 'ACTIVE' ? 'Available for Bidding' : 'Hidden (Delivered / Remaking)' }}
+                    </span>
+                    <button
+                      type="button"
+                      class="btn-toggle-availability"
+                      [class.btn-live]="craft.status === 'OFFLINE'"
+                      (click)="toggleCraftStatus(craft, $event)"
+                      title="Toggle availability"
+                    >
+                      {{ craft.status === 'ACTIVE' ? '🔴 Mark Offline' : '🟢 Turn Live' }}
+                    </button>
+                  </div>
+
+                  <div class="card-bottom-actions">
+                    <div class="price-stack">
+                      <span class="price-caption">Base Price</span>
+                      <strong class="price-number">{{ formatPrice(craft.basePrice) }}</strong>
+                    </div>
+
+                    <div class="btn-group">
+                      @if (craft.status === 'ACTIVE') {
+                        <button class="btn-action-auction" (click)="openAuctionModal(craft, $event)" title="Start Live Turn Auction">
+                          🔨 Start Auction
+                        </button>
+                      }
+                      <button class="btn-action-delete" (click)="deleteCraft(craft.id, $event)" title="Delete Craft">
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="studio-empty-state">
+            <div class="empty-glyph">🎨</div>
+            <h3>No crafts uploaded in your studio</h3>
+            <p>Start sharing your handmade craft creations with buyers and live auction bidders.</p>
+            <a routerLink="/artisan/upload-craft" class="btn-create-craft"> + Upload First Craft </a>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- ================= TAB 2: REELS ================= -->
+    @if (!loading && activeTab === 'reels') {
+      <section class="tab-content-area">
+        @if (reels.length > 0) {
+          <div class="reels-grid-layout">
+            @for (reel of reels; track reel.id) {
+              <div class="studio-reel-card">
+                <div class="reel-media-box">
+                  <video [src]="reel.videoUrl" controls [poster]="reel.thumbnailUrl"></video>
+                </div>
+                <div class="reel-meta-box">
+                  <h4>{{ reel.title }}</h4>
+                  <div class="reel-stat-row">
+                    <span>👁️ {{ reel.views || 0 }} views</span>
+                    <span>❤️ {{ reel.likes || 0 }} likes</span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="studio-empty-state">
+            <div class="empty-glyph">🎥</div>
+            <h3>No behind-the-scenes reels yet</h3>
+            <p>Process videos uploaded with your crafts will show up here automatically.</p>
+            <a routerLink="/artisan/upload-craft" class="btn-create-craft"> + Upload Craft & Reel </a>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- ================= TAB 3: ORDERS & DISPATCH ================= -->
+    @if (!loading && activeTab === 'orders') {
+      <section class="tab-content-area">
+        @if (orders.length > 0) {
+          <div class="orders-card-table-wrap">
+            <table class="studio-table">
+              <thead>
+                <tr>
+                  <th>Order Ref</th>
+                  <th>Craft Item</th>
+                  <th>Winning Buyer</th>
+                  <th>Shipping Address</th>
+                  <th>Winning Bid</th>
+                  <th>Platform Fee (10%)</th>
+                  <th>Your Net Payout (90%)</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (o of orders; track o.id) {
+                  <tr>
+                    <td><span class="order-ref-code">#CB-ORD-{{ o.id }}</span></td>
+                    <td>
+                      <strong>{{ o.auction?.craft?.title }}</strong>
+                    </td>
+                    <td>
+                      <div class="buyer-profile-cell">
+                        <strong>{{ o.fullName }}</strong>
+                        <small>📞 {{ o.phone }}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="address-cell">
+                        {{ o.streetAddress }}, {{ o.city }}, {{ o.pincode }}
+                      </div>
+                    </td>
+                    <td>{{ formatPrice(o.winningAmount) }}</td>
+                    <td class="fee-text">- {{ formatPrice(o.platformFee) }}</td>
+                    <td class="payout-text"><strong>{{ formatPrice(o.artisanPayout) }}</strong></td>
+                    <td>
+                      <span class="status-badge-chip">{{ o.status }}</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="studio-empty-state">
+            <div class="empty-glyph">📦</div>
+            <h3>No dispatch orders yet</h3>
+            <p>When collectors win your live craft auctions and provide delivery addresses, orders will appear here.</p>
+          </div>
+        }
+      </section>
+    }
+  </main>
+</div>
+
+<!-- ================= LAUNCH LIVE AUCTION MODAL ================= -->
+@if (isAuctionModalOpen && selectedCraft) {
+  <div class="modal-backdrop-blur" (click)="closeAuctionModal()">
+    <div class="modal-dialog-glass" (click)="$event.stopPropagation()">
+      <div class="modal-header-strip">
+        <h2>🔨 Launch Live Turn Auction</h2>
+        <button class="btn-modal-close" (click)="closeAuctionModal()">✕</button>
+      </div>
+
+      <div class="modal-body-content">
+        <div class="craft-preview-box">
+          <img [src]="selectedCraft.imageUrl" [alt]="selectedCraft.title" (error)="onImageError($event)" />
+          <div>
+            <h3>{{ selectedCraft.title }}</h3>
+            <p>Product Base Price: <strong>{{ formatPrice(selectedCraft.basePrice) }}</strong></p>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>Starting Bid Price (₹)</label>
+          <input type="number" [(ngModel)]="auctionStartingPrice" min="1" placeholder="Starting bid price" />
+        </div>
+
+        <div class="form-field">
+          <label>Minimum Turn Increment (₹)</label>
+          <input type="number" [(ngModel)]="auctionMinIncrement" min="10" step="10" />
+        </div>
+
+        <div class="form-field">
+          <label>Room Duration</label>
+          <select [(ngModel)]="auctionDurationHours">
+            <option [value]="6">6 Hours</option>
+            <option [value]="12">12 Hours</option>
+            <option [value]="24">24 Hours (1 Day)</option>
+            <option [value]="48">48 Hours (2 Days)</option>
+            <option [value]="72">72 Hours (3 Days)</option>
+            <option [value]="168">7 Days (1 Week)</option>
+          </select>
+        </div>
+
+        <div class="turn-rule-info-card">
+          🛡️ <strong>Live Turn Rules:</strong> Up to 10 collectors pay the base price deposit to join. Every bid resets a 60-second turn timer. Winner receives the craft; non-winners are 100% refunded!
+        </div>
+
+        @if (auctionError) {
+          <p class="error-msg-pill">⚠️ {{ auctionError }}</p>
+        }
+
+        @if (auctionSuccess) {
+          <p class="success-msg-pill">{{ auctionSuccess }}</p>
+        }
+      </div>
+
+      <div class="modal-footer-strip">
+        <button class="btn-modal-cancel" (click)="closeAuctionModal()">Cancel</button>
+        <button class="btn-modal-launch" (click)="submitAuction()" [disabled]="auctionLoading">
+          {{ auctionLoading ? 'Launching Room...' : '🚀 Start Live Auction' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

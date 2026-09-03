@@ -1,0 +1,12 @@
+.home-page {
+  min-height: 100vh;
+  background: #fdf8ef;
+}
+
+.home-content {
+  width: 100%;
+}
+
+main {
+  display: block;
+}

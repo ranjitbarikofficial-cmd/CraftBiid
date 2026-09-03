@@ -1,0 +1,68 @@
+<app-topbar></app-topbar>
+<app-navbar></app-navbar>
+
+<div class="my-bids-container">
+  <div class="my-bids-header">
+    <h1>🔨 My Placed Bids</h1>
+    <p>Track all the handmade craft auctions you have participated in.</p>
+  </div>
+
+  @if (loading) {
+    <div class="loading-state">
+      <p>⏳ Loading your bids history...</p>
+    </div>
+  }
+
+  @if (!loading && bids.length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">🔨</div>
+      <h2>You haven't placed any bids yet</h2>
+      <p>Discover unique handcrafted pieces and place your first auction bid!</p>
+      <a routerLink="/auctions" class="btn-primary">Explore Live Auctions</a>
+    </div>
+  }
+
+  @if (!loading && bids.length > 0) {
+    <div class="bids-table-wrap">
+      <table class="bids-table">
+        <thead>
+          <tr>
+            <th>Auction Item</th>
+            <th>Your Bid Amount</th>
+            <th>Placed At</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (bid of bids; track bid.id) {
+            <tr>
+              <td>
+                <div class="craft-item-info">
+                  <strong>{{ bid.auction?.craft?.title || 'Craft Item' }}</strong>
+                  <small>{{ bid.auction?.seller?.name || 'Artisan' }}</small>
+                </div>
+              </td>
+              <td>
+                <strong class="bid-price">{{ formatPrice(bid.amount) }}</strong>
+              </td>
+              <td>{{ formatDate(bid.bidTime) }}</td>
+              <td>
+                <span class="status-badge" [class.winning]="bid.status === 'ACCEPTED'">
+                  {{ bid.status }}
+                </span>
+              </td>
+              <td>
+                @if (bid.auction?.id) {
+                  <a [routerLink]="['/auctions', bid.auction!.id]" class="btn-view-auction">View Auction</a>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<app-footer></app-footer>

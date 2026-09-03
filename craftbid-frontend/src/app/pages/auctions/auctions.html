@@ -1,0 +1,59 @@
+<app-topbar></app-topbar>
+<app-navbar></app-navbar>
+
+<div class="auctions-container">
+  <div class="auctions-header">
+    <h1>🔨 Live Craft Auctions</h1>
+    <p>Place competitive bids on rare, one-of-a-kind handmade crafts directly from verified artisans.</p>
+  </div>
+
+  @if (loading) {
+    <div class="loading-state">
+      <p>⏳ Loading active auctions...</p>
+    </div>
+  }
+
+  @if (!loading && auctions.length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">🔨</div>
+      <h2>No live auctions right now</h2>
+      <p>Artisans launch limited-edition auctions regularly. Explore the marketplace in the meantime!</p>
+      <a routerLink="/home" class="btn-primary">Browse Marketplace</a>
+    </div>
+  }
+
+  @if (!loading && auctions.length > 0) {
+    <div class="auctions-grid">
+      @for (auction of auctions; track auction.id) {
+        <article class="auction-card" [routerLink]="['/auctions', auction.id]">
+          <div class="auction-image-wrap">
+            <span class="timer-badge">⏳ {{ getTimeRemaining(auction.endTime) }}</span>
+            <img [src]="auction.craft?.imageUrl" [alt]="auction.craft?.title" (error)="onImageError($event)" />
+            <span class="bids-pill">{{ auction.totalBids }} bids</span>
+          </div>
+
+          <div class="auction-details">
+            <span class="category-name">{{ auction.craft?.category?.name || 'Craft' }}</span>
+            <h3>{{ auction.craft?.title }}</h3>
+            <p class="seller-name">👨‍🎨 {{ auction.seller?.name }}</p>
+
+            <div class="bid-status-box">
+              <div class="bid-col">
+                <span class="label">Current Highest Bid</span>
+                <span class="value">{{ formatPrice(auction.currentHighestBid) }}</span>
+              </div>
+              <div class="bid-col right">
+                <span class="label">Starting</span>
+                <span class="sub-value">{{ formatPrice(auction.startingPrice) }}</span>
+              </div>
+            </div>
+
+            <button class="btn-bid-now">🔨 Bid Now</button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>
+
+<app-footer></app-footer>

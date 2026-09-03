@@ -1,0 +1,85 @@
+<app-topbar></app-topbar>
+<app-navbar></app-navbar>
+
+<div class="craft-details-container">
+  @if (loading) {
+    <div class="loading-state">
+      <p>⏳ Loading craft details...</p>
+    </div>
+  }
+
+  @if (!loading && errorMessage) {
+    <div class="error-container">
+      <div class="error-icon">🏺</div>
+      <h2>{{ errorMessage }}</h2>
+      <a routerLink="/home" class="btn-back">← Back to Marketplace</a>
+    </div>
+  }
+
+  @if (!loading && craft) {
+    <div class="breadcrumb">
+      <a routerLink="/home">Home</a> &gt;
+      <span>{{ craft.category?.name || 'Craft' }}</span> &gt;
+      <span>{{ craft.title }}</span>
+    </div>
+
+    <div class="craft-main-layout">
+      <!-- LEFT: Image & Reels -->
+      <div class="craft-media-section">
+        <div class="main-image-wrap">
+          <img [src]="craft.imageUrl" [alt]="craft.title" (error)="onImageError($event)" />
+          <span class="status-badge">{{ craft.status }}</span>
+        </div>
+
+        @if (reels.length > 0) {
+          <div class="reels-showcase">
+            <h3>🎥 Making Process Reel</h3>
+            @for (reel of reels; track reel.id) {
+              <div class="reel-player-box">
+                <video [src]="reel.videoUrl" controls (play)="onVideoPlay(reel)"></video>
+                <div class="reel-meta">
+                  <span>{{ reel.title }}</span>
+                  <div class="reel-actions">
+                    <span>👁️ {{ reel.views || 0 }}</span>
+                    <button class="btn-like" (click)="likeReel(reel)">❤️ {{ reel.likes || 0 }}</button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- RIGHT: Details & Artisan Info -->
+      <div class="craft-info-section">
+        <span class="category-tag">{{ craft.category?.name || 'Handmade Craft' }}</span>
+        <h1 class="craft-title">{{ craft.title }}</h1>
+
+        <div class="artisan-badge">
+          <span class="avatar">👨‍🎨</span>
+          <div>
+            <strong>{{ craft.seller?.name || 'CraftBid Artisan' }}</strong>
+            <small>Verified Maker</small>
+          </div>
+        </div>
+
+        <div class="price-box">
+          <span class="price-label">Base Price</span>
+          <span class="price-value">{{ formatPrice(craft.basePrice) }}</span>
+        </div>
+
+        <div class="description-box">
+          <h3>About this craft</h3>
+          <p>{{ craft.description }}</p>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn-primary-action">🔨 Place Bid in Auction</button>
+          <button class="btn-secondary-action">❤️ Save to Wishlist</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<app-footer></app-footer>

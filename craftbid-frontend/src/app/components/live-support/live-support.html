@@ -1,0 +1,174 @@
+<!-- ================= FLOATING LAUNCHER BUTTON ================= -->
+<div class="support-floating-launcher" (click)="toggleWidget()">
+  <span class="launcher-pulse"></span>
+  <span class="launcher-icon">🎧</span>
+  <span class="launcher-text">Need Help? 24/7 Support</span>
+</div>
+
+<!-- ================= SLIDE-OVER SUPPORT DRAWER / WIDGET ================= -->
+@if (isOpen) {
+  <div class="support-drawer-backdrop" (click)="closeWidget()">
+    <div class="support-drawer-card" (click)="$event.stopPropagation()">
+      <!-- HEADER -->
+      <div class="support-drawer-header">
+        <div class="header-left">
+          <div class="support-avatar-badge">🎧</div>
+          <div>
+            <h3>CraftBid Customer Care</h3>
+            <span class="online-status">🟢 Online • Instant Response</span>
+          </div>
+        </div>
+        <button class="btn-close-drawer" (click)="closeWidget()">✕</button>
+      </div>
+
+      <!-- TABS -->
+      <div class="support-tabs-bar">
+        <button [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'">
+          💬 Live Assistant
+        </button>
+        <button [class.active]="activeTab === 'ticket'" (click)="activeTab = 'ticket'">
+          🎫 Submit Ticket
+        </button>
+        <button [class.active]="activeTab === 'faqs'" (click)="activeTab = 'faqs'">
+          ❓ Top FAQs
+        </button>
+      </div>
+
+      <!-- TAB 1: LIVE CHAT ASSISTANT -->
+      @if (activeTab === 'chat') {
+        <div class="chat-pane">
+          <!-- Quick Suggestion Pills -->
+          <div class="quick-pills-row">
+            <button class="quick-pill" (click)="sendQuickQuery('How do auto-refunds work?')">
+              💳 Auto-Refunds
+            </button>
+            <button class="quick-pill" (click)="sendQuickQuery('Explain 1-minute live turn bidding')">
+              ⏱️ Turn Bidding
+            </button>
+            <button class="quick-pill" (click)="sendQuickQuery('When will artisan ship my order?')">
+              📦 Shipping Status
+            </button>
+            <button class="quick-pill" (click)="sendQuickQuery('What are artisan payout percentages?')">
+              🎨 90% Payouts
+            </button>
+          </div>
+
+          <!-- Message History -->
+          <div class="messages-viewport">
+            @for (msg of messages; track $index) {
+              <div class="chat-bubble" [class.user]="msg.sender === 'user'" [class.bot]="msg.sender === 'bot'">
+                <p>{{ msg.text }}</p>
+                <small class="msg-time">{{ msg.time }}</small>
+              </div>
+            }
+
+            @if (isTyping) {
+              <div class="typing-indicator-bubble">
+                <span></span><span></span><span></span>
+              </div>
+            }
+          </div>
+
+          <!-- Chat Input -->
+          <div class="chat-input-bar">
+            <input
+              type="text"
+              [(ngModel)]="userQuery"
+              placeholder="Ask anything about auctions, deposits, orders..."
+              (keyup.enter)="sendChatMessage()"
+            />
+            <button class="btn-send-chat" (click)="sendChatMessage()">➤</button>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 2: SUBMIT TICKET -->
+      @if (activeTab === 'ticket') {
+        <div class="ticket-pane">
+          @if (!createdTicket) {
+            <div class="ticket-form">
+              <div class="form-row-2">
+                <div>
+                  <label>Your Name</label>
+                  <input type="text" [(ngModel)]="ticketForm.name" placeholder="Full Name" />
+                </div>
+                <div>
+                  <label>Email Address</label>
+                  <input type="email" [(ngModel)]="ticketForm.email" placeholder="email@example.com" />
+                </div>
+              </div>
+
+              <div>
+                <label>Issue Category</label>
+                <select [(ngModel)]="ticketForm.category">
+                  <option value="AUCTION_BIDDING">🔨 Live Turn Auctions & Bidding</option>
+                  <option value="PAYMENT_REFUND">💳 Deposits, Payments & Auto-Refunds</option>
+                  <option value="SHIPPING_ORDER">📦 Delivery Address & Craft Shipping</option>
+                  <option value="ARTISAN_QUERY">🎨 Artisan Studio & 90% Payouts</option>
+                  <option value="OTHER">⚡ Other Questions</option>
+                </select>
+              </div>
+
+              <div>
+                <label>Subject</label>
+                <input type="text" [(ngModel)]="ticketForm.subject" placeholder="Brief subject..." />
+              </div>
+
+              <div>
+                <label>Message / Description</label>
+                <textarea rows="3" [(ngModel)]="ticketForm.message" placeholder="Please describe how we can assist you..."></textarea>
+              </div>
+
+              <button class="btn-submit-ticket" (click)="submitTicket()" [disabled]="submittingTicket">
+                {{ submittingTicket ? 'Submitting Ticket...' : '🚀 Submit Support Ticket' }}
+              </button>
+            </div>
+          } @else {
+            <div class="ticket-success-box">
+              <div class="success-glyph">✅</div>
+              <h4>Support Ticket Submitted!</h4>
+              <p>Our dedicated care team has received your inquiry.</p>
+              <div class="ticket-ref-chip">
+                <span>Reference:</span>
+                <strong>{{ createdTicket.ticketRef }}</strong>
+              </div>
+              <p class="response-eta">Expected response time: <strong>&lt; 30 minutes</strong></p>
+              <button class="btn-new-ticket" (click)="resetTicketForm()">+ Submit Another Ticket</button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- TAB 3: TOP FAQS -->
+      @if (activeTab === 'faqs') {
+        <div class="faqs-pane">
+          <div class="faq-item">
+            <strong>💳 How do 100% automated refunds work?</strong>
+            <p>If another collector wins the 1-minute turn auction, 100% of your deposit and differential bids are immediately credited back to your bank account via UPI without any fee deduction.</p>
+          </div>
+
+          <div class="faq-item">
+            <strong>⏱️ What is the 1-minute turn bidding rule?</strong>
+            <p>Each live auction room holds 10 participants max. Every new bid resets a 60-second countdown. If no one outbids you in 60 seconds, you are declared the winner!</p>
+          </div>
+
+          <div class="faq-item">
+            <strong>📦 When do artisans dispatch items?</strong>
+            <p>As soon as you win and submit your shipping address, the master artisan receives the dispatch order and prepares secure courier shipping within 2 business days.</p>
+          </div>
+
+          <div class="faq-item">
+            <strong>📞 Can I contact support via phone or WhatsApp?</strong>
+            <p>Yes! Our 24/7 hotline is <strong>+91 90404 08690</strong> and email is <strong>support@craftbid.in</strong>.</p>
+          </div>
+        </div>
+      }
+
+      <!-- FOOTER HELPLINE -->
+      <div class="support-drawer-footer">
+        <span>📞 Helpline: <strong>+91 90404 08690</strong></span>
+        <span>✉️ <strong>support@craftbid.in</strong></span>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,192 @@
+<app-topbar></app-topbar>
+<app-navbar></app-navbar>
+
+<div class="profile-page-container">
+  @if (currentUser) {
+    <!-- 1. USER PROFILE CARD -->
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="avatar-circle">👤</div>
+        <div>
+          <h1>{{ currentUser.name }}</h1>
+          <p class="role-badge">{{ currentUser.role }}</p>
+        </div>
+      </div>
+
+      <div class="profile-details-grid">
+        <div class="detail-item">
+          <span class="label">User ID</span>
+          <strong>#{{ currentUser.userId }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span class="label">Contact Email / Phone</span>
+          <strong>{{ currentUser.email }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span class="label">Artisan Seller Status</span>
+          <strong>{{ currentUser.sellerEnabled ? '✅ Enabled (Artisan Maker)' : '❌ Not Enabled' }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span class="label">Account Status</span>
+          <strong class="text-success">Active & Verified</strong>
+        </div>
+      </div>
+
+      <div class="profile-actions">
+        @if (currentUser.sellerEnabled) {
+          <a routerLink="/artisan-dashboard" class="btn-primary">🎨 Open Artisan Studio</a>
+        } @else {
+          <a routerLink="/artisan" class="btn-primary">🎨 Become an Artisan</a>
+        }
+
+        <a routerLink="/my-bids" class="btn-secondary">🔨 View My Bids</a>
+
+        @if (currentUser.role === 'ADMIN') {
+          <a routerLink="/admin-dashboard" class="btn-admin">⚡ Admin Dashboard</a>
+        }
+
+        <button class="btn-logout" (click)="logout()">🚪 Logout</button>
+      </div>
+    </div>
+
+    <!-- PROFILE TABS SELECTOR -->
+    <div class="profile-tabs-row">
+      <button
+        type="button"
+        class="profile-tab-btn"
+        [class.active]="activeTab === 'wallet'"
+        (click)="setTab('wallet')"
+      >
+        💳 Payments & Auto-Refunds
+      </button>
+      <button
+        type="button"
+        class="profile-tab-btn"
+        [class.active]="activeTab === 'following'"
+        (click)="setTab('following')"
+      >
+        👥 Followed Artisans ({{ followedArtisans.length }})
+      </button>
+    </div>
+
+    <!-- 2. PAYMENT & REFUND LEDGER TAB -->
+    @if (activeTab === 'wallet') {
+      <div class="ledger-card">
+        <div class="ledger-header">
+          <div>
+            <h2>💳 Payments & Auto-Refunds Ledger</h2>
+            <p>Complete record of deposits, differential turn bids, auto-refunds, and purchases.</p>
+          </div>
+          <div class="ledger-metrics">
+            <div class="metric-pill spent">
+              <span>Total Paid / Deposited:</span>
+              <strong>{{ formatPrice(totalSpent) }}</strong>
+            </div>
+            <div class="metric-pill refunded">
+              <span>Total Auto-Refunded:</span>
+              <strong>{{ formatPrice(totalRefunded) }}</strong>
+            </div>
+          </div>
+        </div>
+
+        @if (loadingTransactions) {
+          <p class="loading-text">⏳ Loading payment transactions...</p>
+        } @else if (transactions.length > 0) {
+          <div class="table-wrap">
+            <table class="ledger-table">
+              <thead>
+                <tr>
+                  <th>Transaction Ref</th>
+                  <th>Type</th>
+                  <th>Payment Method</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Date & Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (t of transactions; track t.id) {
+                  <tr>
+                    <td>
+                      <span class="ref-code">{{ t.transactionRef }}</span>
+                      @if (t.notes) {
+                        <small class="notes-sub">{{ t.notes }}</small>
+                      }
+                    </td>
+                    <td>
+                      <span class="type-badge" [class.refund]="t.type === 'AUTO_REFUND'">
+                        {{ t.type }}
+                      </span>
+                    </td>
+                    <td><strong>{{ t.paymentMethod }}</strong></td>
+                    <td class="amount-cell" [class.refund]="t.type === 'AUTO_REFUND'">
+                      {{ t.type === 'AUTO_REFUND' ? '+' : '-' }}{{ formatPrice(t.amount) }}
+                    </td>
+                    <td>
+                      <span class="status-badge" [class.success]="t.status === 'SUCCESS'" [class.refunded]="t.status === 'REFUNDED'">
+                        {{ t.status }}
+                      </span>
+                    </td>
+                    <td><small>{{ formatDate(t.createdAt) }}</small></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="empty-ledger">
+            <p>No payment transactions recorded yet. Deposits and bids will appear here in real-time.</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- 3. FOLLOWED ARTISANS TAB -->
+    @if (activeTab === 'following') {
+      <div class="ledger-card">
+        <div class="ledger-header">
+          <div>
+            <h2>👥 Artisans You Follow</h2>
+            <p>Stay connected with master artisans to discover their latest craft uploads and live auction drops.</p>
+          </div>
+          <a routerLink="/reels" class="btn-secondary" style="font-size: 12px; padding: 6px 14px;">
+            🎥 Watch Following Reels →
+          </a>
+        </div>
+
+        @if (loadingFollows) {
+          <p class="loading-text">⏳ Loading followed artisans...</p>
+        } @else if (followedArtisans.length > 0) {
+          <div class="artisan-cards-grid">
+            @for (artisan of followedArtisans; track artisan.id) {
+              <div class="followed-artisan-item">
+                <div class="artisan-item-avatar">👨‍🎨</div>
+                <div class="artisan-item-info">
+                  <h3>{{ artisan.shopName || artisan.user.name }}</h3>
+                  <p class="artisan-meta">📍 {{ artisan.city }} • Craft: {{ artisan.craftType }}</p>
+                  <span class="artisan-maker-tag">By {{ artisan.user.name }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="btn-unfollow"
+                  (click)="unfollowArtisan(artisan.user.id, $event)"
+                >
+                  ✓ Following
+                </button>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-ledger">
+            <p>You haven't followed any artisans yet. Discover master makers in <a routerLink="/reels" style="color: #ea580c; font-weight: 700;">Craft Reels</a> or the marketplace!</p>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+
+<app-footer></app-footer>

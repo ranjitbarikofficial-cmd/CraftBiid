@@ -1,0 +1,206 @@
+<div class="upload-page">
+  <!-- =========================================
+       HEADER
+  ========================================== -->
+
+  <div class="upload-header">
+    <div>
+      <a routerLink="/artisan-dashboard" class="back-btn"> ← Dashboard </a>
+
+      <h1>Upload Your Craft</h1>
+
+      <p>Share your handmade creation with the CraftBid community.</p>
+    </div>
+  </div>
+
+  <!-- =========================================
+       FORM
+  ========================================== -->
+
+  <div class="upload-card">
+    <!-- CRAFT TITLE -->
+
+    <div class="form-group">
+      <label> Craft Title <span class="required">*</span></label>
+
+      <input type="text" [(ngModel)]="title" placeholder="Example: Hand-carved Wooden Jewelry Box" required />
+    </div>
+
+    <!-- CATEGORY -->
+
+    <div class="form-group">
+      <label> Category <span class="required">*</span></label>
+
+      <select [(ngModel)]="category" required>
+        <option value="" disabled>Select category</option>
+        @for (cat of categories; track cat.id) {
+          <option [value]="cat.name">{{ cat.name }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- DESCRIPTION -->
+
+    <div class="form-group">
+      <label> Description <span class="required">*</span></label>
+
+      <textarea
+        [(ngModel)]="description"
+        rows="5"
+        placeholder="Tell customers about your handmade craft, materials used, technique, and care instructions..."
+        required
+      ></textarea>
+    </div>
+
+    <!-- PRICE -->
+
+    <div class="form-group">
+      <label> Base Price (₹) <span class="required">*</span></label>
+
+      <input type="number" [(ngModel)]="basePrice" placeholder="Enter base price" min="1" required />
+    </div>
+
+    <!-- =========================================
+         CRAFT IMAGE
+    ========================================== -->
+
+    <div class="form-group">
+      <label>
+        Craft Image
+        <span class="required">*</span>
+      </label>
+
+      @if (!imageFile) {
+        <label class="file-upload-box">
+          <input type="file" accept="image/*" (change)="onImageSelected($event)" hidden />
+
+          <div class="upload-icon">🖼️</div>
+
+          <h3>Upload your craft image</h3>
+
+          <p>Choose a clear photo of your finished craft.</p>
+
+          <span class="browse-btn"> Choose Image </span>
+        </label>
+      }
+
+      @if (imageFile) {
+        <div class="image-preview">
+          <img [src]="imagePreviewUrl" alt="Craft preview" />
+
+          <div class="file-info">
+            <strong>
+              {{ imageFile.name }}
+            </strong>
+
+            <span> {{ (imageFile.size / 1024 / 1024).toFixed(2) }} MB </span>
+
+            <button type="button" (click)="removeImage()">Remove Image</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- =========================================
+         CRAFT MAKING VIDEO
+    ========================================== -->
+
+    <div class="form-group">
+      <label>
+        Craft Process Reel Video 🎥
+        <span class="required">*</span>
+      </label>
+
+      <p class="field-description">
+        Show customers how you crafted this item. This video will appear as a Craft Reel on the home page and in the reels feed.
+      </p>
+
+      @if (!videoFile) {
+        <label class="video-upload-box">
+          <input
+            type="file"
+            accept="video/mp4,video/webm,video/quicktime"
+            (change)="onVideoSelected($event)"
+            hidden
+          />
+
+          <div class="video-icon">🎥</div>
+
+          <h3>Upload your making process video</h3>
+
+          <p>Show the creativity, technique, and craftsmanship behind your product.</p>
+
+          <span class="browse-video-btn"> Choose Video </span>
+
+          <small> MP4, WebM or MOV • Maximum 100 MB </small>
+        </label>
+      }
+
+      @if (videoFile) {
+        <div class="video-preview">
+          <video [src]="videoPreviewUrl" controls></video>
+
+          <div class="video-info">
+            <div>
+              <strong>
+                {{ videoFile.name }}
+              </strong>
+
+              <span> {{ (videoFile.size / 1024 / 1024).toFixed(2) }} MB </span>
+            </div>
+
+            <button type="button" class="remove-video" (click)="removeVideo()">Remove Video</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- =========================================
+         LIVE FOR AUCTION & MARKETPLACE TOGGLE
+    ========================================== -->
+    <div class="form-group toggle-box-group">
+      <div class="toggle-card-content">
+        <div class="toggle-text-wrap">
+          <label class="toggle-title">
+            🟢 Make Product Live for Auction / Marketplace
+          </label>
+          <p class="field-description">
+            Turn ON to make this craft available for bidding and marketplace. You can toggle this OFF whenever the product is delivered to a winner, and turn it back ON once you make it again!
+          </p>
+        </div>
+        <label class="custom-switch-label">
+          <input type="checkbox" [(ngModel)]="isLiveForAuction" class="toggle-checkbox" />
+          <span class="status-indicator-tag" [class.on]="isLiveForAuction">
+            {{ isLiveForAuction ? 'LIVE' : 'OFFLINE' }}
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <!-- =========================================
+         MESSAGE
+    ========================================== -->
+
+    @if (errorMessage) {
+      <div class="error-message">⚠️ {{ errorMessage }}</div>
+    }
+
+    @if (successMessage) {
+      <div class="success-message">
+        {{ successMessage }}
+      </div>
+    }
+
+    <!-- =========================================
+         SUBMIT
+    ========================================== -->
+
+    <button type="button" class="upload-btn" (click)="uploadCraft()" [disabled]="loading">
+      @if (loading) {
+        <span>⏳ Uploading Craft & Reel...</span>
+      } @else {
+        <span>🎨 Upload Craft & Reel</span>
+      }
+    </button>
+  </div>
+</div>

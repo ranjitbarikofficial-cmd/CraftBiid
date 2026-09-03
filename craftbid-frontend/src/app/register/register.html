@@ -1,0 +1,171 @@
+<div class="auth-page-container">
+  <div class="auth-shell">
+    
+    <!-- LEFT SIDEBAR: STARTUP BRANDING -->
+    <aside class="auth-visual-panel">
+      <div class="visual-panel-content">
+        <a routerLink="/home" class="brand-logo-pill">
+          <span class="brand-logo-icon">🏺</span>
+          <span class="brand-logo-text">CraftBid</span>
+        </a>
+
+        <div class="visual-hero-copy">
+          <span class="badge-tag">🎨 For Connoisseurs & Artisans</span>
+          <h2>Join the Next-Gen Handmade Craft Community.</h2>
+          <p>Create your account in seconds to bid in live transparent auctions, discover certified master artisans, or launch your own creator studio.</p>
+        </div>
+
+        <div class="feature-highlights-grid">
+          <div class="feature-pill">
+            <span class="feat-icon">🎯</span>
+            <div>
+              <strong>Instant Account Setup</strong>
+              <small>Verify with email OTP or instant test code</small>
+            </div>
+          </div>
+          <div class="feature-pill">
+            <span class="feat-icon">💎</span>
+            <div>
+              <strong>Buyer & Seller In One</strong>
+              <small>Seamlessly upgrade to Artisan Studio anytime</small>
+            </div>
+          </div>
+          <div class="feature-pill">
+            <span class="feat-icon">🔒</span>
+            <div>
+              <strong>Secure Financial Escrow</strong>
+              <small>Safe bidding deposits with zero risk</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-panel-footer">
+          <span class="verified-chip">✨ Trusted by 10,000+ Verified Users</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT PANEL: MODERN REGISTER FORM -->
+    <main class="auth-form-panel">
+      <div class="auth-form-card">
+        
+        <div class="form-header">
+          <span class="form-subtitle">Get Started Free</span>
+          <h1 class="form-title">Create your account</h1>
+          <p class="form-instruction">Enter your details to join CraftBid marketplace</p>
+        </div>
+
+        <!-- NOTIFICATIONS & ALERTS -->
+        @if (errorMessage) {
+          <div class="auth-alert error">
+            <span class="alert-icon">⚠️</span>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span>{{ errorMessage }}</span>
+              @if (isAlreadyRegistered) {
+                <a routerLink="/login" class="link-highlight" style="font-weight: 700; text-decoration: underline;">
+                  👉 Click here to Log In directly →
+                </a>
+              }
+            </div>
+          </div>
+        }
+
+        <form (ngSubmit)="register()" class="auth-form" autocomplete="on">
+          <!-- Full Name -->
+          <div class="auth-input-group">
+            <label for="reg-name">Full Name *</label>
+            <div class="input-wrapper">
+              <span class="input-icon">👤</span>
+              <input
+                id="reg-name"
+                type="text"
+                name="name"
+                [(ngModel)]="name"
+                placeholder="e.g. Ranjit Barik"
+                required
+                autocomplete="name"
+              />
+            </div>
+          </div>
+
+          <!-- Email Address -->
+          <div class="auth-input-group">
+            <label for="reg-email">Email Address *</label>
+            <div class="input-wrapper">
+              <span class="input-icon">✉️</span>
+              <input
+                id="reg-email"
+                type="email"
+                name="email"
+                [(ngModel)]="email"
+                placeholder="name@example.com"
+                required
+                autocomplete="email"
+              />
+            </div>
+          </div>
+
+          <!-- Mobile Number -->
+          <div class="auth-input-group">
+            <label for="reg-phone">Mobile Number (Optional)</label>
+            <div class="input-wrapper">
+              <span class="input-icon">📱</span>
+              <input
+                id="reg-phone"
+                type="tel"
+                name="phone"
+                [(ngModel)]="phone"
+                placeholder="10-digit mobile number"
+                autocomplete="tel"
+              />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="auth-input-group">
+            <label for="reg-password">Password (Minimum 6 characters) *</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔒</span>
+              <input
+                id="reg-password"
+                [type]="showPassword ? 'text' : 'password'"
+                name="password"
+                [(ngModel)]="password"
+                placeholder="Create a strong password"
+                required
+                minlength="6"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="btn-toggle-pwd"
+                (click)="togglePasswordVisibility()"
+                title="Show / Hide Password"
+              >
+                {{ showPassword ? '🙈' : '👁️' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn-primary-auth" [disabled]="loading">
+            @if (loading) {
+              <span class="btn-spinner"></span>
+              <span>Creating your account...</span>
+            } @else {
+              <span>Continue to Verification →</span>
+            }
+          </button>
+        </form>
+
+        <!-- Footer Link -->
+        <div class="auth-form-footer">
+          <p>Already have an account? <a routerLink="/login" class="link-highlight">Log in</a></p>
+          <a routerLink="/home" class="link-back-home">← Back to Marketplace Home</a>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+</div>

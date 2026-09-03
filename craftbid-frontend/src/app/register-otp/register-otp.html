@@ -1,0 +1,80 @@
+<div class="auth-page-container">
+  <div class="auth-center-card">
+    
+    <div class="brand-header">
+      <a routerLink="/home" class="brand-logo-pill">
+        <span class="brand-logo-icon">🏺</span>
+        <span class="brand-logo-text">CraftBid</span>
+      </a>
+    </div>
+
+    <div class="otp-card-body">
+      <div class="icon-bubble">
+        <span>✉️</span>
+      </div>
+
+      <h1 class="card-title">Verify Your Account</h1>
+      <p class="card-subtitle">
+        We've sent a 6-digit verification code to<br />
+        <strong class="highlight-identifier">{{ identifier || 'your email / phone' }}</strong>
+      </p>
+
+      <!-- ALERTS -->
+      @if (errorMessage) {
+        <div class="auth-alert error">
+          <span class="alert-icon">⚠️</span>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+
+      @if (successMessage) {
+        <div class="auth-alert success">
+          <span class="alert-icon">✅</span>
+          <span>{{ successMessage }}</span>
+        </div>
+      }
+
+      <form (ngSubmit)="verifyOtp()" class="otp-form">
+        <div class="auth-input-group">
+          <label for="reg-otp-code">6-Digit Verification Code</label>
+          <div class="otp-input-wrapper">
+            <input
+              id="reg-otp-code"
+              type="text"
+              name="otp"
+              [(ngModel)]="otp"
+              maxlength="6"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              placeholder="• • • • • •"
+              required
+              class="otp-digit-input"
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary-auth" [disabled]="loading">
+          @if (loading) {
+            <span class="btn-spinner"></span>
+            <span>Verifying code...</span>
+          } @else {
+            <span>Verify & Complete Registration →</span>
+          }
+        </button>
+      </form>
+
+      <div class="resend-wrapper">
+        <span>Didn't receive the email?</span>
+        <button type="button" class="btn-resend" (click)="resendOtp()" [disabled]="resendLoading">
+          {{ resendLoading ? 'Resending...' : 'Resend Code' }}
+        </button>
+      </div>
+
+      <div class="card-footer">
+        <a routerLink="/login" class="link-back">← Back to Login</a>
+      </div>
+
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,67 @@
+<div class="auth-page-container">
+  <div class="auth-center-card">
+    
+    <div class="brand-header">
+      <a routerLink="/home" class="brand-logo-pill">
+        <span class="brand-logo-icon">🏺</span>
+        <span class="brand-logo-text">CraftBid</span>
+      </a>
+    </div>
+
+    <div class="otp-card-body">
+      <div class="icon-bubble">
+        <span>🔐</span>
+      </div>
+
+      <h1 class="card-title">Enter Verification Code</h1>
+      <p class="card-subtitle">
+        We've sent a 6-digit password reset code to<br />
+        <strong class="highlight-identifier">{{ email || 'your email address' }}</strong>
+      </p>
+
+      <!-- TEST MODE CALLOUT BANNER -->
+      <div class="test-mode-banner">
+        <span class="badge-pill">⚡ FAST PASS</span>
+        <p>Testing? Enter universal OTP <strong>123456</strong> or the code sent to your inbox.</p>
+      </div>
+
+      <!-- ALERTS -->
+      @if (errorMessage) {
+        <div class="auth-alert error">
+          <span class="alert-icon">⚠️</span>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+
+      <form (ngSubmit)="verifyOtp()" class="otp-form">
+        <div class="auth-input-group">
+          <label for="reset-otp-input">6-Digit Reset Code</label>
+          <div class="otp-input-wrapper">
+            <input
+              id="reset-otp-input"
+              type="text"
+              name="otp"
+              [(ngModel)]="otp"
+              maxlength="6"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              placeholder="• • • • • •"
+              required
+              class="otp-digit-input"
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary-auth">
+          <span>Verify & Continue →</span>
+        </button>
+      </form>
+
+      <div class="card-footer">
+        <p>Remembered your password? <a routerLink="/login" class="link-highlight">Back to Login</a></p>
+      </div>
+
+    </div>
+
+  </div>
+</div>

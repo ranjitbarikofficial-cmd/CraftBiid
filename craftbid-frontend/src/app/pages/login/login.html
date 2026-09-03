@@ -1,0 +1,270 @@
+<div class="auth-page-container">
+  <div class="auth-shell">
+    
+    <!-- LEFT SIDEBAR: STARTUP BRANDING & CRAFT HIGHLIGHTS -->
+    <aside class="auth-visual-panel">
+      <div class="visual-panel-content">
+        <a routerLink="/home" class="brand-logo-pill">
+          <span class="brand-logo-icon">🏺</span>
+          <span class="brand-logo-text">CraftBid</span>
+        </a>
+
+        <div class="visual-hero-copy">
+          <span class="badge-tag">🇮🇳 India's 1st Artisan Auction Platform</span>
+          <h2>Where True Heritage Meets Live Auctions.</h2>
+          <p>Join thousands of art connoisseurs bidding directly for rare handcrafted treasures crafted by certified master artisans.</p>
+        </div>
+
+        <div class="feature-highlights-grid">
+          <div class="feature-pill">
+            <span class="feat-icon">⚡</span>
+            <div>
+              <strong>1-Min Live Turns</strong>
+              <small>Dynamic real-time differential bidding</small>
+            </div>
+          </div>
+          <div class="feature-pill">
+            <span class="feat-icon">🛡️</span>
+            <div>
+              <strong>100% Auto-Refunds</strong>
+              <small>Instant deposit reversals for non-winners</small>
+            </div>
+          </div>
+          <div class="feature-pill">
+            <span class="feat-icon">🔐</span>
+            <div>
+              <strong>Multi-Factor Security</strong>
+              <small>Role-based access & admin email OTP verification</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-panel-footer">
+          <span class="verified-chip">✨ 100% Authenticity Guaranteed</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT PANEL: MODERN LOGIN FORM -->
+    <main class="auth-form-panel">
+      <div class="auth-form-card">
+        
+        <!-- TOP MODE SWITCHER TABS -->
+        <div class="auth-mode-tabs">
+          <button
+            type="button"
+            class="tab-btn"
+            [class.active]="loginMode === 'standard'"
+            (click)="setMode('standard')"
+          >
+            👤 User Login
+          </button>
+          <button
+            type="button"
+            class="tab-btn admin-mode-tab"
+            [class.active]="loginMode === 'admin_otp'"
+            (click)="setMode('admin_otp')"
+          >
+            🛡️ Admin OTP Login
+          </button>
+        </div>
+
+        <!-- =========================================================
+             MODE 1: STANDARD CUSTOMER / ARTISAN LOGIN
+             ========================================================= -->
+        @if (loginMode === 'standard') {
+          <div class="form-header">
+            <span class="form-subtitle">Welcome back</span>
+            <h1 class="form-title">Log in to your account</h1>
+            <p class="form-instruction">Enter your registered email or mobile number and password</p>
+          </div>
+
+          <!-- ALERTS -->
+          @if (infoMessage) {
+            <div class="auth-alert info">
+              <span class="alert-icon">ℹ️</span>
+              <span>{{ infoMessage }}</span>
+            </div>
+          }
+
+          @if (errorMessage) {
+            <div class="auth-alert error">
+              <span class="alert-icon">⚠️</span>
+              <span>{{ errorMessage }}</span>
+            </div>
+          }
+
+          @if (successMessage) {
+            <div class="auth-alert success">
+              <span class="alert-icon">✅</span>
+              <span>{{ successMessage }}</span>
+            </div>
+          }
+
+          <form (ngSubmit)="login()" class="auth-form" autocomplete="on">
+            <!-- Identifier -->
+            <div class="auth-input-group">
+              <label for="login-identifier">Email address or Mobile number</label>
+              <div class="input-wrapper">
+                <span class="input-icon">👤</span>
+                <input
+                  id="login-identifier"
+                  type="text"
+                  name="identifier"
+                  [(ngModel)]="identifier"
+                  placeholder="name@example.com or 10-digit mobile"
+                  required
+                  autocomplete="username"
+                />
+              </div>
+            </div>
+
+            <!-- Password -->
+            <div class="auth-input-group">
+              <div class="label-row">
+                <label for="login-password">Password</label>
+                <a routerLink="/forgot-password" class="link-forgot">Forgot password?</a>
+              </div>
+              <div class="input-wrapper">
+                <span class="input-icon">🔒</span>
+                <input
+                  id="login-password"
+                  [type]="showPassword ? 'text' : 'password'"
+                  name="password"
+                  [(ngModel)]="password"
+                  placeholder="Enter your password"
+                  required
+                  autocomplete="current-password"
+                />
+                <button
+                  type="button"
+                  class="btn-toggle-pwd"
+                  (click)="togglePasswordVisibility()"
+                  title="Show / Hide Password"
+                >
+                  {{ showPassword ? '🙈' : '👁️' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-primary-auth" [disabled]="loading">
+              @if (loading) {
+                <span class="btn-spinner"></span>
+                <span>Authenticating...</span>
+              } @else {
+                <span>Sign In to CraftBid →</span>
+              }
+            </button>
+          </form>
+
+          <!-- Footer Link -->
+          <div class="auth-form-footer">
+            <p>Don't have an account yet? <a routerLink="/register" class="link-highlight">Create an account</a></p>
+            <a routerLink="/home" class="link-back-home">← Back to Marketplace Home</a>
+          </div>
+        }
+
+        <!-- =========================================================
+             MODE 2: ADMIN OTP LOGIN
+             ========================================================= -->
+        @if (loginMode === 'admin_otp') {
+          <div class="form-header">
+            <span class="form-subtitle" style="color: #ef4444;">🛡️ Master Security Portal</span>
+            <h1 class="form-title">Admin OTP Authentication</h1>
+            <p class="form-instruction">Enter your administrator email to receive a single-use security code</p>
+          </div>
+
+          <!-- ALERTS -->
+          @if (errorMessage) {
+            <div class="auth-alert error">
+              <span class="alert-icon">⚠️</span>
+              <span>{{ errorMessage }}</span>
+            </div>
+          }
+
+          @if (successMessage) {
+            <div class="auth-alert success">
+              <span class="alert-icon">✅</span>
+              <span>{{ successMessage }}</span>
+            </div>
+          }
+
+          <!-- ADMIN FORM WITH CLEAN EMAIL INPUT + OTP -->
+          <form (ngSubmit)="verifyAdminOtp()" class="auth-form">
+            <!-- Admin Email -->
+            <div class="auth-input-group">
+              <label for="admin-email-input">Admin Email Address</label>
+              <div class="input-wrapper">
+                <span class="input-icon">✉️</span>
+                <input
+                  id="admin-email-input"
+                  type="email"
+                  name="adminEmail"
+                  [(ngModel)]="adminEmail"
+                  placeholder="admin@craftbid.in"
+                  required
+                  autocomplete="username"
+                />
+              </div>
+            </div>
+
+            <!-- Send OTP Action -->
+            <div class="admin-send-row">
+              <span class="send-prompt-text">Click to receive OTP code:</span>
+              <button
+                type="button"
+                class="btn-send-otp-chip"
+                (click)="requestAdminOtp()"
+                [disabled]="adminOtpLoading"
+              >
+                @if (adminOtpLoading) {
+                  <span class="btn-spinner" style="width: 14px; height: 14px;"></span>
+                  <span>Sending...</span>
+                } @else {
+                  <span>📧 {{ adminOtpSent ? 'Resend OTP Code' : 'Send OTP Code' }}</span>
+                }
+              </button>
+            </div>
+
+            <!-- OTP Input -->
+            <div class="auth-input-group">
+              <label for="admin-otp-input">6-Digit Security OTP Code</label>
+              <div class="otp-input-wrapper">
+                <input
+                  id="admin-otp-input"
+                  type="text"
+                  name="adminOtp"
+                  [(ngModel)]="adminOtp"
+                  maxlength="6"
+                  inputmode="numeric"
+                  placeholder="• • • • • •"
+                  required
+                  class="otp-digit-input"
+                  autocomplete="one-time-code"
+                />
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary-auth admin-btn" [disabled]="loading">
+              @if (loading) {
+                <span class="btn-spinner"></span>
+                <span>Verifying Security Access...</span>
+              } @else {
+                <span>🛡️ Verify OTP & Access Admin Console →</span>
+              }
+            </button>
+          </form>
+
+          <!-- Back to User Login -->
+          <div class="auth-form-footer">
+            <p>Switch back to <a href="javascript:void(0)" (click)="setMode('standard')" class="link-highlight">User Login</a></p>
+            <a routerLink="/home" class="link-back-home">← Back to Marketplace Home</a>
+          </div>
+        }
+
+      </div>
+    </main>
+
+  </div>
+</div>

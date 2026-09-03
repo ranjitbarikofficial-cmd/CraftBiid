@@ -1,0 +1,60 @@
+<nav class="sub-navbar">
+  <div class="sub-navbar-inner">
+    <a
+      routerLink="/"
+      class="nav-tab"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <span class="tab-icon">🏠</span>
+      <span>Home</span>
+    </a>
+
+    <a routerLink="/categories" class="nav-tab" routerLinkActive="active">
+      <span class="tab-icon">🏺</span>
+      <span>Categories</span>
+    </a>
+
+    <a routerLink="/auctions" class="nav-tab" routerLinkActive="active">
+      <span class="tab-icon">🔨</span>
+      <span>Live Auctions</span>
+      <span class="tab-badge">Hot</span>
+    </a>
+
+    <a routerLink="/reels" class="nav-tab" routerLinkActive="active">
+      <span class="tab-icon">🎥</span>
+      <span>Craft Reels</span>
+    </a>
+
+    <a routerLink="/my-bids" class="nav-tab" routerLinkActive="active">
+      <span class="tab-icon">🏷️</span>
+      <span>My Bids</span>
+    </a>
+
+    <a routerLink="/customer-service" class="nav-tab" routerLinkActive="active">
+      <span class="tab-icon">🎧</span>
+      <span>Customer Service</span>
+    </a>
+
+    <a
+      [routerLink]="isSeller ? '/artisan-dashboard' : '/artisan'"
+      class="nav-tab artisan-tab"
+      routerLinkActive="active"
+    >
+      <span class="tab-icon">{{ isSeller ? '🎨' : '✨' }}</span>
+      <span>{{ isSeller ? 'Artisan Studio' : 'Become Artisan' }}</span>
+    </a>
+
+    @if (isAdmin) {
+      <a
+        routerLink="/admin-dashboard"
+        class="nav-tab admin-tab"
+        routerLinkActive="active"
+        style="background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.3); color: #fca5a5; font-weight: 700;"
+      >
+        <span class="tab-icon">🛡️</span>
+        <span>Admin Panel</span>
+      </a>
+    }
+  </div>
+</nav>

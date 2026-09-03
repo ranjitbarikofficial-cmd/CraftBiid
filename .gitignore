@@ -1,0 +1,18 @@
+# OS & IDE files
+.DS_Store
+.idea/
+*.iml
+.vscode/
+
+# Angular Frontend
+craftbid-frontend/node_modules/
+craftbid-frontend/dist/
+craftbid-frontend/.angular/
+craftbid-frontend/coverage/
+
+# Spring Boot Backend
+craftbid-auth-service/target/
+craftbid-auth-service/*.log
+
+# Media uploads (optional or keep sample)
+uploads/

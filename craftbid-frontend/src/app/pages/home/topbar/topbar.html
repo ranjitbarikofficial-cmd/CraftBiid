@@ -1,0 +1,262 @@
+<header class="topbar-container">
+  <div class="topbar-inner">
+    <!-- Brand Logo -->
+    <a routerLink="/" class="brand-logo">
+      <div class="logo-mark">
+        <span class="logo-icon">✨</span>
+      </div>
+      <div class="logo-text">
+        <span class="brand-name">Craft<span class="highlight">Bid</span></span>
+        <span class="brand-tag">HANDMADE LIVE</span>
+      </div>
+    </a>
+
+    <!-- Smart Search Bar -->
+    <div class="search-wrap">
+      <span class="search-glyph">🔍</span>
+      <input
+        type="text"
+        placeholder="Search authentic pottery, wooden art, jewelry, artisans..."
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="onSearch()"
+      />
+      <button class="search-btn" (click)="onSearch()" aria-label="Search">Search</button>
+    </div>
+
+    <!-- Actions & User Console -->
+    <div class="topbar-actions">
+      <!-- Live Auction Indicator -->
+      <a routerLink="/auctions" class="live-pill-badge" title="Live 1-Minute Turn Auctions">
+        <span class="pulse-dot"></span>
+        <span class="live-label">LIVE AUCTIONS</span>
+      </a>
+
+      @if (isLoggedIn && currentUser) {
+        <!-- NOTIFICATIONS DROPDOWN CONTAINER -->
+        <div class="notif-container">
+          <button type="button" class="btn-icon-topbar" (click)="toggleNotifications($event)" title="Notifications">
+            <span class="bell-glyph">🔔</span>
+            @if (unreadCount > 0) {
+              <span class="notif-badge-count">{{ unreadCount }}</span>
+            }
+          </button>
+
+          <!-- NOTIFICATIONS POPOVER DROPDOWN -->
+          @if (isNotifOpen) {
+            <div class="notif-dropdown-popover" (click)="$event.stopPropagation()">
+              <div class="notif-dropdown-header">
+                <div>
+                  <h4>🔔 Notifications</h4>
+                  <small>{{ unreadCount }} unread alerts</small>
+                </div>
+                <div class="notif-header-actions">
+                  <button class="btn-text-action" (click)="markAllRead()">Mark all read</button>
+                  <button class="btn-text-action danger" (click)="clearAllNotifs()">Clear</button>
+                </div>
+              </div>
+
+              <div class="notif-list-body">
+                @if (notifications.length > 0) {
+                  @for (n of notifications; track n.id) {
+                    <div
+                      class="notif-item-row"
+                      [class.unread]="!n.read"
+                      (click)="openNotification(n)"
+                    >
+                      <div class="notif-icon-col">
+                        @if (n.type === 'AUCTION') { <span>🏆</span> }
+                        @else if (n.type === 'REFUND') { <span>💳</span> }
+                        @else if (n.type === 'ORDER') { <span>📦</span> }
+                        @else if (n.type === 'REEL') { <span>🎥</span> }
+                        @else if (n.type === 'BID') { <span>🔨</span> }
+                        @else { <span>⚡</span> }
+                      </div>
+
+                      <div class="notif-content-col">
+                        <div class="notif-row-top">
+                          <strong>{{ n.title }}</strong>
+                          <small>{{ n.time }}</small>
+                        </div>
+                        <p>{{ n.message }}</p>
+                      </div>
+
+                      @if (!n.read) {
+                        <span class="unread-dot"></span>
+                      }
+                    </div>
+                  }
+                } @else {
+                  <div class="empty-notifs">
+                    <p>No new notifications</p>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- SETTINGS BUTTON -->
+        <button type="button" class="btn-icon-topbar" (click)="openSettings()" title="Settings & Studio Preferences">
+          <span class="gear-glyph">⚙️</span>
+        </button>
+
+        @if (currentUser.role === 'ADMIN') {
+          <a routerLink="/admin-dashboard" class="action-btn admin-btn">
+            🛡️ Admin
+          </a>
+        }
+
+        @if (currentUser.sellerEnabled) {
+          <a routerLink="/artisan-dashboard" class="action-btn studio-btn">
+            🎨 Studio
+          </a>
+        } @else {
+          <a routerLink="/artisan" class="action-btn become-btn">
+            Become Artisan
+          </a>
+        }
+
+        <!-- User Profile Pill -->
+        <a routerLink="/profile" class="user-pill" title="My Profile & Ledger">
+          <span class="avatar-emoji">👤</span>
+          <span class="user-name">{{ currentUser.name || currentUser.email }}</span>
+        </a>
+
+        <!-- Logout -->
+        <button type="button" class="btn-logout" (click)="logout()" title="Logout">
+          <span class="logout-icon">🚪</span>
+        </button>
+      } @else {
+        <a routerLink="/login" class="btn-login">Log In</a>
+        <a routerLink="/register" class="btn-signup">Get Started</a>
+      }
+    </div>
+  </div>
+</header>
+
+<!-- ================= PLATFORM SETTINGS MODAL ================= -->
+@if (isSettingsOpen) {
+  <div class="modal-backdrop" (click)="closeSettings()">
+    <div class="settings-modal-dialog" (click)="$event.stopPropagation()">
+      <div class="settings-header">
+        <div class="settings-title-wrap">
+          <span class="settings-icon">⚙️</span>
+          <div>
+            <h2>Platform & Studio Settings</h2>
+            <p>Customize your profile, turn notifications, and payout bank accounts.</p>
+          </div>
+        </div>
+        <button class="btn-close-modal" (click)="closeSettings()">✕</button>
+      </div>
+
+      <!-- Segmented Settings Tabs -->
+      <div class="settings-nav-tabs">
+        <button
+          [class.active]="activeSettingsTab === 'profile'"
+          (click)="activeSettingsTab = 'profile'"
+        >
+          👤 Profile & Workshop
+        </button>
+        <button
+          [class.active]="activeSettingsTab === 'notifications'"
+          (click)="activeSettingsTab = 'notifications'"
+        >
+          🔔 Turn Alerts & SMS
+        </button>
+        <button
+          [class.active]="activeSettingsTab === 'payouts'"
+          (click)="activeSettingsTab = 'payouts'"
+        >
+          💳 Bank & 90% Payouts
+        </button>
+      </div>
+
+      <div class="settings-body-area">
+        <!-- TAB 1: PROFILE & WORKSHOP -->
+        @if (activeSettingsTab === 'profile') {
+          <div class="tab-pane">
+            <div class="form-group-custom">
+              <label>Full Display Name</label>
+              <input type="text" [(ngModel)]="settingsForm.displayName" placeholder="Your Name" />
+            </div>
+
+            <div class="form-row-custom">
+              <div class="form-group-custom">
+                <label>Contact Phone</label>
+                <input type="text" [(ngModel)]="settingsForm.phone" placeholder="Phone Number" />
+              </div>
+              <div class="form-group-custom">
+                <label>Workshop / Studio City</label>
+                <input type="text" [(ngModel)]="settingsForm.workshopCity" placeholder="City, State" />
+              </div>
+            </div>
+
+            <div class="form-group-custom">
+              <label>Artisan Studio Bio / Story</label>
+              <textarea rows="3" [(ngModel)]="settingsForm.bio" placeholder="Describe your craft technique and heritage..."></textarea>
+            </div>
+          </div>
+        }
+
+        <!-- TAB 2: NOTIFICATIONS -->
+        @if (activeSettingsTab === 'notifications') {
+          <div class="tab-pane">
+            <div class="toggle-card-row">
+              <div>
+                <strong>⏱️ 1-Minute Live Turn Alerts</strong>
+                <p>Receive sound and banner alerts when 20 seconds remain in an active turn.</p>
+              </div>
+              <input type="checkbox" [(ngModel)]="settingsForm.notifyTurnTimer" class="custom-toggle" />
+            </div>
+
+            <div class="toggle-card-row">
+              <div>
+                <strong>🔨 Outbid Notifications</strong>
+                <p>Instant WhatsApp & email notifications whenever a collector places a higher turn bid.</p>
+              </div>
+              <input type="checkbox" [(ngModel)]="settingsForm.notifyOutbid" class="custom-toggle" />
+            </div>
+
+            <div class="toggle-card-row">
+              <div>
+                <strong>🎥 Trending Reels Digest</strong>
+                <p>Weekly showcase of master artisan crafting videos and behind-the-scenes.</p>
+              </div>
+              <input type="checkbox" [(ngModel)]="settingsForm.notifyReels" class="custom-toggle" />
+            </div>
+          </div>
+        }
+
+        <!-- TAB 3: PAYOUTS & BANK -->
+        @if (activeSettingsTab === 'payouts') {
+          <div class="tab-pane">
+            <div class="payout-guarantee-note">
+              🛡️ <strong>90% Direct Artisan Payouts:</strong> When buyers win your auctions and confirm delivery addresses, 90% net funds are automatically disbursed to your verified UPI / Bank Account.
+            </div>
+
+            <div class="form-group-custom">
+              <label>Primary UPI ID for Instant Payouts</label>
+              <input type="text" [(ngModel)]="settingsForm.upiId" placeholder="artisan@upi" />
+            </div>
+
+            <div class="form-row-custom">
+              <div class="form-group-custom">
+                <label>Bank Account Number</label>
+                <input type="password" [(ngModel)]="settingsForm.bankAccount" placeholder="Bank Account Number" />
+              </div>
+              <div class="form-group-custom">
+                <label>IFSC Code</label>
+                <input type="text" [(ngModel)]="settingsForm.ifscCode" placeholder="HDFC0001234" />
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="settings-footer">
+        <button class="btn-cancel-settings" (click)="closeSettings()">Cancel</button>
+        <button class="btn-save-settings" (click)="saveSettings()">Save Preferences</button>
+      </div>
+    </div>
+  </div>
+}

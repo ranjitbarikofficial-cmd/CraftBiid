@@ -1,0 +1,68 @@
+<app-topbar></app-topbar>
+<app-navbar></app-navbar>
+
+<div class="categories-page-container">
+  <div class="page-header">
+    <h1>🏺 Explore by Craft Category</h1>
+    <p>Discover heritage craft techniques, handmade art, pottery, woodworking, and custom jewelry.</p>
+  </div>
+
+  <!-- Category Pills / Tabs -->
+  <div class="category-tabs-scroll">
+    @for (cat of categories; track cat.id) {
+      <button
+        class="category-tab-btn"
+        [class.active]="selectedCategory?.id === cat.id"
+        (click)="selectCategory(cat)"
+      >
+        <span class="icon">{{ getCategoryIcon(cat.name) }}</span>
+        <span>{{ cat.name }}</span>
+      </button>
+    }
+  </div>
+
+  @if (selectedCategory) {
+    <div class="category-description-banner">
+      <h2>{{ getCategoryIcon(selectedCategory.name) }} {{ selectedCategory.name }}</h2>
+      <p>{{ selectedCategory.description }}</p>
+    </div>
+  }
+
+  @if (loading) {
+    <div class="loading-state">
+      <p>⏳ Loading crafts in this category...</p>
+    </div>
+  }
+
+  @if (!loading && crafts.length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">🎨</div>
+      <h2>No crafts listed in this category yet</h2>
+      <p>Be the first artisan to list handmade items in {{ selectedCategory?.name }}!</p>
+      <a routerLink="/artisan/upload-craft" class="btn-upload">Upload Craft</a>
+    </div>
+  }
+
+  @if (!loading && crafts.length > 0) {
+    <div class="crafts-grid">
+      @for (craft of crafts; track craft.id) {
+        <article class="craft-card" [routerLink]="['/crafts', craft.id]">
+          <div class="image-wrap">
+            <img [src]="craft.imageUrl" [alt]="craft.title" (error)="onImageError($event)" />
+            <span class="price-tag">{{ formatPrice(craft.basePrice) }}</span>
+          </div>
+          <div class="card-info">
+            <h3>{{ craft.title }}</h3>
+            <p class="description">{{ craft.description }}</p>
+            <div class="card-footer">
+              <span class="seller">👨‍🎨 {{ craft.seller?.name || 'Artisan' }}</span>
+              <span class="explore-link">Explore →</span>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>
+
+<app-footer></app-footer>

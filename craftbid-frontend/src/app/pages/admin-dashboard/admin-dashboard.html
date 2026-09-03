@@ -1,0 +1,205 @@
+<div class="admin-dashboard-layout">
+  <aside class="sidebar">
+    <div class="logo">⚡ CraftBid Admin</div>
+    <div class="admin-label">Master Control Panel</div>
+
+    <nav>
+      <a [class.active]="activeTab === 'overview'" (click)="activeTab = 'overview'"> 📊 Overview </a>
+      <a [class.active]="activeTab === 'users'" (click)="activeTab = 'users'"> 👥 Users ({{ users.length }}) </a>
+      <a [class.active]="activeTab === 'crafts'" (click)="activeTab = 'crafts'"> 🎨 Crafts ({{ crafts.length }}) </a>
+      <a [class.active]="activeTab === 'auctions'" (click)="activeTab = 'auctions'"> 🔨 Auctions ({{ auctions.length }}) </a>
+      <a routerLink="/home"> 🌐 Marketplace </a>
+      <a href="javascript:void(0)" (click)="logout()"> 🚪 Logout </a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <header class="admin-header">
+      <div>
+        <h1>Platform Administration Console</h1>
+        <p>Manage users, verify artisans, monitor crafts, and moderate live auctions.</p>
+      </div>
+    </header>
+
+    @if (loading) {
+      <div class="loading-state">
+        <p>⏳ Loading administration metrics...</p>
+      </div>
+    }
+
+    <!-- TAB 1: OVERVIEW -->
+    @if (!loading && activeTab === 'overview' && stats) {
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <span class="icon">👥</span>
+          <div>
+            <h3>Total Users</h3>
+            <strong>{{ stats.totalUsers }}</strong>
+          </div>
+        </div>
+
+        <div class="metric-card highlight">
+          <span class="icon">🎨</span>
+          <div>
+            <h3>Active Artisans</h3>
+            <strong>{{ stats.totalArtisans }}</strong>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <span class="icon">🏺</span>
+          <div>
+            <h3>Total Crafts</h3>
+            <strong>{{ stats.totalCrafts }}</strong>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <span class="icon">🔨</span>
+          <div>
+            <h3>Active Auctions</h3>
+            <strong>{{ stats.totalActiveAuctions }}</strong>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <span class="icon">💰</span>
+          <div>
+            <h3>Total Bids</h3>
+            <strong>{{ stats.totalBids }}</strong>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- TAB 2: USERS -->
+    @if (!loading && activeTab === 'users') {
+      <section class="table-container">
+        <h2>Registered Users</h2>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email / Phone</th>
+              <th>Role</th>
+              <th>Artisan Enabled</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of users; track u.id) {
+              <tr>
+                <td>#{{ u.id }}</td>
+                <td><strong>{{ u.name }}</strong></td>
+                <td>{{ u.email || u.phone }}</td>
+                <td><span class="role-badge">{{ u.role }}</span></td>
+                <td>{{ u.sellerEnabled ? '✅ Yes' : '❌ No' }}</td>
+                <td>
+                  <span class="status-badge" [class.active]="u.active">
+                    {{ u.active ? 'ACTIVE' : 'SUSPENDED' }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn-toggle" (click)="toggleUser(u)">
+                    {{ u.active ? 'Suspend' : 'Activate' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
+
+    <!-- TAB 3: CRAFTS -->
+    @if (!loading && activeTab === 'crafts') {
+      <section class="table-container">
+        <h2>Crafts Database</h2>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Craft</th>
+              <th>Category</th>
+              <th>Artisan</th>
+              <th>Base Price</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of crafts; track c.id) {
+              <tr>
+                <td>#{{ c.id }}</td>
+                <td><strong>{{ c.title }}</strong></td>
+                <td>{{ c.category?.name || 'General' }}</td>
+                <td>{{ c.seller?.name }}</td>
+                <td>
+                  <span class="status-badge" [class.active]="c.status === 'ACTIVE'" [class.inactive]="c.status !== 'ACTIVE'">
+                    {{ c.status === 'ACTIVE' ? '🟢 LIVE' : '🔴 OFFLINE' }}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    class="btn-toggle"
+                    [class.btn-success]="c.status !== 'ACTIVE'"
+                    [class.btn-warning]="c.status === 'ACTIVE'"
+                    (click)="toggleCraftStatus(c)"
+                  >
+                    {{ c.status === 'ACTIVE' ? 'Take Offline' : 'Make Live' }}
+                  </button>
+                  <button class="btn-delete" (click)="deleteCraft(c.id)">Delete</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
+
+    <!-- TAB 4: AUCTIONS -->
+    @if (!loading && activeTab === 'auctions') {
+      <section class="table-container">
+        <h2>Auctions Manager</h2>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Craft Item</th>
+              <th>Artisan</th>
+              <th>Highest Bid</th>
+              <th>Bids</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of auctions; track a.id) {
+              <tr>
+                <td>#{{ a.id }}</td>
+                <td><strong>{{ a.craft?.title }}</strong></td>
+                <td>{{ a.seller?.name }}</td>
+                <td>{{ formatPrice(a.currentHighestBid) }}</td>
+                <td>{{ a.totalBids }}</td>
+                <td>
+                  <span class="status-badge" [class.active]="a.status === 'ACTIVE'">
+                    {{ a.status }}
+                  </span>
+                </td>
+                <td>
+                  @if (a.status === 'ACTIVE') {
+                    <button class="btn-cancel" (click)="cancelAuction(a.id)">Cancel</button>
+                  } @else {
+                    <span class="muted-text">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
+  </main>
+</div>

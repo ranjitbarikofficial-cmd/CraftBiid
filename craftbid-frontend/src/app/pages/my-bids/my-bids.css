@@ -1,0 +1,117 @@
+.my-bids-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 36px 20px 80px;
+  min-height: 80vh;
+}
+
+.my-bids-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.my-bids-header h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.my-bids-header p {
+  color: #64748b;
+  font-size: 1.05rem;
+}
+
+.bids-table-wrap {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.bids-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.bids-table th {
+  background: #f8fafc;
+  padding: 16px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.bids-table td {
+  padding: 18px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.95rem;
+}
+
+.craft-item-info strong {
+  display: block;
+  color: #0f172a;
+}
+
+.craft-item-info small {
+  color: #64748b;
+}
+
+.bid-price {
+  color: #ea580c;
+  font-size: 1.05rem;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.status-badge.winning {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.btn-view-auction {
+  background: #ea580c;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.btn-view-auction:hover {
+  background: #c2410c;
+}
+
+.empty-state, .loading-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #64748b;
+}
+
+.empty-icon {
+  font-size: 3.5rem;
+  margin-bottom: 12px;
+}
+
+.btn-primary {
+  display: inline-block;
+  margin-top: 16px;
+  background: #ea580c;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}

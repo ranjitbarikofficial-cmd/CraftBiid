@@ -1,0 +1,272 @@
+<div class="homepage-wrapper">
+  <!-- ================= 1. STARTUP HERO SECTION ================= -->
+  <section class="startup-hero">
+    <div class="hero-bg-glow"></div>
+    <div class="hero-grid-pattern"></div>
+
+    <div class="hero-container">
+      <div class="hero-left">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          <span>INDIA'S 1ST LIVE TURN CRAFT MARKETPLACE</span>
+        </div>
+
+        <h1 class="hero-title">
+          Authentic Handmade Crafts.<br />
+          <span class="gradient-text">Live 1-Minute Auctions.</span>
+        </h1>
+
+        <p class="hero-subtext">
+          Connect directly with verified master artisans. Watch craft reels, place differential turn bids with full refund protection, and collect priceless handcrafted treasures.
+        </p>
+
+        <div class="hero-cta-group">
+          <a routerLink="/auctions" class="btn-hero-primary">
+            <span>🔨 Enter Live Auctions</span>
+          </a>
+          <a routerLink="/reels" class="btn-hero-secondary">
+            <span>🎥 Watch Craft Reels</span>
+          </a>
+          <a [routerLink]="isSeller ? '/artisan-dashboard' : '/artisan'" class="btn-hero-artisan">
+            <span>{{ isSeller ? '🎨 Artisan Studio' : '🎨 Sell Your Craft' }}</span>
+          </a>
+        </div>
+
+        <!-- Trust Badges -->
+        <div class="hero-trust-row">
+          <div class="trust-item">
+            <span class="trust-icon">🛡️</span>
+            <span>100% Genuine Handmade</span>
+          </div>
+          <div class="trust-item">
+            <span class="trust-icon">⏱️</span>
+            <span>60s Live Turn Bidding</span>
+          </div>
+          <div class="trust-item">
+            <span class="trust-icon">💳</span>
+            <span>Instant Auto-Refunds</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Right Floating Preview Card -->
+      <div class="hero-right">
+        <div class="hero-featured-card">
+          <div class="featured-card-media">
+            <img
+              src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=800&q=80"
+              alt="Handcrafted Clay Pot"
+            />
+            <div class="card-live-indicator">
+              <span class="live-dot-pulse"></span>
+              <span>LIVE AUCTION ROOM</span>
+            </div>
+            <div class="turn-timer-chip">
+              <span>⏱️ Turn Timer: <strong>48s</strong></span>
+            </div>
+          </div>
+
+          <div class="featured-card-details">
+            <div class="card-meta-row">
+              <span class="category-chip">Pottery & Clay</span>
+              <span class="room-slots">👥 4/10 Joined</span>
+            </div>
+            <h3>Terracotta Masterpiece Vase</h3>
+            <p class="artisan-credit">By Master Artisan Rajesh Sharma</p>
+
+            <div class="card-bid-footer">
+              <div>
+                <span class="price-caption">Current Highest Bid</span>
+                <div class="price-val">₹1,800</div>
+              </div>
+              <a routerLink="/auctions/1" class="btn-join-bid">Bid Now →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2. HOW IT WORKS (PAY-TO-BID ENGINE) ================= -->
+  <section class="how-it-works-section">
+    <div class="section-container">
+      <div class="section-heading text-center">
+        <span class="sub-heading-pill">TRANSPARENT & FAIR</span>
+        <h2>How CraftBid Pay-to-Bid Works</h2>
+        <p>A fair, thrilling, and 100% risk-free turn-by-turn live auction experience.</p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <div class="step-icon">💳</div>
+          <h3>Pay Base Deposit</h3>
+          <p>Pay the product's base price (e.g. ₹1,000) to join the room with up to 10 active collectors.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <div class="step-icon">📈</div>
+          <h3>Differential Bidding</h3>
+          <p>Only pay the difference! When raising bid from ₹1,000 to ₹1,100, you pay just the extra ₹100.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <div class="step-icon">⏱️</div>
+          <h3>1-Minute Turn Timer</h3>
+          <p>Every bid resets the 60-second countdown. If no one outbids in 1 minute, you win the craft!</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">04</div>
+          <div class="step-icon">🛡️</div>
+          <h3>100% Auto-Refunds</h3>
+          <p>If you don't win, your full deposit + all incremental bids are instantly refunded to your bank.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. POPULAR CATEGORIES ================= -->
+  <section class="categories-section">
+    <div class="section-container">
+      <div class="section-heading-flex">
+        <div>
+          <span class="sub-heading-pill">CURATED COLLECTIONS</span>
+          <h2>Explore Heritage Crafts</h2>
+        </div>
+        <a routerLink="/categories" class="see-all-link">Browse all categories →</a>
+      </div>
+
+      <div class="categories-grid">
+        @for (category of categories; track category.id) {
+          <a [routerLink]="['/search']" [queryParams]="{ category: category.id }" class="category-card">
+            <div class="category-icon-bubble">{{ getCategoryIcon(category.name) }}</div>
+            <div class="category-info">
+              <h4>{{ category.name }}</h4>
+              <span class="category-cta">Explore craft items →</span>
+            </div>
+          </a>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 4. TRENDING CRAFT REELS ================= -->
+  @if (craftReels.length > 0) {
+    <section class="reels-showcase-section">
+      <div class="section-container">
+        <div class="section-heading-flex">
+          <div>
+            <span class="sub-heading-pill">ARTISAN IN ACTION</span>
+            <h2>🎥 Trending Craft Reels</h2>
+          </div>
+          <a routerLink="/reels" class="see-all-link">Open Reels Studio →</a>
+        </div>
+
+        <div class="reels-stream">
+          @for (reel of craftReels; track reel.id) {
+            <div class="reel-card-item">
+              <div class="reel-video-container">
+                <video [src]="reel.videoUrl" [poster]="reel.thumbnailUrl" preload="metadata" muted playsinline></video>
+                <div class="reel-gradient-scrim"></div>
+
+                <div class="reel-top-tags">
+                  <span class="view-tag">👁️ {{ reel.views || 0 }}</span>
+                  <button class="like-bubble" (click)="likeReel(reel, $event)">❤️ {{ reel.likes || 0 }}</button>
+                </div>
+
+                <div class="reel-bottom-details">
+                  <p class="reel-title-text">{{ reel.title }}</p>
+                  @if (reel.craft) {
+                    <a [routerLink]="['/crafts', reel.craft.id]" class="reel-craft-badge">
+                      <span>🛍️ View Craft (₹{{ reel.craft.basePrice }})</span>
+                    </a>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- ================= 5. FRESH FROM THE WORKSHOPS ================= -->
+  <section class="marketplace-section">
+    <div class="section-container">
+      <div class="section-heading-flex">
+        <div>
+          <span class="sub-heading-pill">NEW CREATIONS</span>
+          <h2>🏺 Fresh from the Workshops</h2>
+        </div>
+        <a routerLink="/search" class="see-all-link">View all creations →</a>
+      </div>
+
+      @if (crafts.length > 0) {
+        <div class="crafts-grid">
+          @for (craft of crafts; track craft.id) {
+            <article class="craft-card-item" [routerLink]="['/crafts', craft.id]">
+              <div class="craft-thumbnail-box">
+                <span class="craft-handmade-badge">✨ HANDMADE</span>
+                <img [src]="craft.imageUrl" [alt]="craft.title" (error)="onImageError($event)" />
+              </div>
+
+              <div class="craft-info-box">
+                <span class="craft-category-tag">{{ craft.category?.name || 'Craft' }}</span>
+                <h3 class="craft-title">{{ craft.title }}</h3>
+                <p class="craft-artisan-name">👨‍🎨 {{ craft.seller?.name || 'Master Artisan' }}</p>
+
+                <div class="craft-price-row">
+                  <div class="price-stack">
+                    <span class="price-label">Base Price</span>
+                    <strong class="price-num">{{ formatPrice(craft.basePrice) }}</strong>
+                  </div>
+                  <span class="btn-view-craft">View Details →</span>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty-creations-box">
+          <div class="empty-art-icon">🏺</div>
+          <h3>Be the first artisan to showcase your craft!</h3>
+          <p>Share your handcrafted art with thousands of collectors across India.</p>
+          <a [routerLink]="isSeller ? '/artisan-dashboard' : '/artisan'" class="btn-hero-primary">
+            + Upload Craft Creation
+          </a>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ================= 6. ARTISAN EMPOWERMENT BANNER ================= -->
+  <section class="artisan-cta-banner">
+    <div class="section-container banner-inner">
+      <div class="banner-content">
+        <span class="banner-pill">🎨 ARTISAN EMPOWERMENT</span>
+        <h2>Are you a traditional craftsman or handmade artist?</h2>
+        <p>
+          Showcase your crafts directly to collectors worldwide. Run live auctions with guaranteed deposits, receive 90% net payouts, and grow your artisan studio with ₹0 listing fees.
+        </p>
+        <div class="banner-actions">
+          <a [routerLink]="isSeller ? '/artisan-dashboard' : '/artisan'" class="btn-banner-action">
+            {{ isSeller ? '🚀 Open Artisan Dashboard' : '✨ Start Selling as an Artisan' }}
+          </a>
+        </div>
+      </div>
+      <div class="banner-graphic">
+        <div class="graphic-stat-card">
+          <span class="stat-number">90%</span>
+          <span class="stat-desc">Direct Artisan Payouts</span>
+        </div>
+        <div class="graphic-stat-card">
+          <span class="stat-number">10%</span>
+          <span class="stat-desc">Transparent Flat Fee</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

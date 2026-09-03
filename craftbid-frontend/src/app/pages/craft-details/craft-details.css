@@ -1,0 +1,240 @@
+.craft-details-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  min-height: 80vh;
+}
+
+.breadcrumb {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.breadcrumb a {
+  color: #ea580c;
+  text-decoration: none;
+}
+
+.craft-main-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 48px;
+}
+
+@media (max-width: 868px) {
+  .craft-main-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.craft-media-section {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.main-image-wrap {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  max-height: 480px;
+}
+
+.main-image-wrap img {
+  width: 100%;
+  height: 100%;
+  max-height: 480px;
+  object-fit: contain;
+  display: block;
+}
+
+.status-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #10b981;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.reels-showcase h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.reel-player-box {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid #e2e8f0;
+}
+
+.reel-player-box video {
+  width: 100%;
+  max-height: 380px;
+  display: block;
+}
+
+.reel-meta {
+  padding: 12px 16px;
+  background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reel-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-like {
+  background: #fee2e2;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #ef4444;
+}
+
+.craft-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.category-tag {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ea580c;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.craft-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.artisan-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+}
+
+.artisan-badge .avatar {
+  font-size: 1.8rem;
+}
+
+.artisan-badge strong {
+  display: block;
+  color: #9a3412;
+}
+
+.artisan-badge small {
+  color: #c2410c;
+}
+
+.price-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.price-label {
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+.price-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ea580c;
+}
+
+.description-box h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.description-box p {
+  color: #475569;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.btn-primary-action {
+  flex: 1;
+  background: #ea580c;
+  color: #ffffff;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.25);
+  transition: background 0.15s ease;
+}
+
+.btn-primary-action:hover {
+  background: #c2410c;
+}
+
+.btn-secondary-action {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.loading-state, .error-container {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.btn-back {
+  display: inline-block;
+  margin-top: 16px;
+  background: #ea580c;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+}
