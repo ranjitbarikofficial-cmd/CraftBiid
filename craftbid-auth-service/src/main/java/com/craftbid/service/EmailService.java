@@ -9,7 +9,9 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class EmailService {
 
-    private static final String FROM_EMAIL = "craftbid.official@gmail.com";
+    @org.springframework.beans.factory.annotation.Value("${craftbid.mail.from:${spring.mail.username:craftbid.official@gmail.com}}")
+    private String fromEmail;
+
     private final JavaMailSender mailSender;
 
     public EmailService(JavaMailSender mailSender) {
@@ -23,7 +25,7 @@ public class EmailService {
         CompletableFuture.runAsync(() -> {
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(FROM_EMAIL);
+                message.setFrom(fromEmail);
                 message.setTo(email);
                 message.setSubject("CraftBid Email Verification OTP: " + otp);
                 message.setText(
@@ -50,7 +52,7 @@ public class EmailService {
         CompletableFuture.runAsync(() -> {
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(FROM_EMAIL);
+                message.setFrom(fromEmail);
                 message.setTo(email);
                 message.setSubject("🎉 Welcome to CraftBid - Account Created Successfully!");
                 message.setText(
@@ -77,7 +79,7 @@ public class EmailService {
         CompletableFuture.runAsync(() -> {
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(FROM_EMAIL);
+                message.setFrom(fromEmail);
                 message.setTo(email);
                 message.setSubject("🛡️ CraftBid Admin Login Security Code: " + otp);
                 message.setText(
@@ -104,7 +106,7 @@ public class EmailService {
         CompletableFuture.runAsync(() -> {
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(FROM_EMAIL);
+                message.setFrom(fromEmail);
                 message.setTo(email);
                 message.setSubject("CraftBid Password Reset OTP: " + otp);
                 message.setText(
@@ -130,7 +132,7 @@ public class EmailService {
         CompletableFuture.runAsync(() -> {
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(FROM_EMAIL);
+                message.setFrom(fromEmail);
                 message.setTo(email);
                 message.setSubject("CraftBid Password Reset Confirmation");
                 message.setText(
@@ -152,7 +154,7 @@ public class EmailService {
         CompletableFuture.runAsync(() -> {
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(FROM_EMAIL);
+                message.setFrom(fromEmail);
                 message.setTo(email);
                 message.setSubject("🎨 Welcome to CraftBid Artisan Studio!");
                 message.setText(
