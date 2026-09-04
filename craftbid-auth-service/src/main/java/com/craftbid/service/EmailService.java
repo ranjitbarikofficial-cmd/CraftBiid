@@ -35,6 +35,9 @@ public class EmailService {
     @Value("${BREVO_API_KEY:}")
     private String brevoApiKey;
 
+    @Value("${RESEND_API_KEY:}")
+    private String resendApiKey;
+
     private final JavaMailSender mailSender;
     private final HttpClient httpClient;
 
@@ -52,17 +55,22 @@ public class EmailService {
         CompletableFuture.runAsync(() -> {
             boolean sent = false;
 
-            // 1. If Brevo REST API key is configured, use it first (HTTPS Port 443 - zero cloud firewall block)
+            // 1. If Brevo REST API key is configured, use it first (HTTPS Port 443)
             if (brevoApiKey != null && !brevoApiKey.isBlank()) {
                 sent = trySendViaBrevoRest(toEmail, subject, htmlContent);
             }
 
-            // 2. Try Google SMTP via JavaMailSender
+            // 2. If Resend REST API key is configured
+            if (!sent && resendApiKey != null && !resendApiKey.isBlank()) {
+                sent = trySendViaResendRest(toEmail, subject, htmlContent);
+            }
+
+            // 3. Try Google SMTP via JavaMailSender
             if (!sent) {
                 sent = trySendViaGoogleSmtp(toEmail, subject, htmlContent);
             }
 
-            // 3. Try Direct SMTPS (Port 465 SSL)
+            // 4. Try Direct SMTPS (Port 465 SSL)
             if (!sent) {
                 trySendViaDirectSmtps(toEmail, subject, htmlContent);
             }
@@ -83,7 +91,8 @@ public class EmailService {
 
         StringBuilder log = new StringBuilder();
         log.append("Attempting email dispatch to: ").append(toEmail).append("\n");
-        log.append("Configured BREVO_API_KEY: ").append(brevoApiKey != null && !brevoApiKey.isBlank() ? "YES (" + brevoApiKey.substring(0, Math.min(8, brevoApiKey.length())) + "...)" : "NO (Empty)").append("\n");
+        log.append("Configured BREVO_API_KEY: ").append(brevoApiKey != null && !brevoApiKey.isBlank() ? "YES (" + getFormattedBrevoKey().substring(0, Math.min(16, getFormattedBrevoKey().length())) + "...)" : "NO (Empty)").append("\n");
+        log.append("Configured RESEND_API_KEY: ").append(resendApiKey != null && !resendApiKey.isBlank() ? "YES" : "NO").append("\n");
         log.append("Configured Sender FROM: ").append(fromEmail).append("\n");
 
         boolean sent = false;
@@ -91,6 +100,7 @@ public class EmailService {
         // 1. Try Brevo REST if key present
         if (brevoApiKey != null && !brevoApiKey.isBlank()) {
             try {
+                String cleanKey = getFormattedBrevoKey();
                 String jsonBody = String.format(
                         "{\"sender\":{\"name\":\"CraftBid\",\"email\":\"%s\"},\"to\":[{\"email\":\"%s\"}],\"subject\":\"%s\",\"htmlContent\":\"%s\"}",
                         escapeJson(fromEmail),
@@ -101,7 +111,7 @@ public class EmailService {
 
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
-                        .header("api-key", brevoApiKey.trim())
+                        .header("api-key", cleanKey)
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                         .timeout(Duration.ofSeconds(6))
@@ -116,6 +126,36 @@ public class EmailService {
                 }
             } catch (Exception e) {
                 log.append("⚠️ Brevo REST API exception: ").append(e.getMessage()).append("\n");
+            }
+        }
+
+        // 2. Try Resend REST
+        if (!sent && resendApiKey != null && !resendApiKey.isBlank()) {
+            try {
+                String jsonBody = String.format(
+                        "{\"from\":\"CraftBid <onboarding@resend.dev>\",\"to\":[\"%s\"],\"subject\":\"%s\",\"html\":\"%s\"}",
+                        escapeJson(toEmail),
+                        escapeJson(subject),
+                        escapeJson(html)
+                );
+
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create("https://api.resend.com/emails"))
+                        .header("Authorization", "Bearer " + resendApiKey.trim())
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                        .timeout(Duration.ofSeconds(6))
+                        .build();
+
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                    log.append("✅ Resend REST API (HTTPS Port 443) succeeded in ").append(System.currentTimeMillis() - start).append("ms! Response: ").append(response.body()).append("\n");
+                    sent = true;
+                } else {
+                    log.append("⚠️ Resend REST API returned ").append(response.statusCode()).append(": ").append(response.body()).append("\n");
+                }
+            } catch (Exception e) {
+                log.append("⚠️ Resend REST API exception: ").append(e.getMessage()).append("\n");
             }
         }
 
@@ -227,8 +267,18 @@ public class EmailService {
         }
     }
 
+    private String getFormattedBrevoKey() {
+        if (brevoApiKey == null) return "";
+        String clean = brevoApiKey.trim();
+        if (!clean.startsWith("xkeysib-") && !clean.isBlank()) {
+            return "xkeysib-" + clean;
+        }
+        return clean;
+    }
+
     private boolean trySendViaBrevoRest(String toEmail, String subject, String htmlContent) {
         try {
+            String cleanKey = getFormattedBrevoKey();
             String jsonBody = String.format(
                     "{\"sender\":{\"name\":\"CraftBid\",\"email\":\"%s\"},\"to\":[{\"email\":\"%s\"}],\"subject\":\"%s\",\"htmlContent\":\"%s\"}",
                     escapeJson(fromEmail),
@@ -239,7 +289,7 @@ public class EmailService {
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
-                    .header("api-key", brevoApiKey.trim())
+                    .header("api-key", cleanKey)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                     .timeout(Duration.ofSeconds(6))
@@ -255,6 +305,37 @@ public class EmailService {
             }
         } catch (Exception e) {
             System.err.println("❌ Brevo REST API error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean trySendViaResendRest(String toEmail, String subject, String htmlContent) {
+        try {
+            String jsonBody = String.format(
+                    "{\"from\":\"CraftBid <onboarding@resend.dev>\",\"to\":[\"%s\"],\"subject\":\"%s\",\"html\":\"%s\"}",
+                    escapeJson(toEmail),
+                    escapeJson(subject),
+                    escapeJson(htmlContent)
+            );
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.resend.com/emails"))
+                    .header("Authorization", "Bearer " + resendApiKey.trim())
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .timeout(Duration.ofSeconds(6))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                System.out.println("✅ Email delivered via Resend REST API to " + toEmail);
+                return true;
+            } else {
+                System.err.println("❌ Resend REST API returned " + response.statusCode() + ": " + response.body());
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Resend REST API error: " + e.getMessage());
             return false;
         }
     }
