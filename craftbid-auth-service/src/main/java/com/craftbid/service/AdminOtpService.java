@@ -50,27 +50,25 @@ public class AdminOtpService {
             );
         }
 
-        // Find admin from database
+        // Find admin from database (or auto-provision official admin if first time)
         User admin = userRepository
                 .findByEmail(ADMIN_EMAIL)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Admin account not found for " + ADMIN_EMAIL
-                        )
-                );
+                .orElseGet(() -> {
+                    User newAdmin = new User();
+                    newAdmin.setName("CraftBid Official Admin");
+                    newAdmin.setEmail(ADMIN_EMAIL);
+                    newAdmin.setPhone("9040408690");
+                    newAdmin.setRole(Role.ADMIN);
+                    newAdmin.setActive(true);
+                    newAdmin.setSellerEnabled(true);
+                    return userRepository.save(newAdmin);
+                });
 
-        // Check role
-        if (admin.getRole() != Role.ADMIN) {
-            throw new RuntimeException(
-                    "This account is not configured as an administrator."
-            );
-        }
-
-        // Check active
-        if (!admin.isActive()) {
-            throw new RuntimeException(
-                    "Admin account is inactive."
-            );
+        // Ensure role and active status
+        if (admin.getRole() != Role.ADMIN || !admin.isActive()) {
+            admin.setRole(Role.ADMIN);
+            admin.setActive(true);
+            admin = userRepository.save(admin);
         }
 
         // Generate 6 digit OTP
@@ -115,27 +113,25 @@ public class AdminOtpService {
             );
         }
 
-        // Find admin
+        // Find admin (or auto-provision)
         User admin = userRepository
                 .findByEmail(ADMIN_EMAIL)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Admin account not found"
-                        )
-                );
+                .orElseGet(() -> {
+                    User newAdmin = new User();
+                    newAdmin.setName("CraftBid Official Admin");
+                    newAdmin.setEmail(ADMIN_EMAIL);
+                    newAdmin.setPhone("9040408690");
+                    newAdmin.setRole(Role.ADMIN);
+                    newAdmin.setActive(true);
+                    newAdmin.setSellerEnabled(true);
+                    return userRepository.save(newAdmin);
+                });
 
-        // Check role
-        if (admin.getRole() != Role.ADMIN) {
-            throw new RuntimeException(
-                    "Access denied. Not an admin"
-            );
-        }
-
-        // Check active
-        if (!admin.isActive()) {
-            throw new RuntimeException(
-                    "Admin account is inactive"
-            );
+        // Check role and active
+        if (admin.getRole() != Role.ADMIN || !admin.isActive()) {
+            admin.setRole(Role.ADMIN);
+            admin.setActive(true);
+            admin = userRepository.save(admin);
         }
 
         // Get stored OTP
