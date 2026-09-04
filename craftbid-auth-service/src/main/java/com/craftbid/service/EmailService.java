@@ -23,7 +23,7 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class EmailService {
 
-    @Value("${craftbid.mail.from:craftbid.official@gmail.com}")
+    @Value("${craftbid.mail.from:${SPRING_MAIL_FROM:craftbid.official@gmail.com}}")
     private String fromEmail;
 
     @Value("${spring.mail.username:craftbid.official@gmail.com}")
@@ -32,10 +32,10 @@ public class EmailService {
     @Value("${spring.mail.password:toyekvrmhrmunicr}")
     private String mailPassword;
 
-    @Value("${BREVO_API_KEY:}")
+    @Value("${craftbid.brevo.api-key:${BREVO_API_KEY:}}")
     private String brevoApiKey;
 
-    @Value("${RESEND_API_KEY:}")
+    @Value("${craftbid.resend.api-key:${RESEND_API_KEY:}}")
     private String resendApiKey;
 
     private final JavaMailSender mailSender;
@@ -55,13 +55,16 @@ public class EmailService {
         CompletableFuture.runAsync(() -> {
             boolean sent = false;
 
+            String brevoKey = getFormattedBrevoKey();
+            String resendKey = getEffectiveResendKey();
+
             // 1. If Brevo REST API key is configured, use it first (HTTPS Port 443)
-            if (brevoApiKey != null && !brevoApiKey.isBlank()) {
+            if (!brevoKey.isBlank()) {
                 sent = trySendViaBrevoRest(toEmail, subject, htmlContent);
             }
 
             // 2. If Resend REST API key is configured
-            if (!sent && resendApiKey != null && !resendApiKey.isBlank()) {
+            if (!sent && !resendKey.isBlank()) {
                 sent = trySendViaResendRest(toEmail, subject, htmlContent);
             }
 
@@ -89,18 +92,20 @@ public class EmailService {
                 + "<p><strong>Timestamp:</strong> " + java.time.LocalDateTime.now() + "</p>"
                 + "</div>";
 
+        String brevoKey = getFormattedBrevoKey();
+        String resendKey = getEffectiveResendKey();
+
         StringBuilder log = new StringBuilder();
         log.append("Attempting email dispatch to: ").append(toEmail).append("\n");
-        log.append("Configured BREVO_API_KEY: ").append(brevoApiKey != null && !brevoApiKey.isBlank() ? "YES (" + getFormattedBrevoKey().substring(0, Math.min(16, getFormattedBrevoKey().length())) + "...)" : "NO (Empty)").append("\n");
-        log.append("Configured RESEND_API_KEY: ").append(resendApiKey != null && !resendApiKey.isBlank() ? "YES" : "NO").append("\n");
+        log.append("Configured BREVO_API_KEY: ").append(!brevoKey.isBlank() ? "YES (" + brevoKey.substring(0, Math.min(16, brevoKey.length())) + "...)" : "NO (Empty)").append("\n");
+        log.append("Configured RESEND_API_KEY: ").append(!resendKey.isBlank() ? "YES" : "NO").append("\n");
         log.append("Configured Sender FROM: ").append(fromEmail).append("\n");
 
         boolean sent = false;
 
         // 1. Try Brevo REST if key present
-        if (brevoApiKey != null && !brevoApiKey.isBlank()) {
+        if (!brevoKey.isBlank()) {
             try {
-                String cleanKey = getFormattedBrevoKey();
                 String jsonBody = String.format(
                         "{\"sender\":{\"name\":\"CraftBid\",\"email\":\"%s\"},\"to\":[{\"email\":\"%s\"}],\"subject\":\"%s\",\"htmlContent\":\"%s\"}",
                         escapeJson(fromEmail),
@@ -111,7 +116,7 @@ public class EmailService {
 
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
-                        .header("api-key", cleanKey)
+                        .header("api-key", brevoKey)
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                         .timeout(Duration.ofSeconds(6))
@@ -130,7 +135,7 @@ public class EmailService {
         }
 
         // 2. Try Resend REST
-        if (!sent && resendApiKey != null && !resendApiKey.isBlank()) {
+        if (!sent && !resendKey.isBlank()) {
             try {
                 String jsonBody = String.format(
                         "{\"from\":\"CraftBid <onboarding@resend.dev>\",\"to\":[\"%s\"],\"subject\":\"%s\",\"html\":\"%s\"}",
@@ -141,7 +146,7 @@ public class EmailService {
 
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create("https://api.resend.com/emails"))
-                        .header("Authorization", "Bearer " + resendApiKey.trim())
+                        .header("Authorization", "Bearer " + resendKey)
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                         .timeout(Duration.ofSeconds(6))
@@ -268,12 +273,26 @@ public class EmailService {
     }
 
     private String getFormattedBrevoKey() {
-        if (brevoApiKey == null) return "";
-        String clean = brevoApiKey.trim();
+        String key = brevoApiKey;
+        if (key == null || key.isBlank()) {
+            key = System.getenv("BREVO_API_KEY");
+        }
+        if (key == null || key.isBlank()) {
+            return "";
+        }
+        String clean = key.trim();
         if (!clean.startsWith("xkeysib-") && !clean.isBlank()) {
             return "xkeysib-" + clean;
         }
         return clean;
+    }
+
+    private String getEffectiveResendKey() {
+        String key = resendApiKey;
+        if (key == null || key.isBlank()) {
+            key = System.getenv("RESEND_API_KEY");
+        }
+        return key != null ? key.trim() : "";
     }
 
     private boolean trySendViaBrevoRest(String toEmail, String subject, String htmlContent) {
