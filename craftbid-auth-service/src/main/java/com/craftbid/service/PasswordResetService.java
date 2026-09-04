@@ -149,10 +149,9 @@ public class PasswordResetService {
             );
         }
 
-        // Check OTP (accepts generated OTP or instant test OTP 123456)
-        boolean isValidOtp = otpData.otp.equals(otp.trim()) || "123456".equals(otp.trim());
-        if (!isValidOtp) {
-            throw new RuntimeException("Invalid OTP");
+        // Check OTP (accepts generated real OTP only)
+        if (!otpData.otp.equals(otp.trim())) {
+            throw new RuntimeException("Invalid OTP code. Please enter the code sent to your email.");
         }
 
         // Find user

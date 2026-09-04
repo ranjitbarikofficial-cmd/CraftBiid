@@ -142,22 +142,16 @@ public class AdminOtpService {
         OtpData otpData = otpStore.get(ADMIN_EMAIL);
 
         if (otpData == null) {
-            // If test pass 123456 is used, allow it
-            if (!"123456".equals(otp.trim())) {
-                throw new RuntimeException("OTP not found or expired. Please request a new OTP.");
-            }
+            throw new RuntimeException("OTP not found or expired. Please request a new OTP.");
         } else {
             // Check expiry
             if (System.currentTimeMillis() > otpData.expiryTime) {
                 otpStore.remove(ADMIN_EMAIL);
-                if (!"123456".equals(otp.trim())) {
-                    throw new RuntimeException("OTP expired. Please request a new OTP");
-                }
+                throw new RuntimeException("OTP expired. Please request a new OTP");
             }
 
-            // Check OTP
-            boolean isValidOtp = otpData.otp.equals(otp.trim()) || "123456".equals(otp.trim());
-            if (!isValidOtp) {
+            // Check OTP (accepts generated real OTP only)
+            if (!otpData.otp.equals(otp.trim())) {
                 throw new RuntimeException("Invalid OTP code. Please check and try again.");
             }
         }

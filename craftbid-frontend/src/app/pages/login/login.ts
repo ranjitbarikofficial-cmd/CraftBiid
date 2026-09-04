@@ -159,9 +159,8 @@ export class Login implements OnInit {
         console.log('Admin OTP response:', response);
         this.adminOtpLoading = false;
         this.adminOtpSent = true;
-        const code = response.otp || '123456';
-        this.adminOtp = code;
-        this.successMessage = `✅ OTP Code [${code}] generated & auto-filled! Click Verify below to enter.`;
+        this.adminOtp = '';
+        this.successMessage = 'Security code dispatched to admin email. Please check your inbox.';
       },
       error: (error) => {
         console.error('Failed to send admin OTP:', error);

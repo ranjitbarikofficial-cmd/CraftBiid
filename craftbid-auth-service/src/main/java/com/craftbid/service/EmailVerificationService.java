@@ -171,10 +171,9 @@ public class EmailVerificationService {
             throw new RuntimeException("OTP expired. Please request a new OTP");
         }
 
-        // Check OTP (accepts generated OTP or instant test OTP 123456)
-        boolean isValidOtp = pending.getOtp().equals(otp.trim()) || "123456".equals(otp.trim());
-        if (!isValidOtp) {
-            throw new RuntimeException("Invalid OTP");
+        // Check OTP (accepts generated real OTP only)
+        if (!pending.getOtp().equals(otp.trim())) {
+            throw new RuntimeException("Invalid OTP code. Please enter the code sent to your email.");
         }
 
         // OTP correct -> create account
