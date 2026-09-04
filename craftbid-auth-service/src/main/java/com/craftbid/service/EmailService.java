@@ -1,5 +1,11 @@
 package com.craftbid.service;
 
+import jakarta.mail.Authenticator;
+import jakarta.mail.Message;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -11,6 +17,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -18,6 +25,12 @@ public class EmailService {
 
     @Value("${craftbid.mail.from:craftbid.official@gmail.com}")
     private String fromEmail;
+
+    @Value("${spring.mail.username:craftbid.official@gmail.com}")
+    private String mailUsername;
+
+    @Value("${spring.mail.password:toyekvrmhrmunicr}")
+    private String mailPassword;
 
     @Value("${BREVO_API_KEY:}")
     private String brevoApiKey;
@@ -28,64 +41,179 @@ public class EmailService {
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
         this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(5))
+                .connectTimeout(Duration.ofSeconds(6))
                 .build();
     }
 
     // =====================================================
-    // CORE EMAIL DISPATCHER (HTML MIME + REST API FALLBACK)
+    // CORE EMAIL DISPATCHER (NON-BLOCKING ASYNC)
     // =====================================================
     private void dispatchEmail(String toEmail, String subject, String htmlContent) {
         CompletableFuture.runAsync(() -> {
-            boolean sent = false;
+            boolean sent = trySendViaGoogleSmtp(toEmail, subject, htmlContent);
 
-            // 1. Send via Google SMTP (JavaMailSender with HTML MimeMessage)
-            if (mailSender != null) {
-                try {
-                    MimeMessage mimeMessage = mailSender.createMimeMessage();
-                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
-                    helper.setFrom(fromEmail, "CraftBid Official");
-                    helper.setTo(toEmail);
-                    helper.setSubject(subject);
-                    helper.setText(htmlContent, true);
-                    mailSender.send(mimeMessage);
-                    System.out.println("✅ Email delivered successfully via Google SMTP to " + toEmail);
-                    sent = true;
-                } catch (Exception e) {
-                    System.err.println("⚠️ SMTP failed: " + e.getMessage() + ". Trying REST fallback...");
-                }
+            if (!sent) {
+                sent = trySendViaDirectSmtps(toEmail, subject, htmlContent);
             }
 
-            // 2. Fallback to Brevo REST API if API Key is configured
             if (!sent && brevoApiKey != null && !brevoApiKey.isBlank()) {
-                try {
-                    String jsonBody = String.format(
-                            "{\"sender\":{\"name\":\"CraftBid\",\"email\":\"%s\"},\"to\":[{\"email\":\"%s\"}],\"subject\":\"%s\",\"htmlContent\":\"%s\"}",
-                            escapeJson(fromEmail),
-                            escapeJson(toEmail),
-                            escapeJson(subject),
-                            escapeJson(htmlContent)
-                    );
-
-                    HttpRequest request = HttpRequest.newBuilder()
-                            .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
-                            .header("api-key", brevoApiKey.trim())
-                            .header("Content-Type", "application/json")
-                            .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-                            .timeout(Duration.ofSeconds(6))
-                            .build();
-
-                    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-                    if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                        System.out.println("✅ Email delivered via Brevo REST API to " + toEmail);
-                    } else {
-                        System.err.println("❌ Brevo REST API returned " + response.statusCode() + ": " + response.body());
-                    }
-                } catch (Exception e) {
-                    System.err.println("❌ Brevo REST API error: " + e.getMessage());
-                }
+                trySendViaBrevoRest(toEmail, subject, htmlContent);
             }
         });
+    }
+
+    // =====================================================
+    // SYNCHRONOUS DIAGNOSTIC EMAIL TEST
+    // =====================================================
+    public String sendDiagnosticTestEmail(String toEmail) {
+        long start = System.currentTimeMillis();
+        String subject = "CraftBid Diagnostic Email Test - " + System.currentTimeMillis();
+        String html = "<div style='font-family:sans-serif;padding:20px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;'>"
+                + "<h2 style='color:#15803d;'>✅ CraftBid Email Dispatcher is Operational!</h2>"
+                + "<p>This is a test email sent to verify active delivery from the CraftBid cloud infrastructure.</p>"
+                + "<p><strong>Timestamp:</strong> " + java.time.LocalDateTime.now() + "</p>"
+                + "</div>";
+
+        StringBuilder log = new StringBuilder();
+        log.append("Attempting email dispatch to: ").append(toEmail).append("\n");
+
+        boolean sent = false;
+        try {
+            if (mailSender != null) {
+                MimeMessage mimeMessage = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+                helper.setFrom(fromEmail, "CraftBid Official");
+                helper.setTo(toEmail);
+                helper.setSubject(subject);
+                helper.setText(html, true);
+                mailSender.send(mimeMessage);
+                log.append("✅ Google SMTP (JavaMailSender) succeeded in ").append(System.currentTimeMillis() - start).append("ms\n");
+                sent = true;
+            }
+        } catch (Exception e) {
+            log.append("⚠️ JavaMailSender failed: ").append(e.getMessage()).append("\n");
+        }
+
+        if (!sent) {
+            try {
+                Properties prop = new Properties();
+                prop.put("mail.smtp.host", "smtp.gmail.com");
+                prop.put("mail.smtp.port", "465");
+                prop.put("mail.smtp.auth", "true");
+                prop.put("mail.smtp.socketFactory.port", "465");
+                prop.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+                prop.put("mail.smtp.ssl.enable", "true");
+                prop.put("mail.smtp.ssl.trust", "*");
+                prop.put("mail.smtp.connectiontimeout", "5000");
+                prop.put("mail.smtp.timeout", "5000");
+
+                Session session = Session.getInstance(prop, new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(mailUsername, mailPassword);
+                    }
+                });
+
+                Message message = new MimeMessage(session);
+                message.setFrom(new InternetAddress(fromEmail, "CraftBid Official"));
+                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+                message.setSubject(subject);
+                message.setContent(html, "text/html; charset=utf-8");
+
+                Transport.send(message);
+                log.append("✅ Direct SMTPS (Port 465 SSL) succeeded in ").append(System.currentTimeMillis() - start).append("ms\n");
+                sent = true;
+            } catch (Exception e) {
+                log.append("⚠️ Direct SMTPS failed: ").append(e.getMessage()).append("\n");
+            }
+        }
+
+        return log.toString();
+    }
+
+    private boolean trySendViaGoogleSmtp(String toEmail, String subject, String htmlContent) {
+        if (mailSender == null) return false;
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+            helper.setFrom(fromEmail, "CraftBid Official");
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+            mailSender.send(mimeMessage);
+            System.out.println("✅ Email delivered successfully via Google SMTP to " + toEmail);
+            return true;
+        } catch (Exception e) {
+            System.err.println("⚠️ Google SMTP failed for " + toEmail + ": " + e.getMessage() + ". Trying SMTPS fallback...");
+            return false;
+        }
+    }
+
+    private boolean trySendViaDirectSmtps(String toEmail, String subject, String htmlContent) {
+        try {
+            Properties prop = new Properties();
+            prop.put("mail.smtp.host", "smtp.gmail.com");
+            prop.put("mail.smtp.port", "465");
+            prop.put("mail.smtp.auth", "true");
+            prop.put("mail.smtp.socketFactory.port", "465");
+            prop.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+            prop.put("mail.smtp.ssl.enable", "true");
+            prop.put("mail.smtp.ssl.trust", "*");
+            prop.put("mail.smtp.connectiontimeout", "5000");
+            prop.put("mail.smtp.timeout", "5000");
+
+            Session session = Session.getInstance(prop, new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(mailUsername, mailPassword);
+                }
+            });
+
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(fromEmail, "CraftBid Official"));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            message.setSubject(subject);
+            message.setContent(htmlContent, "text/html; charset=utf-8");
+
+            Transport.send(message);
+            System.out.println("✅ Email delivered via SMTPS Port 465 to " + toEmail);
+            return true;
+        } catch (Exception e) {
+            System.err.println("⚠️ Direct SMTPS failed for " + toEmail + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean trySendViaBrevoRest(String toEmail, String subject, String htmlContent) {
+        try {
+            String jsonBody = String.format(
+                    "{\"sender\":{\"name\":\"CraftBid\",\"email\":\"%s\"},\"to\":[{\"email\":\"%s\"}],\"subject\":\"%s\",\"htmlContent\":\"%s\"}",
+                    escapeJson(fromEmail),
+                    escapeJson(toEmail),
+                    escapeJson(subject),
+                    escapeJson(htmlContent)
+            );
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
+                    .header("api-key", brevoApiKey.trim())
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .timeout(Duration.ofSeconds(6))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                System.out.println("✅ Email delivered via Brevo REST API to " + toEmail);
+                return true;
+            } else {
+                System.err.println("❌ Brevo REST API returned " + response.statusCode() + ": " + response.body());
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Brevo REST API error: " + e.getMessage());
+            return false;
+        }
     }
 
     private String escapeJson(String input) {

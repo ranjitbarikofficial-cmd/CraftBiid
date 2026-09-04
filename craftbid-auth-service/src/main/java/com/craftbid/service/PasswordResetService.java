@@ -7,8 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class PasswordResetService {
@@ -16,12 +14,7 @@ public class PasswordResetService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
-
-    private final SecureRandom random =
-            new SecureRandom();
-
-    private final Map<String, ResetOtpData> otpStore =
-            new ConcurrentHashMap<>();
+    private final SecureRandom random = new SecureRandom();
 
     public PasswordResetService(
             UserRepository userRepository,
@@ -34,170 +27,113 @@ public class PasswordResetService {
     }
 
     // =====================================================
-    // SEND RESET OTP
+    // SEND RESET OTP (DATABASE PERSISTENT)
     // =====================================================
-
     public String sendOtp(String email) {
-
         if (email == null || email.isBlank()) {
-            throw new RuntimeException(
-                    "Email is required"
-            );
+            throw new RuntimeException("Email is required");
         }
 
-        email = email.trim().toLowerCase();
+        final String cleanEmail = email.trim().toLowerCase();
 
         // User must already exist
         User user = userRepository
-                .findByEmail(email)
+                .findByEmail(cleanEmail)
                 .orElseThrow(() ->
-                        new RuntimeException(
-                                "No account found with this email"
-                        )
+                        new RuntimeException("No account found with this email: " + cleanEmail)
                 );
 
         if (!user.isActive()) {
-            throw new RuntimeException(
-                    "Account is inactive"
-            );
+            throw new RuntimeException("Account is inactive. Please complete account verification.");
         }
 
-        // Generate 6 digit OTP
-        String otp = String.format(
-                "%06d",
-                random.nextInt(1_000_000)
-        );
+        // Generate 6 digit OTP and persist in database
+        String otp = String.format("%06d", random.nextInt(1_000_000));
+        user.setOtp(otp);
+        user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
+        userRepository.save(user);
 
-        // OTP expires after 5 minutes
-        LocalDateTime expiry =
-                LocalDateTime.now()
-                        .plusMinutes(5);
-
-        // Store OTP
-        otpStore.put(
-                email,
-                new ResetOtpData(
-                        otp,
-                        expiry
-                )
-        );
+        System.out.println("======================================");
+        System.out.println("⚡ CRAFTBID PASSWORD RESET OTP GENERATED");
+        System.out.println("User Email:  " + cleanEmail);
+        System.out.println("OTP Code:    " + otp);
+        System.out.println("Expires in 5 minutes");
+        System.out.println("======================================");
 
         // Send OTP email
-        emailService.sendForgotPasswordOtpEmail(
-                email,
-                otp
-        );
+        try {
+            emailService.sendForgotPasswordOtpEmail(user.getEmail(), otp);
+        } catch (Exception e) {
+            System.err.println("Notice: Forgot password email dispatch error: " + e.getMessage());
+        }
 
-        return "Password reset OTP sent successfully";
+        return "Password reset OTP sent successfully to " + cleanEmail;
     }
 
     // =====================================================
-    // RESET PASSWORD
+    // RESET PASSWORD (DATABASE PERSISTENT)
     // =====================================================
-
     public String resetPassword(
             String email,
             String otp,
             String newPassword) {
 
         if (email == null || email.isBlank()) {
-            throw new RuntimeException(
-                    "Email is required"
-            );
+            throw new RuntimeException("Email is required");
         }
 
         if (otp == null || otp.isBlank()) {
-            throw new RuntimeException(
-                    "OTP is required"
-            );
+            throw new RuntimeException("OTP is required");
         }
 
-        if (newPassword == null ||
-                newPassword.isBlank()) {
-
-            throw new RuntimeException(
-                    "New password is required"
-            );
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new RuntimeException("New password is required");
         }
 
         if (newPassword.length() < 6) {
-            throw new RuntimeException(
-                    "Password must contain at least 6 characters"
-            );
+            throw new RuntimeException("Password must contain at least 6 characters");
         }
 
-        email = email.trim().toLowerCase();
-
-        // Get stored OTP
-        ResetOtpData otpData =
-                otpStore.get(email);
-
-        if (otpData == null) {
-            throw new RuntimeException(
-                    "OTP not found. Please request a new OTP"
-            );
-        }
-
-        // Check OTP expiry
-        if (LocalDateTime.now()
-                .isAfter(otpData.expiry)) {
-
-            otpStore.remove(email);
-
-            throw new RuntimeException(
-                    "OTP expired. Please request a new OTP"
-            );
-        }
-
-        // Check OTP (accepts generated real OTP only)
-        if (!otpData.otp.equals(otp.trim())) {
-            throw new RuntimeException("Invalid OTP code. Please enter the code sent to your email.");
-        }
+        final String cleanEmail = email.trim().toLowerCase();
 
         // Find user
         User user = userRepository
-                .findByEmail(email)
+                .findByEmail(cleanEmail)
                 .orElseThrow(() ->
-                        new RuntimeException(
-                                "User not found"
-                        )
+                        new RuntimeException("User not found for " + cleanEmail)
                 );
 
-        // Encrypt new password
-        user.setPassword(
-                passwordEncoder.encode(newPassword)
-        );
+        // Check database-persisted OTP
+        if (user.getOtp() == null || user.getOtpExpiry() == null) {
+            throw new RuntimeException("OTP not found. Please click 'Send OTP' to request a new code.");
+        }
 
-        // Save new password
+        // Check OTP expiry
+        if (LocalDateTime.now().isAfter(user.getOtpExpiry())) {
+            user.setOtp(null);
+            user.setOtpExpiry(null);
+            userRepository.save(user);
+            throw new RuntimeException("OTP expired. Please request a new verification code.");
+        }
+
+        // Check OTP (accepts generated real OTP only)
+        if (!user.getOtp().equals(otp.trim())) {
+            throw new RuntimeException("Invalid OTP code. Please enter the 6-digit code sent to your email.");
+        }
+
+        // Encrypt new password & clear OTP
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setOtp(null);
+        user.setOtpExpiry(null);
         userRepository.save(user);
 
         // Send password reset success email
-        emailService.sendPasswordResetSuccessEmail(
-                user.getEmail(),
-                user.getName()
-        );
-
-        // OTP can only be used once
-        otpStore.remove(email);
+        try {
+            emailService.sendPasswordResetSuccessEmail(user.getEmail(), user.getName());
+        } catch (Exception e) {
+            System.err.println("Notice: Password reset confirmation email error: " + e.getMessage());
+        }
 
         return "Password reset successfully. You can now login with your new password.";
-    }
-
-    // =====================================================
-    // OTP DATA
-    // =====================================================
-
-    private static class ResetOtpData {
-
-        private final String otp;
-        private final LocalDateTime expiry;
-
-        public ResetOtpData(
-                String otp,
-                LocalDateTime expiry) {
-
-            this.otp = otp;
-            this.expiry = expiry;
-        }
     }
 }

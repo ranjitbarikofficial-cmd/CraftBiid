@@ -11,6 +11,7 @@ import com.craftbid.dto.ResetPasswordRequest;
 
 import com.craftbid.service.AdminOtpService;
 import com.craftbid.service.AuthService;
+import com.craftbid.service.EmailService;
 import com.craftbid.service.EmailVerificationService;
 import com.craftbid.service.PasswordResetService;
 
@@ -29,17 +30,20 @@ public class AuthController {
     private final AdminOtpService adminOtpService;
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
+    private final EmailService emailService;
 
     public AuthController(
             AuthService authService,
             AdminOtpService adminOtpService,
             EmailVerificationService emailVerificationService,
-            PasswordResetService passwordResetService) {
+            PasswordResetService passwordResetService,
+            EmailService emailService) {
 
         this.authService = authService;
         this.adminOtpService = adminOtpService;
         this.emailVerificationService = emailVerificationService;
         this.passwordResetService = passwordResetService;
+        this.emailService = emailService;
     }
 
     // ==========================================
@@ -187,5 +191,18 @@ public class AuthController {
         String result = authService.enableSeller(identifier);
 
         return ResponseEntity.ok(result);
+    }
+
+    // ==========================================
+    // DIAGNOSTIC EMAIL TEST
+    // ==========================================
+
+    @GetMapping("/test-email")
+    public ResponseEntity<String> testEmail(
+            @RequestParam(defaultValue = "ranjitbarik.official@gmail.com") String to) {
+
+        return ResponseEntity.ok(
+                emailService.sendDiagnosticTestEmail(to)
+        );
     }
 }

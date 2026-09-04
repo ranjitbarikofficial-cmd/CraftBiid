@@ -32,6 +32,7 @@ public class AuthService {
     }
 
     // =====================================================
+    // =====================================================
     // CHECK EMAIL OR PHONE
     // =====================================================
 
@@ -51,31 +52,97 @@ public class AuthService {
 
         // Check email
         if (email != null && !email.isBlank()) {
-
             email = email.trim().toLowerCase();
-
-            if (userRepository.existsByEmail(email)) {
-                throw new RuntimeException(
-                        "Email already registered"
-                );
-            }
+            userRepository.findByEmail(email).ifPresent(existing -> {
+                if (existing.isActive()) {
+                    throw new RuntimeException("Email is already registered. Please login.");
+                }
+            });
         }
 
         // Check phone
         if (phone != null && !phone.isBlank()) {
-
             phone = phone.trim();
-
-            if (userRepository.existsByPhone(phone)) {
-                throw new RuntimeException(
-                        "Mobile number already registered"
-                );
-            }
+            userRepository.findByPhone(phone).ifPresent(existing -> {
+                if (existing.isActive()) {
+                    throw new RuntimeException("Mobile number is already registered. Please login.");
+                }
+            });
         }
     }
 
     // =====================================================
-    // CREATE USER AFTER OTP VERIFICATION
+    // SAVE PENDING REGISTRATION USER WITH OTP IN DATABASE
+    // =====================================================
+    public User savePendingUser(RegisterRequest request, String otp, java.time.LocalDateTime expiry) {
+        String email = request.getEmail() != null && !request.getEmail().isBlank() ? request.getEmail().trim().toLowerCase() : null;
+        String phone = request.getPhone() != null && !request.getPhone().isBlank() ? request.getPhone().trim() : null;
+
+        User user = null;
+        if (email != null) {
+            user = userRepository.findByEmail(email).orElse(null);
+        }
+        if (user == null && phone != null) {
+            user = userRepository.findByPhone(phone).orElse(null);
+        }
+
+        if (user == null) {
+            user = new User();
+            user.setRole(Role.CUSTOMER);
+            user.setSellerEnabled(false);
+        }
+
+        user.setName(request.getName());
+        user.setEmail(email);
+        user.setPhone(phone);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setActive(false);
+        user.setOtp(otp);
+        user.setOtpExpiry(expiry);
+
+        return userRepository.save(user);
+    }
+
+    // =====================================================
+    // VERIFY PENDING USER AFTER OTP IN DATABASE
+    // =====================================================
+    public User verifyPendingUser(String identifier, String otp) {
+        if (identifier == null || identifier.isBlank()) {
+            throw new RuntimeException("Email or mobile number is required");
+        }
+
+        if (otp == null || otp.isBlank()) {
+            throw new RuntimeException("OTP code is required");
+        }
+
+        String cleanIdentifier = identifier.trim();
+        User user = userRepository.findByIdentifier(cleanIdentifier)
+                .orElseThrow(() -> new RuntimeException("Registration record not found for " + cleanIdentifier + ". Please register first."));
+
+        if (user.isActive()) {
+            return user;
+        }
+
+        if (user.getOtp() == null || user.getOtpExpiry() == null) {
+            throw new RuntimeException("OTP not found. Please click 'Resend OTP'.");
+        }
+
+        if (java.time.LocalDateTime.now().isAfter(user.getOtpExpiry())) {
+            throw new RuntimeException("OTP expired. Please click 'Resend OTP' to get a new code.");
+        }
+
+        if (!user.getOtp().equals(otp.trim())) {
+            throw new RuntimeException("Invalid OTP code. Please enter the 6-digit code sent to your email.");
+        }
+
+        user.setActive(true);
+        user.setOtp(null);
+        user.setOtpExpiry(null);
+        return userRepository.save(user);
+    }
+
+    // =====================================================
+    // CREATE USER AFTER OTP VERIFICATION (LEGACY COMPAT)
     // =====================================================
 
     public User createVerifiedUser(
@@ -84,78 +151,25 @@ public class AuthService {
         String email = request.getEmail();
         String phone = request.getPhone();
 
-        // -------------------------------------------------
-        // NORMALIZE EMAIL
-        // -------------------------------------------------
-
         if (email != null && !email.isBlank()) {
-
             email = email.trim().toLowerCase();
-
-            if (userRepository.existsByEmail(email)) {
-                throw new RuntimeException(
-                        "Email already registered"
-                );
-            }
-
         } else {
             email = null;
         }
 
-        // -------------------------------------------------
-        // NORMALIZE PHONE
-        // -------------------------------------------------
-
         if (phone != null && !phone.isBlank()) {
-
             phone = phone.trim();
-
-            if (userRepository.existsByPhone(phone)) {
-                throw new RuntimeException(
-                        "Mobile number already registered"
-                );
-            }
-
         } else {
             phone = null;
         }
 
-        // -------------------------------------------------
-        // AT LEAST ONE LOGIN METHOD
-        // -------------------------------------------------
-
-        if (email == null && phone == null) {
-
-            throw new RuntimeException(
-                    "Email or mobile number is required"
-            );
-        }
-
-        // =================================================
-        // CREATE NORMAL USER
-        // =================================================
-
         User user = new User();
-
         user.setName(request.getName());
-
         user.setEmail(email);
-
         user.setPhone(phone);
-
-        user.setPassword(
-                passwordEncoder.encode(
-                        request.getPassword()
-                )
-        );
-
-        // Every normal registered user is CUSTOMER
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.CUSTOMER);
-
-        // Account verified
         user.setActive(true);
-
-        // Seller capability disabled initially
         user.setSellerEnabled(false);
 
         return userRepository.save(user);

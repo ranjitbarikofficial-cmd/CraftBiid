@@ -126,7 +126,8 @@ public class SecurityConfig {
                                 "/api/auth/admin/send-otp",
                                 "/api/auth/admin/verify-otp",
                                 "/api/auth/forgot-password",
-                                "/api/auth/reset-password"
+                                "/api/auth/reset-password",
+                                "/api/auth/test-email"
                         ).permitAll()
 
                         // Authenticated Seller / Artisan enable

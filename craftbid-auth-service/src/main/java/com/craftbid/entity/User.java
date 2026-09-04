@@ -32,6 +32,12 @@ public class User {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "otp")
+    private String otp;
+
+    @Column(name = "otp_expiry")
+    private java.time.LocalDateTime otpExpiry;
+
     public User() {
     }
 
@@ -93,5 +99,21 @@ public class User {
 
     public void setSellerEnabled(boolean sellerEnabled) {
         this.sellerEnabled = sellerEnabled;
+    }
+
+    public String getOtp() {
+        return otp;
+    }
+
+    public void setOtp(String otp) {
+        this.otp = otp;
+    }
+
+    public java.time.LocalDateTime getOtpExpiry() {
+        return otpExpiry;
+    }
+
+    public void setOtpExpiry(java.time.LocalDateTime otpExpiry) {
+        this.otpExpiry = otpExpiry;
     }
 }

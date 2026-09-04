@@ -8,29 +8,25 @@ import com.craftbid.security.JwtService;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AdminOtpService {
 
-    // Primary authorized admin emails that can access admin login
+    // Authorized admin emails that can access admin login
     private static final Set<String> AUTHORIZED_ADMIN_EMAILS = Set.of(
             "craftbid.official@gmail.com",
             "ranjitbarik146@gmail.com",
+            "ranjitbarik.official@gmail.com",
             "rb650196@gmail.com",
             "ranjitbarik466@gmail.com"
     );
 
-    // OTP validity = 5 minutes
-    private static final long OTP_EXPIRY = 5 * 60 * 1000;
-
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final JwtService jwtService;
-
     private final SecureRandom random = new SecureRandom();
-    private final ConcurrentHashMap<String, OtpData> otpStore = new ConcurrentHashMap<>();
 
     public AdminOtpService(
             UserRepository userRepository,
@@ -48,7 +44,7 @@ public class AdminOtpService {
     }
 
     // ==========================================
-    // SEND OTP
+    // SEND OTP (DATABASE PERSISTENT)
     // ==========================================
     public String sendOtp(String email) {
         if (email == null || email.isBlank()) {
@@ -79,18 +75,16 @@ public class AdminOtpService {
             if (isAuthorizedAdmin(cleanEmail)) {
                 admin.setRole(Role.ADMIN);
                 admin.setActive(true);
-                admin = userRepository.save(admin);
             } else {
                 throw new RuntimeException("Access denied. Account is not configured as administrator.");
             }
         }
 
-        // Generate 6 digit OTP
+        // Generate 6 digit OTP and persist in MySQL database
         String otp = String.format("%06d", random.nextInt(1_000_000));
-        long expiryTime = System.currentTimeMillis() + OTP_EXPIRY;
-
-        // Store OTP keyed by clean email
-        otpStore.put(cleanEmail, new OtpData(otp, expiryTime));
+        admin.setOtp(otp);
+        admin.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
+        userRepository.save(admin);
 
         System.out.println("======================================");
         System.out.println("⚡ CRAFTBID ADMIN LOGIN OTP GENERATED");
@@ -109,7 +103,7 @@ public class AdminOtpService {
     }
 
     // ==========================================
-    // VERIFY OTP
+    // VERIFY OTP (DATABASE PERSISTENT)
     // ==========================================
     public LoginResponse verifyOtp(String email, String otp) {
         if (email == null || email.isBlank()) {
@@ -122,54 +116,38 @@ public class AdminOtpService {
 
         String cleanEmail = email.trim().toLowerCase();
 
-        // Find or auto-provision admin
+        // Find admin
         User admin = userRepository
                 .findByEmail(cleanEmail)
-                .orElseGet(() -> {
-                    if (isAuthorizedAdmin(cleanEmail)) {
-                        User newAdmin = new User();
-                        newAdmin.setName("CraftBid Administrator");
-                        newAdmin.setEmail(cleanEmail);
-                        newAdmin.setPhone("9040408690");
-                        newAdmin.setRole(Role.ADMIN);
-                        newAdmin.setActive(true);
-                        newAdmin.setSellerEnabled(true);
-                        return userRepository.save(newAdmin);
-                    }
-                    throw new RuntimeException("Administrator account not found for " + cleanEmail);
-                });
+                .orElseThrow(() -> new RuntimeException("Administrator account not found for " + cleanEmail));
 
         // Check role and active
         if (admin.getRole() != Role.ADMIN || !admin.isActive()) {
-            if (isAuthorizedAdmin(cleanEmail)) {
-                admin.setRole(Role.ADMIN);
-                admin.setActive(true);
-                admin = userRepository.save(admin);
-            } else {
-                throw new RuntimeException("Access denied. Not an authorized administrator.");
-            }
+            throw new RuntimeException("Access denied. Not an authorized administrator.");
         }
 
-        // Get stored OTP
-        OtpData otpData = otpStore.get(cleanEmail);
-
-        if (otpData == null) {
-            throw new RuntimeException("OTP not found or expired. Please request a new security code.");
+        // Check database-persisted OTP
+        if (admin.getOtp() == null || admin.getOtpExpiry() == null) {
+            throw new RuntimeException("Security code not found. Please click 'Send OTP Code'.");
         }
 
         // Check expiry
-        if (System.currentTimeMillis() > otpData.expiryTime) {
-            otpStore.remove(cleanEmail);
+        if (LocalDateTime.now().isAfter(admin.getOtpExpiry())) {
+            admin.setOtp(null);
+            admin.setOtpExpiry(null);
+            userRepository.save(admin);
             throw new RuntimeException("Security code expired. Please request a new OTP.");
         }
 
-        // Check OTP (accepts real generated OTP only)
-        if (!otpData.otp.equals(otp.trim())) {
+        // Check OTP
+        if (!admin.getOtp().equals(otp.trim())) {
             throw new RuntimeException("Invalid security code. Please check your inbox and try again.");
         }
 
-        // OTP used -> clear store
-        otpStore.remove(cleanEmail);
+        // Clear used OTP in database
+        admin.setOtp(null);
+        admin.setOtpExpiry(null);
+        userRepository.save(admin);
 
         // Generate JWT
         String token = jwtService.generateToken(
@@ -185,18 +163,5 @@ public class AdminOtpService {
                 admin.getRole().name(),
                 admin.isSellerEnabled()
         );
-    }
-
-    // ==========================================
-    // OTP DATA
-    // ==========================================
-    private static class OtpData {
-        private final String otp;
-        private final long expiryTime;
-
-        public OtpData(String otp, long expiryTime) {
-            this.otp = otp;
-            this.expiryTime = expiryTime;
-        }
     }
 }
