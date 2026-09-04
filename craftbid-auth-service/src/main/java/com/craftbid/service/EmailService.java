@@ -38,12 +38,16 @@ public class EmailService {
     @Value("${craftbid.resend.api-key:${RESEND_API_KEY:}}")
     private String resendApiKey;
 
+    @Value("${craftbid.email.webhook-url:${CRAFTBID_EMAIL_WEBHOOK_URL:}}")
+    private String webhookUrl;
+
     private final JavaMailSender mailSender;
     private final HttpClient httpClient;
 
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
         this.httpClient = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.ALWAYS)
                 .connectTimeout(Duration.ofSeconds(6))
                 .build();
     }
@@ -55,25 +59,31 @@ public class EmailService {
         CompletableFuture.runAsync(() -> {
             boolean sent = false;
 
+            String whUrl = getEffectiveWebhookUrl();
             String brevoKey = getFormattedBrevoKey();
             String resendKey = getEffectiveResendKey();
 
-            // 1. If Brevo REST API key is configured, use it first (HTTPS Port 443)
-            if (!brevoKey.isBlank()) {
+            // 1. If Webhook URL is configured (HTTPS Port 443)
+            if (!whUrl.isBlank()) {
+                sent = trySendViaWebhook(toEmail, subject, htmlContent);
+            }
+
+            // 2. If Brevo REST API key is configured, use it (HTTPS Port 443)
+            if (!sent && !brevoKey.isBlank()) {
                 sent = trySendViaBrevoRest(toEmail, subject, htmlContent);
             }
 
-            // 2. If Resend REST API key is configured
+            // 3. If Resend REST API key is configured (HTTPS Port 443)
             if (!sent && !resendKey.isBlank()) {
                 sent = trySendViaResendRest(toEmail, subject, htmlContent);
             }
 
-            // 3. Try Google SMTP via JavaMailSender
+            // 4. Try Google SMTP via JavaMailSender (Port 587)
             if (!sent) {
                 sent = trySendViaGoogleSmtp(toEmail, subject, htmlContent);
             }
 
-            // 4. Try Direct SMTPS (Port 465 SSL)
+            // 5. Try Direct SMTPS (Port 465 SSL)
             if (!sent) {
                 trySendViaDirectSmtps(toEmail, subject, htmlContent);
             }
@@ -92,16 +102,47 @@ public class EmailService {
                 + "<p><strong>Timestamp:</strong> " + java.time.LocalDateTime.now() + "</p>"
                 + "</div>";
 
+        String whUrl = getEffectiveWebhookUrl();
         String brevoKey = getFormattedBrevoKey();
         String resendKey = getEffectiveResendKey();
 
         StringBuilder log = new StringBuilder();
         log.append("Attempting email dispatch to: ").append(toEmail).append("\n");
+        log.append("Configured WEBHOOK_URL: ").append(!whUrl.isBlank() ? "YES (" + whUrl.substring(0, Math.min(30, whUrl.length())) + "...)" : "NO").append("\n");
         log.append("Configured BREVO_API_KEY: ").append(!brevoKey.isBlank() ? "YES (" + brevoKey.substring(0, Math.min(16, brevoKey.length())) + "...)" : "NO (Empty)").append("\n");
         log.append("Configured RESEND_API_KEY: ").append(!resendKey.isBlank() ? "YES" : "NO").append("\n");
         log.append("Configured Sender FROM: ").append(fromEmail).append("\n");
 
         boolean sent = false;
+
+        // 1. Try Webhook if configured
+        if (!whUrl.isBlank()) {
+            try {
+                String jsonBody = String.format(
+                        "{\"to\":\"%s\",\"subject\":\"%s\",\"html\":\"%s\"}",
+                        escapeJson(toEmail),
+                        escapeJson(subject),
+                        escapeJson(html)
+                );
+
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(whUrl))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                        .timeout(Duration.ofSeconds(6))
+                        .build();
+
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                    log.append("✅ Google Webhook (HTTPS Port 443) succeeded in ").append(System.currentTimeMillis() - start).append("ms! Response: ").append(response.body()).append("\n");
+                    sent = true;
+                } else {
+                    log.append("⚠️ Google Webhook returned ").append(response.statusCode()).append(": ").append(response.body()).append("\n");
+                }
+            } catch (Exception e) {
+                log.append("⚠️ Google Webhook exception: ").append(e.getMessage()).append("\n");
+            }
+        }
 
         // 1. Try Brevo REST if key present
         if (!brevoKey.isBlank()) {
@@ -272,10 +313,21 @@ public class EmailService {
         }
     }
 
+    private String getEffectiveWebhookUrl() {
+        String url = webhookUrl;
+        if (url == null || url.isBlank()) {
+            url = System.getenv("CRAFTBID_EMAIL_WEBHOOK_URL");
+        }
+        return url != null ? url.trim() : "";
+    }
+
     private String getFormattedBrevoKey() {
         String key = brevoApiKey;
         if (key == null || key.isBlank()) {
             key = System.getenv("BREVO_API_KEY");
+        }
+        if (key == null || key.isBlank()) {
+            key = System.getenv("CRAFTBID_BREVO_API_KEY");
         }
         if (key == null || key.isBlank()) {
             return "";
@@ -292,7 +344,42 @@ public class EmailService {
         if (key == null || key.isBlank()) {
             key = System.getenv("RESEND_API_KEY");
         }
+        if (key == null || key.isBlank()) {
+            key = System.getenv("CRAFTBID_RESEND_API_KEY");
+        }
         return key != null ? key.trim() : "";
+    }
+
+    private boolean trySendViaWebhook(String toEmail, String subject, String htmlContent) {
+        String url = getEffectiveWebhookUrl();
+        if (url.isBlank()) return false;
+        try {
+            String jsonBody = String.format(
+                    "{\"to\":\"%s\",\"subject\":\"%s\",\"html\":\"%s\"}",
+                    escapeJson(toEmail),
+                    escapeJson(subject),
+                    escapeJson(htmlContent)
+            );
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .timeout(Duration.ofSeconds(6))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                System.out.println("✅ Email delivered via Webhook to " + toEmail);
+                return true;
+            } else {
+                System.err.println("❌ Webhook returned " + response.statusCode() + ": " + response.body());
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Webhook error: " + e.getMessage());
+            return false;
+        }
     }
 
     private boolean trySendViaBrevoRest(String toEmail, String subject, String htmlContent) {
