@@ -35,6 +35,9 @@ public class EmailService {
     @Value("${craftbid.brevo.api-key:${BREVO_API_KEY:}}")
     private String brevoApiKey;
 
+    @Value("${craftbid.brevo.sender-email:${BREVO_SENDER_EMAIL:ranjitbarik146@gmail.com}}")
+    private String brevoSenderEmail;
+
     @Value("${craftbid.resend.api-key:${RESEND_API_KEY:}}")
     private String resendApiKey;
 
@@ -144,11 +147,13 @@ public class EmailService {
             }
         }
 
-        // 1. Try Brevo REST if key present
+        // 2. Try Brevo REST if key present
         if (!brevoKey.isBlank()) {
             try {
+                String brevoSender = getEffectiveBrevoSenderEmail();
                 String jsonBody = String.format(
-                        "{\"sender\":{\"name\":\"CraftBid\",\"email\":\"%s\"},\"to\":[{\"email\":\"%s\"}],\"subject\":\"%s\",\"htmlContent\":\"%s\"}",
+                        "{\"sender\":{\"name\":\"CraftBid\",\"email\":\"%s\"},\"replyTo\":{\"email\":\"%s\",\"name\":\"CraftBid Support\"},\"to\":[{\"email\":\"%s\"}],\"subject\":\"%s\",\"htmlContent\":\"%s\"}",
+                        escapeJson(brevoSender),
                         escapeJson(fromEmail),
                         escapeJson(toEmail),
                         escapeJson(subject),
@@ -389,11 +394,24 @@ public class EmailService {
         }
     }
 
+    private String getEffectiveBrevoSenderEmail() {
+        String email = brevoSenderEmail;
+        if (email == null || email.isBlank()) {
+            email = System.getenv("BREVO_SENDER_EMAIL");
+        }
+        if (email == null || email.isBlank()) {
+            email = System.getenv("CRAFTBID_BREVO_SENDER_EMAIL");
+        }
+        return (email != null && !email.isBlank()) ? email.trim() : "ranjitbarik146@gmail.com";
+    }
+
     private boolean trySendViaBrevoRest(String toEmail, String subject, String htmlContent) {
         try {
             String cleanKey = getFormattedBrevoKey();
+            String brevoSender = getEffectiveBrevoSenderEmail();
             String jsonBody = String.format(
-                    "{\"sender\":{\"name\":\"CraftBid\",\"email\":\"%s\"},\"to\":[{\"email\":\"%s\"}],\"subject\":\"%s\",\"htmlContent\":\"%s\"}",
+                    "{\"sender\":{\"name\":\"CraftBid\",\"email\":\"%s\"},\"replyTo\":{\"email\":\"%s\",\"name\":\"CraftBid Support\"},\"to\":[{\"email\":\"%s\"}],\"subject\":\"%s\",\"htmlContent\":\"%s\"}",
+                    escapeJson(brevoSender),
                     escapeJson(fromEmail),
                     escapeJson(toEmail),
                     escapeJson(subject),
