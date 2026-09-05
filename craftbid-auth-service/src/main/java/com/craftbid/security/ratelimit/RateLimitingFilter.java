@@ -23,9 +23,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final RateLimiterService rateLimiterService;
     private final ObjectMapper objectMapper;
 
-    public RateLimitingFilter(RateLimiterService rateLimiterService, ObjectMapper objectMapper) {
+    public RateLimitingFilter(RateLimiterService rateLimiterService) {
         this.rateLimiterService = rateLimiterService;
-        this.objectMapper = objectMapper;
+        this.objectMapper = new ObjectMapper();
     }
 
     @Override
