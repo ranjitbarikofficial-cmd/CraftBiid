@@ -15,8 +15,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+import org.springframework.validation.annotation.Validated;
+
 @RestController
 @RequestMapping("/api/auctions")
+@Validated
 public class AuctionController {
 
     private final AuctionService auctionService;
@@ -28,7 +32,7 @@ public class AuctionController {
     @PostMapping
     public ResponseEntity<Auction> createAuction(
             Authentication authentication,
-            @RequestBody CreateAuctionRequest request) {
+            @Valid @RequestBody CreateAuctionRequest request) {
 
         String identifier = authentication.getName();
         return ResponseEntity.ok(auctionService.createAuction(identifier, request));
@@ -60,7 +64,7 @@ public class AuctionController {
     public ResponseEntity<AuctionParticipant> joinAuction(
             Authentication authentication,
             @PathVariable Long id,
-            @RequestBody(required = false) JoinAuctionRequest request) {
+            @Valid @RequestBody(required = false) JoinAuctionRequest request) {
 
         String identifier = authentication.getName();
         if (request == null) request = new JoinAuctionRequest();
@@ -72,7 +76,7 @@ public class AuctionController {
     public ResponseEntity<Bid> placeDifferentialBid(
             Authentication authentication,
             @PathVariable Long id,
-            @RequestBody PlaceBidRequest request) {
+            @Valid @RequestBody PlaceBidRequest request) {
 
         String identifier = authentication.getName();
         return ResponseEntity.ok(auctionService.placeDifferentialBid(identifier, id, request.getAmount()));
@@ -83,7 +87,7 @@ public class AuctionController {
     public ResponseEntity<Bid> placeBid(
             Authentication authentication,
             @PathVariable Long id,
-            @RequestBody PlaceBidRequest request) {
+            @Valid @RequestBody PlaceBidRequest request) {
 
         String identifier = authentication.getName();
         return ResponseEntity.ok(auctionService.placeDifferentialBid(identifier, id, request.getAmount()));
@@ -98,7 +102,7 @@ public class AuctionController {
     public ResponseEntity<AuctionOrder> submitDeliveryAddress(
             Authentication authentication,
             @PathVariable Long id,
-            @RequestBody SubmitAddressRequest request) {
+            @Valid @RequestBody SubmitAddressRequest request) {
 
         String identifier = authentication.getName();
         return ResponseEntity.ok(auctionService.submitDeliveryAddress(identifier, id, request));

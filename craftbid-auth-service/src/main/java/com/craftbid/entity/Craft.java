@@ -1,6 +1,12 @@
 package com.craftbid.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,18 +19,26 @@ public class Craft {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Craft title is required")
+    @Size(min = 2, max = 150, message = "Title must be between 2 and 150 characters")
     @Column(nullable = false)
     private String title;
 
+    @Size(max = 2000, message = "Description cannot exceed 2000 characters")
     @Column(length = 2000)
     private String description;
 
+    @NotNull(message = "Base price is required")
+    @DecimalMin(value = "1.00", message = "Base price must be at least 1.00")
+    @Digits(integer = 10, fraction = 2, message = "Base price format invalid")
     @Column(name = "base_price", nullable = false)
     private BigDecimal basePrice;
 
+    @Size(max = 500, message = "Image URL cannot exceed 500 characters")
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Pattern(regexp = "^(ACTIVE|INACTIVE|SOLD)$", message = "Status must be ACTIVE, INACTIVE, or SOLD")
     @Column(nullable = false)
     private String status = "ACTIVE";
 

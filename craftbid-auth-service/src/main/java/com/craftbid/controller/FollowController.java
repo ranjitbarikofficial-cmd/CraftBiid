@@ -4,14 +4,17 @@ import com.craftbid.entity.ArtisanProfile;
 import com.craftbid.entity.Craft;
 import com.craftbid.entity.CraftReel;
 import com.craftbid.service.FollowService;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+@Validated
 @RestController
 @RequestMapping("/api/follow")
 public class FollowController {
@@ -28,7 +31,7 @@ public class FollowController {
     @PostMapping("/toggle/{artisanUserId}")
     public ResponseEntity<Map<String, Object>> toggleFollow(
             Authentication authentication,
-            @PathVariable Long artisanUserId) {
+            @PathVariable @Positive(message = "Artisan user ID must be positive") Long artisanUserId) {
 
         String identifier = authentication.getName();
         Map<String, Object> result = followService.toggleFollow(identifier, artisanUserId);
@@ -41,7 +44,7 @@ public class FollowController {
     @GetMapping("/status/{artisanUserId}")
     public ResponseEntity<Map<String, Object>> getFollowStatus(
             Authentication authentication,
-            @PathVariable Long artisanUserId) {
+            @PathVariable @Positive(message = "Artisan user ID must be positive") Long artisanUserId) {
 
         String identifier = (authentication != null && authentication.isAuthenticated())
                 ? authentication.getName()
@@ -62,7 +65,7 @@ public class FollowController {
     // ==========================================
     @GetMapping("/count/{artisanUserId}")
     public ResponseEntity<Map<String, Object>> getFollowerCount(
-            @PathVariable Long artisanUserId) {
+            @PathVariable @Positive(message = "Artisan user ID must be positive") Long artisanUserId) {
 
         long count = followService.getFollowerCount(artisanUserId);
         return ResponseEntity.ok(Map.of(

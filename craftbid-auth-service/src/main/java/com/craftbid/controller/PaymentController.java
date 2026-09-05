@@ -9,8 +9,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+import org.springframework.validation.annotation.Validated;
+
 @RestController
 @RequestMapping("/api/payments")
+@Validated
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -22,7 +26,7 @@ public class PaymentController {
     @PostMapping("/process")
     public ResponseEntity<PaymentTransaction> processPayment(
             Authentication authentication,
-            @RequestBody PaymentRequest request) {
+            @Valid @RequestBody PaymentRequest request) {
 
         String identifier = authentication.getName();
         return ResponseEntity.ok(paymentService.processPayment(identifier, request));

@@ -2,11 +2,15 @@ package com.craftbid.controller;
 
 import com.craftbid.entity.Category;
 import com.craftbid.service.CategoryService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/api/categories")
 @CrossOrigin(origins = "http://localhost:4200")
@@ -29,7 +33,7 @@ public class CategoryController {
     // GET category by ID
     @GetMapping("/{id}")
     public ResponseEntity<Category> getCategoryById(
-            @PathVariable Long id) {
+            @PathVariable @Positive(message = "Category ID must be positive") Long id) {
 
         return ResponseEntity.ok(
                 categoryService.getCategoryById(id)
@@ -39,7 +43,7 @@ public class CategoryController {
     // CREATE category
     @PostMapping
     public ResponseEntity<Category> createCategory(
-            @RequestBody Category category) {
+            @Valid @RequestBody Category category) {
 
         return ResponseEntity.ok(
                 categoryService.createCategory(category)
@@ -49,8 +53,8 @@ public class CategoryController {
     // UPDATE category
     @PutMapping("/{id}")
     public ResponseEntity<Category> updateCategory(
-            @PathVariable Long id,
-            @RequestBody Category category) {
+            @PathVariable @Positive(message = "Category ID must be positive") Long id,
+            @Valid @RequestBody Category category) {
 
         return ResponseEntity.ok(
                 categoryService.updateCategory(id, category)
@@ -60,7 +64,7 @@ public class CategoryController {
     // DELETE category
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCategory(
-            @PathVariable Long id) {
+            @PathVariable @Positive(message = "Category ID must be positive") Long id) {
 
         categoryService.deleteCategory(id);
 

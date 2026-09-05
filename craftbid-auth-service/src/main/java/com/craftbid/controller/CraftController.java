@@ -2,15 +2,22 @@ package com.craftbid.controller;
 
 import com.craftbid.entity.Craft;
 import com.craftbid.service.CraftService;
-
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/api/crafts")
 public class CraftController {
@@ -30,11 +37,11 @@ public class CraftController {
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public ResponseEntity<Craft> uploadCraft(
-            @RequestParam String title,
-            @RequestParam String category,
-            @RequestParam(required = false) String description,
-            @RequestParam BigDecimal basePrice,
-            @RequestParam("image") MultipartFile image,
+            @RequestParam @NotBlank(message = "Title is required") @Size(min = 2, max = 150, message = "Title must be between 2 and 150 characters") String title,
+            @RequestParam @NotBlank(message = "Category is required") @Size(min = 2, max = 100, message = "Category must be between 2 and 100 characters") String category,
+            @RequestParam(required = false) @Size(max = 2000, message = "Description cannot exceed 2000 characters") String description,
+            @RequestParam @NotNull(message = "Base price is required") @DecimalMin(value = "1.00", message = "Base price must be at least 1.00") BigDecimal basePrice,
+            @RequestParam("image") @NotNull(message = "Image file is required") MultipartFile image,
             @RequestParam(value = "video", required = false) MultipartFile video,
             @RequestParam(required = false, defaultValue = "true") Boolean isLiveForAuction) {
 
@@ -75,7 +82,7 @@ public class CraftController {
 
     @GetMapping("/category/{categoryId}")
     public ResponseEntity<List<Craft>> getCraftsByCategory(
-            @PathVariable Long categoryId) {
+            @PathVariable @Positive(message = "Category ID must be positive") Long categoryId) {
         return ResponseEntity.ok(craftService.getCraftsByCategoryId(categoryId));
     }
 
@@ -85,10 +92,10 @@ public class CraftController {
 
     @GetMapping("/search")
     public ResponseEntity<List<Craft>> searchCrafts(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) BigDecimal minPrice,
-            @RequestParam(required = false) BigDecimal maxPrice) {
+            @RequestParam(required = false) @Size(max = 100, message = "Keyword cannot exceed 100 characters") String keyword,
+            @RequestParam(required = false) @Positive(message = "Category ID must be positive") Long categoryId,
+            @RequestParam(required = false) @DecimalMin(value = "0.00", message = "Min price cannot be negative") BigDecimal minPrice,
+            @RequestParam(required = false) @DecimalMin(value = "0.00", message = "Max price cannot be negative") BigDecimal maxPrice) {
 
         return ResponseEntity.ok(
                 craftService.searchCrafts(keyword, categoryId, minPrice, maxPrice)
@@ -101,7 +108,7 @@ public class CraftController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Craft> getCraftById(
-            @PathVariable Long id) {
+            @PathVariable @Positive(message = "Craft ID must be positive") Long id) {
 
         return ResponseEntity.ok(craftService.getCraftById(id));
     }
@@ -112,8 +119,8 @@ public class CraftController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Craft> updateCraft(
-            @PathVariable Long id,
-            @RequestBody Craft craft) {
+            @PathVariable @Positive(message = "Craft ID must be positive") Long id,
+            @Valid @RequestBody Craft craft) {
 
         return ResponseEntity.ok(craftService.updateCraft(id, craft));
     }
@@ -124,7 +131,7 @@ public class CraftController {
 
     @PatchMapping("/{id}/toggle-status")
     public ResponseEntity<Craft> toggleLiveStatus(
-            @PathVariable Long id,
+            @PathVariable @Positive(message = "Craft ID must be positive") Long id,
             @RequestParam(required = false) Boolean isLive) {
 
         return ResponseEntity.ok(craftService.toggleLiveStatus(id, isLive));
@@ -136,7 +143,7 @@ public class CraftController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCraft(
-            @PathVariable Long id) {
+            @PathVariable @Positive(message = "Craft ID must be positive") Long id) {
 
         craftService.deleteCraft(id);
         return ResponseEntity.ok("Craft deleted successfully");

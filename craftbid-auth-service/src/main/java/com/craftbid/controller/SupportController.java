@@ -3,12 +3,17 @@ package com.craftbid.controller;
 import com.craftbid.dto.SupportTicketRequest;
 import com.craftbid.entity.SupportTicket;
 import com.craftbid.service.SupportService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/api/support")
 public class SupportController {
@@ -22,7 +27,7 @@ public class SupportController {
     @PostMapping("/ticket")
     public ResponseEntity<SupportTicket> createTicket(
             Authentication authentication,
-            @RequestBody SupportTicketRequest request) {
+            @Valid @RequestBody SupportTicketRequest request) {
 
         String identifier = authentication != null ? authentication.getName() : null;
         return ResponseEntity.ok(supportService.createTicket(identifier, request));
@@ -37,7 +42,9 @@ public class SupportController {
     }
 
     @GetMapping("/ticket/{ref}")
-    public ResponseEntity<SupportTicket> getTicketByRef(@PathVariable String ref) {
+    public ResponseEntity<SupportTicket> getTicketByRef(
+            @PathVariable @NotBlank @Pattern(regexp = "^[A-Za-z0-9_-]{1,64}$", message = "Invalid reference format") String ref) {
         return ResponseEntity.of(supportService.getTicketByRef(ref));
     }
 }
+

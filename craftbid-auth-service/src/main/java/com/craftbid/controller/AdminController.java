@@ -5,11 +5,14 @@ import com.craftbid.entity.Auction;
 import com.craftbid.entity.Craft;
 import com.craftbid.entity.User;
 import com.craftbid.service.AdminService;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
@@ -31,7 +34,8 @@ public class AdminController {
     }
 
     @PutMapping("/users/{id}/toggle-status")
-    public ResponseEntity<User> toggleUserStatus(@PathVariable Long id) {
+    public ResponseEntity<User> toggleUserStatus(
+            @PathVariable @Positive(message = "User ID must be positive") Long id) {
         return ResponseEntity.ok(adminService.toggleUserStatus(id));
     }
 
@@ -45,3 +49,4 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllAuctions());
     }
 }
+

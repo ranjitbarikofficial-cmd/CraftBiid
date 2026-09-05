@@ -65,7 +65,7 @@ public class AuthController {
 
     @PostMapping({"/verify-registration", "/verify-email"})
     public ResponseEntity<String> verifyRegistration(
-            @RequestBody EmailVerificationRequest request) {
+            @Valid @RequestBody EmailVerificationRequest request) {
 
         return ResponseEntity.ok(
                 emailVerificationService.verifyOtp(
@@ -81,7 +81,7 @@ public class AuthController {
 
     @PostMapping("/resend-verification-otp")
     public ResponseEntity<String> resendVerificationOtp(
-            @RequestBody EmailVerificationRequest request) {
+            @Valid @RequestBody EmailVerificationRequest request) {
 
         return ResponseEntity.ok(
                 emailVerificationService.resendOtp(
@@ -96,7 +96,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
-            @RequestBody LoginRequest request) {
+            @Valid @RequestBody LoginRequest request) {
 
         return ResponseEntity.ok(
                 authService.login(request)
@@ -109,7 +109,7 @@ public class AuthController {
 
     @PostMapping("/admin/send-otp")
     public ResponseEntity<java.util.Map<String, String>> sendAdminOtp(
-            @RequestBody AdminOtpRequest request) {
+            @Valid @RequestBody AdminOtpRequest request) {
 
         String otp = adminOtpService.sendOtp(
                 request.getEmail()
@@ -128,7 +128,7 @@ public class AuthController {
 
     @PostMapping("/admin/verify-otp")
     public ResponseEntity<LoginResponse> verifyAdminOtp(
-            @RequestBody AdminOtpVerifyRequest request) {
+            @Valid @RequestBody AdminOtpVerifyRequest request) {
 
         return ResponseEntity.ok(
                 adminOtpService.verifyOtp(
@@ -144,7 +144,7 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(
-            @RequestBody ForgotPasswordRequest request) {
+            @Valid @RequestBody ForgotPasswordRequest request) {
 
         return ResponseEntity.ok(
                 passwordResetService.sendOtp(
@@ -159,7 +159,7 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(
-            @RequestBody ResetPasswordRequest request) {
+            @Valid @RequestBody ResetPasswordRequest request) {
 
         return ResponseEntity.ok(
                 passwordResetService.resetPassword(
