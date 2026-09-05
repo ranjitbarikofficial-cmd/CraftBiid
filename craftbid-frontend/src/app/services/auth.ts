@@ -25,8 +25,8 @@ export interface LoginResponse {
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = '/api/auth';
-  private artisanUrl = '/api/artisan';
+  private apiUrl = 'https://craftbid.onrender.com/api/auth';
+  private artisanUrl = 'https://craftbid.onrender.com/api/artisan';
 
   private currentUserSubject = new BehaviorSubject<UserAuth | null>(this.getStoredUser());
   public currentUser$ = this.currentUserSubject.asObservable();
