@@ -10,6 +10,8 @@ import com.craftbid.repository.UserRepository;
 import com.craftbid.repository.CategoryRepository;
 import com.craftbid.repository.CraftReelRepository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,8 @@ import java.util.List;
 
 @Service
 public class CraftService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CraftService.class);
 
     private final CraftRepository craftRepository;
     private final UserRepository userRepository;
@@ -154,7 +158,8 @@ public class CraftService {
             return savedCraft;
 
         } catch (IOException e) {
-            throw new RuntimeException("Unable to upload craft media files: " + e.getMessage(), e);
+            logger.error("Unable to upload craft media files for craft '{}': ", title, e);
+            throw new RuntimeException("Unable to upload craft media files. Please verify the file and try again.", e);
         }
     }
 

@@ -15,6 +15,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import org.springframework.http.MediaType;
+import jakarta.servlet.http.HttpServletResponse;
+
 import com.craftbid.security.ratelimit.RateLimitingFilter;
 
 @Configuration
@@ -208,6 +211,20 @@ public class SecurityConfig {
                 .addFilterAfter(
                         rateLimitingFilter,
                         JwtAuthenticationFilter.class
+                )
+
+                // Standardized Exception Handling for Authentication and Authorization
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Authentication required to access this resource\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.getWriter().write("{\"status\":403,\"error\":\"Forbidden\",\"message\":\"Access denied. You do not have permission to perform this action.\"}");
+                        })
                 );
 
         return http.build();
