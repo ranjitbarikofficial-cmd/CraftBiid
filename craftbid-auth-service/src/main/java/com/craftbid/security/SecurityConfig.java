@@ -53,7 +53,9 @@ public class SecurityConfig {
 
         // Angular frontend
         configuration.setAllowedOrigins(
-                List.of("http://localhost:4200", "http://127.0.0.1:4200")
+                List.of("http://localhost:4200",
+                        "http://127.0.0.1:4200",
+                        "https://craftbid.vercel.app")
         );
 
         // Allowed HTTP methods
