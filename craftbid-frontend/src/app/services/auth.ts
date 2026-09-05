@@ -37,7 +37,7 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, data).pipe(
       tap((response) => {
         this.saveAuth(response);
-      })
+      }),
     );
   }
 
@@ -45,11 +45,14 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/admin/send-otp`, { email });
   }
 
-  verifyAdminOtp(otp: string, email: string = 'craftbid.official@gmail.com'): Observable<LoginResponse> {
+  verifyAdminOtp(
+    otp: string,
+    email: string = 'craftbid.official@gmail.com',
+  ): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/admin/verify-otp`, { email, otp }).pipe(
       tap((response) => {
         this.saveAuth(response);
-      })
+      }),
     );
   }
 
@@ -68,14 +71,12 @@ export class AuthService {
     return this.http.post(
       `${this.apiUrl}/verify-registration`,
       {
-        identifier: identifier,
-        email: identifier.includes('@') ? identifier : undefined,
-        phone: !identifier.includes('@') ? identifier : undefined,
-        otp: otp,
+        identifier: identifier.trim(),
+        otp: otp.trim(),
       },
       {
         responseType: 'text',
-      }
+      },
     );
   }
 
@@ -87,39 +88,25 @@ export class AuthService {
     return this.http.post(
       `${this.apiUrl}/resend-verification-otp`,
       {
-        identifier: identifier,
-        email: identifier.includes('@') ? identifier : undefined,
-        phone: !identifier.includes('@') ? identifier : undefined,
+        identifier: identifier.trim(),
       },
       {
         responseType: 'text',
-      }
+      },
     );
   }
 
   forgotPassword(email: string): Observable<string> {
-    return this.http.post(
-      `${this.apiUrl}/forgot-password`,
-      { email },
-      { responseType: 'text' }
-    );
+    return this.http.post(`${this.apiUrl}/forgot-password`, { email }, { responseType: 'text' });
   }
 
-  resetPassword(data: {
-    email: string;
-    otp: string;
-    newPassword: string;
-  }): Observable<string> {
+  resetPassword(data: { email: string; otp: string; newPassword: string }): Observable<string> {
     return this.http.post(`${this.apiUrl}/reset-password`, data, {
       responseType: 'text',
     });
   }
 
-  enableSeller(data: {
-    shopName: string;
-    craftType: string;
-    city: string;
-  }): Observable<string> {
+  enableSeller(data: { shopName: string; craftType: string; city: string }): Observable<string> {
     return this.http
       .post(`${this.artisanUrl}/enable`, data, {
         responseType: 'text',
@@ -127,7 +114,7 @@ export class AuthService {
       .pipe(
         tap(() => {
           this.setSellerEnabled(true);
-        })
+        }),
       );
   }
 
