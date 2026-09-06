@@ -238,3 +238,75 @@
   border-radius: 8px;
   text-decoration: none;
 }
+
+/* ================= RESPONSIVE DESIGN ================= */
+
+/* Tablet Viewport (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .craft-details-container {
+    padding: 24px 20px 60px;
+  }
+
+  .craft-main-layout {
+    gap: 32px;
+  }
+
+  .main-image-wrap {
+    max-height: 380px;
+  }
+
+  .main-image-wrap img {
+    max-height: 380px;
+  }
+}
+
+/* Mobile Viewport (320px - 767px) */
+@media (max-width: 767px) {
+  .craft-details-container {
+    padding: 16px 14px 60px;
+  }
+
+  .breadcrumb {
+    font-size: 0.8rem;
+    margin-bottom: 16px;
+  }
+
+  .craft-main-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .main-image-wrap {
+    max-height: 280px;
+    border-radius: 12px;
+  }
+
+  .main-image-wrap img {
+    max-height: 280px;
+  }
+
+  .craft-title {
+    font-size: clamp(1.35rem, 6vw, 1.7rem);
+  }
+
+  .price-box {
+    padding: 12px 16px;
+    border-radius: 10px;
+  }
+
+  .price-value {
+    font-size: 1.4rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-primary-action, .btn-secondary-action {
+    width: 100%;
+    text-align: center;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+  }
+}

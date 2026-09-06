@@ -718,3 +718,145 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+/* ================= RESPONSIVE DESIGN ================= */
+
+/* Tablet Viewport (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .auction-page-container {
+    padding: 24px 20px 60px;
+  }
+
+  .auction-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .image-wrapper {
+    height: 320px;
+  }
+}
+
+/* Mobile Viewport (320px - 767px) */
+@media (max-width: 767px) {
+  .auction-page-container {
+    padding: 16px 12px 60px;
+  }
+
+  .breadcrumb {
+    font-size: 0.8rem;
+    margin-bottom: 16px;
+  }
+
+  .winner-alert-card,
+  .refund-alert-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .winner-icon,
+  .refund-icon {
+    font-size: 2rem;
+  }
+
+  .winner-info h2 {
+    font-size: 1.1rem;
+  }
+
+  .btn-address-action {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .auction-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .craft-showcase-card,
+  .bidding-console-card {
+    padding: 16px 14px;
+    border-radius: 14px;
+    gap: 16px;
+  }
+
+  .image-wrapper {
+    height: 220px;
+  }
+
+  .craft-content {
+    padding: 14px 0 0;
+  }
+
+  .craft-content h1 {
+    font-size: 1.3rem;
+  }
+
+  .room-lobby-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .btn-join-room {
+    width: 100%;
+    text-align: center;
+  }
+
+  .price-hero-box {
+    padding: 14px;
+  }
+
+  .hero-amount {
+    font-size: 1.7rem;
+  }
+
+  .turn-timer-card {
+    padding: 12px 14px;
+  }
+
+  .seconds-digits {
+    font-size: 1.2rem;
+  }
+
+  .differential-summary-card {
+    padding: 10px 12px;
+  }
+
+  .btn-place-bid {
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+
+  .modal-dialog {
+    width: 95%;
+    max-width: 95%;
+    border-radius: 14px;
+  }
+
+  .modal-header {
+    padding: 14px 16px;
+  }
+
+  .modal-header h2 {
+    font-size: 1.05rem;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+  }
+}

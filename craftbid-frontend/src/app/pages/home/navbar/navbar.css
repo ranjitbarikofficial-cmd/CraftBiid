@@ -64,3 +64,36 @@
   color: #ea580c;
   font-weight: 600;
 }
+
+/* ================= RESPONSIVE DESIGN ================= */
+
+@media (max-width: 900px) {
+  .sub-navbar-inner {
+    padding: 0 12px;
+    gap: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-tab {
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .tab-icon {
+    font-size: 0.9rem;
+  }
+
+  .artisan-tab {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-tab {
+    padding: 9px 10px;
+    font-size: 0.78rem;
+    gap: 4px;
+  }
+}

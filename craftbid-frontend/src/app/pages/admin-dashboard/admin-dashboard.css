@@ -132,6 +132,8 @@
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 24px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
@@ -154,12 +156,14 @@
   font-weight: 600;
   color: #475569;
   border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
 }
 
 .admin-table td {
   padding: 14px 16px;
   border-bottom: 1px solid #f1f5f9;
   font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .role-badge {
@@ -217,4 +221,91 @@
 
 .muted-text {
   color: #94a3b8;
+}
+
+/* ================= RESPONSIVE DESIGN ================= */
+
+/* Tablet Viewport (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .admin-dashboard-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 18px 20px;
+  }
+
+  .sidebar nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .main-content {
+    padding: 24px 20px;
+  }
+}
+
+/* Mobile Viewport (320px - 767px) */
+@media (max-width: 767px) {
+  .admin-dashboard-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 16px 14px;
+  }
+
+  .admin-label {
+    margin-bottom: 14px;
+  }
+
+  .sidebar nav {
+    flex-direction: row;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+  }
+
+  .sidebar nav a {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .main-content {
+    padding: 18px 14px;
+  }
+
+  .admin-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .metric-card {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+
+  .metric-card strong {
+    font-size: 1.3rem;
+  }
+
+  .table-container {
+    padding: 16px 12px;
+    border-radius: 12px;
+  }
+
+  .admin-table {
+    min-width: 620px;
+  }
 }

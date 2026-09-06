@@ -401,8 +401,62 @@
   to { transform: rotate(360deg); }
 }
 
-@media (max-width: 900px) {
+/* ================= RESPONSIVE DESIGN ================= */
+
+/* Tablet Viewport (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .artisan-landing-container {
+    padding: 32px 20px 60px;
+  }
+
   .artisan-shell-grid {
     grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+/* Mobile Viewport (320px - 767px) */
+@media (max-width: 767px) {
+  .artisan-landing-container {
+    padding: 20px 14px 60px;
+  }
+
+  .artisan-shell-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .onboarding-form-card {
+    padding: 22px 16px;
+    border-radius: 18px;
+  }
+
+  .onboarding-title {
+    font-size: 1.6rem;
+  }
+
+  .onboarding-subtitle {
+    font-size: 0.88rem;
+    margin-bottom: 20px;
+  }
+
+  .craft-pills-wrap {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .btn-activate-studio {
+    padding: 14px 18px;
+    font-size: 0.95rem;
+  }
+
+  .live-preview-box,
+  .perks-card {
+    padding: 18px 14px;
+    border-radius: 18px;
+  }
+
+  .preview-stats-row {
+    gap: 10px;
   }
 }

@@ -53,14 +53,26 @@
   padding: 0;
 }
 
+html {
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-main);
   color: var(--text-main);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  -moz-osx-smoothing: grayscale;
   overflow-x: hidden;
+  width: 100%;
+  min-width: 320px;
+}
+
+img, video {
+  max-width: 100%;
 }
 
 h1, h2, h3, h4, h5, h6 {

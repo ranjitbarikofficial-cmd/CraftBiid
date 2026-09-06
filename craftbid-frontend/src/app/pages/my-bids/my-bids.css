@@ -26,7 +26,8 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
@@ -114,4 +115,50 @@
   border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
+}
+
+/* ================= RESPONSIVE DESIGN ================= */
+
+/* Tablet Viewport (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .my-bids-container {
+    padding: 28px 20px 60px;
+  }
+}
+
+/* Mobile Viewport (320px - 767px) */
+@media (max-width: 767px) {
+  .my-bids-container {
+    padding: 20px 16px 60px;
+  }
+
+  .my-bids-header {
+    margin-bottom: 24px;
+  }
+
+  .my-bids-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .my-bids-header p {
+    font-size: 0.9rem;
+  }
+
+  .bids-table {
+    min-width: 540px;
+  }
+
+  .bids-table th {
+    padding: 12px 14px;
+    font-size: 0.8rem;
+  }
+
+  .bids-table td {
+    padding: 12px 14px;
+    font-size: 0.85rem;
+  }
+
+  .empty-state, .loading-state {
+    padding: 50px 16px;
+  }
 }

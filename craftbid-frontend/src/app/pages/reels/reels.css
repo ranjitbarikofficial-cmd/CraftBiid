@@ -563,3 +563,139 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(234, 88, 12, 0.4);
 }
+
+/* ================= RESPONSIVE DESIGN ================= */
+
+/* Tablet Viewport (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .shorts-page-container {
+    padding: 16px 20px 40px;
+  }
+
+  .short-video-card {
+    max-height: 80vh;
+  }
+}
+
+/* Mobile Viewport (320px - 767px) */
+@media (max-width: 767px) {
+  .shorts-page-container {
+    padding: 10px 10px 30px 10px;
+    min-height: calc(100svh - 110px);
+  }
+
+  .reels-header-nav {
+    width: 100%;
+    max-width: 100%;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .feed-tab-pill {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .btn-creator-action {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .short-video-card {
+    min-height: 480px;
+    max-height: calc(100svh - 120px);
+    border-radius: 18px;
+  }
+
+  .short-top-bar {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+  }
+
+  .short-sidebar-actions {
+    right: 8px;
+    bottom: 95px;
+    gap: 8px;
+  }
+
+  .btn-action-bubble {
+    width: 38px;
+    height: 38px;
+  }
+
+  .action-glyph {
+    font-size: 15px;
+  }
+
+  .action-count {
+    font-size: 8px;
+  }
+
+  .btn-nav-bubble {
+    width: 28px;
+    height: 28px;
+    font-size: 9px;
+  }
+
+  .short-bottom-overlay {
+    left: 10px;
+    right: 52px;
+    bottom: 12px;
+    gap: 5px;
+  }
+
+  .artisan-avatar-bubble {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+  }
+
+  .artisan-name-stack strong {
+    font-size: 12px;
+  }
+
+  .artisan-city-text {
+    font-size: 10px;
+  }
+
+  .btn-follow-artisan {
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+
+  .short-caption-title {
+    font-size: 13px;
+  }
+
+  .short-caption-desc {
+    font-size: 11px;
+    -webkit-line-clamp: 2;
+  }
+
+  .linked-craft-card {
+    padding: 6px 8px;
+    gap: 4px 8px;
+    grid-template-columns: 40px 1fr;
+    border-radius: 12px;
+  }
+
+  .linked-craft-card img {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+  }
+
+  .craft-mini-info h4 {
+    font-size: 11px;
+  }
+
+  .btn-buy-craft, .btn-bid-live-cta {
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+
+  .shorts-helper-bar {
+    display: none;
+  }
+}

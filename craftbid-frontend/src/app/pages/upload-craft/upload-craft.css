@@ -612,35 +612,50 @@
 }
 
 /* =========================================
-   RESPONSIVE
+/* =========================================
+   RESPONSIVE DESIGN
 ========================================= */
 
-@media (max-width: 700px) {
+/* Tablet Viewport (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .upload-page {
+    padding: 30px 20px 60px;
+  }
+}
+
+/* Mobile Viewport (320px - 767px) */
+@media (max-width: 767px) {
   .upload-page {
     padding: 20px 12px 40px;
   }
 
   .upload-header {
-    margin-bottom: 18px;
+    margin-bottom: 16px;
   }
 
   .upload-header h1 {
-    font-size: 26px;
+    font-size: 24px;
   }
 
   .upload-header p {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .upload-card {
-    padding: 20px;
+    padding: 18px 14px;
+    border-radius: 14px;
+  }
 
-    border-radius: 12px;
+  .toggle-card-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 
   .file-upload-box,
   .video-upload-box {
-    min-height: 160px;
+    min-height: 150px;
+    padding: 20px 12px;
   }
 
   .image-preview {
@@ -656,6 +671,7 @@
   .video-info {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
   }
 
   .remove-video {

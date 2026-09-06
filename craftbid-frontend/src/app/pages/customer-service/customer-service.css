@@ -408,8 +408,90 @@
   color: #b45309;
 }
 
-@media (max-width: 900px) {
+/* ================= RESPONSIVE DESIGN ================= */
+
+/* Tablet Viewport (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .support-content-container {
+    padding: 0 20px;
+  }
+
   .content-grid {
     grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .channels-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile Viewport (320px - 767px) */
+@media (max-width: 767px) {
+  .support-content-container {
+    padding: 0 16px;
+  }
+
+  .support-hero {
+    padding: 36px 0 32px;
+  }
+
+  .support-hero h1 {
+    font-size: clamp(1.5rem, 5.5vw, 2rem);
+  }
+
+  .support-hero p {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+
+  .support-channels-section {
+    padding: 32px 0;
+  }
+
+  .channels-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .channel-card {
+    padding: 18px 14px;
+    border-radius: 12px;
+  }
+
+  .channel-icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+  }
+
+  .support-main-content {
+    padding: 36px 0 60px;
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .faq-column h2 {
+    font-size: 1.45rem;
+    margin-bottom: 16px;
+  }
+
+  .faq-question-header {
+    padding: 12px 14px;
+  }
+
+  .faq-question-header strong {
+    font-size: 0.88rem;
+  }
+
+  .faq-answer-body {
+    padding: 0 14px 14px;
+  }
+
+  .ticket-card-box {
+    padding: 18px 14px;
+    border-radius: 16px;
   }
 }

@@ -729,10 +729,15 @@
 
 /* RESPONSIVE DESIGN */
 @media (max-width: 900px) {
+  .auth-page-container {
+    padding: 20px 14px;
+  }
+
   .auth-shell {
     grid-template-columns: 1fr;
     max-width: 480px;
     border-radius: 20px;
+    min-height: auto;
   }
 
   .auth-visual-panel {
@@ -745,5 +750,34 @@
 
   .form-title {
     font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-page-container {
+    padding: 16px 10px;
+  }
+
+  .auth-form-panel {
+    padding: 24px 14px;
+  }
+
+  .form-title {
+    font-size: 22px;
+  }
+
+  .auth-mode-tabs {
+    gap: 2px;
+    padding: 3px;
+  }
+
+  .tab-btn {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  .otp-digit-input {
+    letter-spacing: 6px;
+    font-size: 20px;
   }
 }

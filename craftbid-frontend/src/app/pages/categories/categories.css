@@ -190,3 +190,79 @@
   text-decoration: none;
   font-weight: 600;
 }
+
+/* ================= RESPONSIVE DESIGN ================= */
+
+/* Tablet Viewport (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .categories-page-container {
+    padding: 28px 20px 60px;
+  }
+
+  .crafts-grid {
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  }
+}
+
+/* Mobile Viewport (320px - 767px) */
+@media (max-width: 767px) {
+  .categories-page-container {
+    padding: 20px 16px 60px;
+  }
+
+  .page-header {
+    margin-bottom: 20px;
+  }
+
+  .page-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .page-header p {
+    font-size: 0.9rem;
+  }
+
+  .category-tabs-scroll {
+    gap: 8px;
+    margin-bottom: 20px;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .category-tab-btn {
+    padding: 7px 12px;
+    font-size: 0.82rem;
+    gap: 6px;
+  }
+
+  .category-description-banner {
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+  }
+
+  .category-description-banner h2 {
+    font-size: 1.1rem;
+  }
+
+  .category-description-banner p {
+    font-size: 0.85rem;
+  }
+
+  .crafts-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    gap: 16px;
+  }
+
+  .image-wrap {
+    height: 180px;
+  }
+
+  .card-info {
+    padding: 14px;
+  }
+
+  .empty-state, .loading-state {
+    padding: 50px 16px;
+  }
+}

@@ -186,3 +186,60 @@
   text-decoration: none;
   font-weight: 600;
 }
+
+/* ================= RESPONSIVE DESIGN ================= */
+
+/* Tablet Viewport (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .auctions-container {
+    padding: 28px 20px 60px;
+  }
+
+  .auctions-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+/* Mobile Viewport (320px - 767px) */
+@media (max-width: 767px) {
+  .auctions-container {
+    padding: 20px 16px 60px;
+  }
+
+  .auctions-header {
+    margin-bottom: 24px;
+  }
+
+  .auctions-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .auctions-header p {
+    font-size: 0.9rem;
+  }
+
+  .auctions-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: 16px;
+  }
+
+  .auction-image-wrap {
+    height: 180px;
+  }
+
+  .auction-details {
+    padding: 14px;
+  }
+
+  .bid-status-box {
+    padding: 8px 12px;
+  }
+
+  .bid-col .value {
+    font-size: 1.15rem;
+  }
+
+  .empty-state, .loading-state {
+    padding: 50px 16px;
+  }
+}

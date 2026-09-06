@@ -192,6 +192,7 @@
 
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ledger-table {
@@ -208,12 +209,14 @@
   text-transform: uppercase;
   color: #71717a;
   border-bottom: 1px solid #ede8e1;
+  white-space: nowrap;
 }
 
 .ledger-table td {
   padding: 12px 14px;
   border-bottom: 1px solid #f4efe9;
   font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .ref-code {
@@ -401,4 +404,107 @@
   background: #fee2e2;
   color: #dc2626;
   border-color: #fca5a5;
+}
+
+/* ================= RESPONSIVE DESIGN ================= */
+
+/* Tablet Viewport (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .profile-page-container {
+    padding: 28px 20px 60px;
+  }
+}
+
+/* Mobile Viewport (320px - 767px) */
+@media (max-width: 767px) {
+  .profile-page-container {
+    padding: 20px 16px 60px;
+    gap: 20px;
+  }
+
+  .profile-card,
+  .ledger-card {
+    padding: 18px 14px;
+    border-radius: 16px;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+
+  .avatar-circle {
+    width: 56px;
+    height: 56px;
+    font-size: 2rem;
+  }
+
+  .profile-header h1 {
+    font-size: 1.35rem;
+  }
+
+  .profile-details-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .detail-item {
+    padding: 12px 14px;
+  }
+
+  .profile-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .profile-actions > * {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .profile-tabs-row {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+  }
+
+  .profile-tab-btn {
+    padding: 7px 12px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .ledger-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .ledger-metrics {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .metric-pill {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .ledger-table {
+    min-width: 580px;
+  }
+
+  .artisan-cards-grid {
+    grid-template-columns: 1fr;
+  }
 }
