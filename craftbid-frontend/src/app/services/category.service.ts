@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { getApiBaseUrl } from './api-config';
 
 export interface CategoryItem {
   id: number;
@@ -13,7 +14,7 @@ export interface CategoryItem {
   providedIn: 'root',
 })
 export class CategoryService {
-  private apiUrl = '/api/categories';
+  private apiUrl = `${getApiBaseUrl()}/api/categories`;
 
   constructor(private http: HttpClient) {}
 

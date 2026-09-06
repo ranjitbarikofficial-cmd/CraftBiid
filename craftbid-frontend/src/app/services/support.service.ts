@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { getApiBaseUrl } from './api-config';
 
 export interface SupportTicketItem {
   id: number;
@@ -29,7 +30,7 @@ export interface CreateSupportTicketPayload {
   providedIn: 'root',
 })
 export class SupportService {
-  private apiUrl = '/api/support';
+  private apiUrl = `${getApiBaseUrl()}/api/support`;
 
   constructor(private http: HttpClient) {}
 

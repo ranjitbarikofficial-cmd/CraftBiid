@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CraftItem } from './craft.service';
 import { AuctionItem } from './auction.service';
+import { getApiBaseUrl } from './api-config';
 
 export interface AdminStats {
   totalUsers: number;
@@ -28,7 +29,7 @@ export interface AdminUser {
   providedIn: 'root',
 })
 export class AdminService {
-  private apiUrl = '/api/admin';
+  private apiUrl = `${getApiBaseUrl()}/api/admin`;
 
   constructor(private http: HttpClient) {}
 

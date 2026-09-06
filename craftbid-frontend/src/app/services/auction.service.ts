@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CraftItem } from './craft.service';
 import { UserAuth } from './auth';
+import { getApiBaseUrl } from './api-config';
 
 export interface AuctionItem {
   id: number;
@@ -115,7 +116,7 @@ export interface SubmitAddressPayload {
   providedIn: 'root',
 })
 export class AuctionService {
-  private apiUrl = '/api/auctions';
+  private apiUrl = `${getApiBaseUrl()}/api/auctions`;
 
   constructor(private http: HttpClient) {}
 
@@ -139,8 +140,13 @@ export class AuctionService {
     return this.http.get<AuctionItem[]>(`${this.apiUrl}/craft/${craftId}`);
   }
 
-  joinAuctionWithDeposit(auctionId: number, paymentMethod = 'UPI'): Observable<AuctionParticipantItem> {
-    return this.http.post<AuctionParticipantItem>(`${this.apiUrl}/${auctionId}/join`, { paymentMethod });
+  joinAuctionWithDeposit(
+    auctionId: number,
+    paymentMethod = 'UPI',
+  ): Observable<AuctionParticipantItem> {
+    return this.http.post<AuctionParticipantItem>(`${this.apiUrl}/${auctionId}/join`, {
+      paymentMethod,
+    });
   }
 
   placeDifferentialBid(auctionId: number, amount: number): Observable<BidItem> {
@@ -155,7 +161,10 @@ export class AuctionService {
     return this.http.get<AuctionParticipantItem[]>(`${this.apiUrl}/${auctionId}/participants`);
   }
 
-  submitDeliveryAddress(auctionId: number, payload: SubmitAddressPayload): Observable<AuctionOrderItem> {
+  submitDeliveryAddress(
+    auctionId: number,
+    payload: SubmitAddressPayload,
+  ): Observable<AuctionOrderItem> {
     return this.http.post<AuctionOrderItem>(`${this.apiUrl}/${auctionId}/address`, payload);
   }
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { getApiBaseUrl } from './api-config';
 
 export interface CraftItem {
   id: number;
@@ -28,7 +29,7 @@ export interface CraftItem {
   providedIn: 'root',
 })
 export class CraftService {
-  private apiUrl = '/api/crafts';
+  private apiUrl = `${getApiBaseUrl()}/api/crafts`;
 
   constructor(private http: HttpClient) {}
 
