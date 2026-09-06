@@ -13,4 +13,4 @@ WORKDIR /app
 COPY --from=build /app/target/app.jar /app/app.jar
 RUN mkdir -p /app/uploads
 EXPOSE 8081
-ENTRYPOINT ["sh", "-c", "exec java -Djava.net.preferIPv4Stack=true -Djava.security.egd=file:/dev/./urandom -jar /app/app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java -Dserver.port=${PORT:-8081} -Dserver.address=0.0.0.0 -Djava.net.preferIPv4Stack=true -Djava.security.egd=file:/dev/./urandom -jar /app/app.jar"]
