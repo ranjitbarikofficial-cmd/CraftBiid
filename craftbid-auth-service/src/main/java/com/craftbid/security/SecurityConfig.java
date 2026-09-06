@@ -133,6 +133,9 @@ public class SecurityConfig {
                         // Static uploaded files
                         .requestMatchers("/uploads/**").permitAll()
 
+                        // Public Health & Diagnostics
+                        .requestMatchers("/api/health", "/api/test/ping").permitAll()
+
                         // Public Auth APIs
                         .requestMatchers(
                                 "/api/auth/register",
