@@ -51,35 +51,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // ==========================================
 
         try {
-            String token = authHeader.substring(7);
+            String token = authHeader.substring(7).trim();
 
-            Claims claims = Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+            if (!token.isEmpty() && !"null".equalsIgnoreCase(token) && !"undefined".equalsIgnoreCase(token)) {
+                Claims claims = Jwts.parser()
+                        .verifyWith(getSigningKey())
+                        .build()
+                        .parseSignedClaims(token)
+                        .getPayload();
 
-            String subject = claims.getSubject();
-            String role = claims.get("role", String.class);
+                String subject = claims.getSubject();
+                String role = claims.get("role", String.class);
 
-            if (subject != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                subject,
-                                null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                        );
+                if (subject != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    subject,
+                                    null,
+                                    List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                            );
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
 
         } catch (Exception e) {
-            // Invalid or expired token: clear context
+            // Invalid or expired token: clear context so request continues as unauthenticated (public endpoints work, protected endpoints are caught by SecurityConfig)
             SecurityContextHolder.clearContext();
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Invalid or expired JWT token\"}");
-            return;
         }
 
         filterChain.doFilter(request, response);

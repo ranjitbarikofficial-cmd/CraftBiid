@@ -9,11 +9,17 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   let authReq = req;
 
-  // Add Authorization header if token exists and header isn't already present
-  if (token && !req.headers.has('Authorization')) {
+  // Add Authorization header if a valid token exists and header isn't already present
+  if (
+    token &&
+    token !== 'null' &&
+    token !== 'undefined' &&
+    token.trim().length > 0 &&
+    !req.headers.has('Authorization')
+  ) {
     authReq = req.clone({
       setHeaders: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token.trim()}`,
       },
     });
   }

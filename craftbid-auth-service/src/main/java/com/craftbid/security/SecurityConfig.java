@@ -51,11 +51,17 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Angular frontend
-        configuration.setAllowedOrigins(
-                List.of("http://localhost:4200",
-                        "http://127.0.0.1:4200",
-                        "https://craftbid.vercel.app")
+        // Allowed Origin Patterns (supports credentials and wildcard domains)
+        configuration.setAllowedOriginPatterns(
+                List.of(
+                        "http://localhost:[*]",
+                        "http://127.0.0.1:[*]",
+                        "https://*.vercel.app",
+                        "https://vercel.app",
+                        "https://*.onrender.com",
+                        "https://onrender.com",
+                        "*"
+                )
         );
 
         // Allowed HTTP methods

@@ -33,7 +33,7 @@ public class GlobalExceptionHandlerTest {
                 "could not execute statement [Duplicate entry 'test@example.com' for key 'users.UK_email'] [insert into users (email, password) values (?, ?)]"
         );
 
-        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleDatabaseExceptions(ex);
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleDataIntegrityViolation(ex);
 
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -49,18 +49,36 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("Should suppress raw SQL exceptions")
+    @DisplayName("Should handle database connection exceptions with 503 Service Unavailable")
+    void shouldHandleDatabaseConnectionExceptions() {
+        org.springframework.transaction.CannotCreateTransactionException ex =
+                new org.springframework.transaction.CannotCreateTransactionException(
+                        "Could not open JPA EntityManager for transaction; nested exception is org.hibernate.exception.JDBCConnectionException: Unable to open JDBC Connection"
+                );
+
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleDatabaseConnectionExceptions(ex);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertEquals("Database service is temporarily unavailable. Please verify the database status and try again shortly.", body.get("message"));
+    }
+
+    @Test
+    @DisplayName("Should suppress raw SQL exceptions with 500 Internal Server Error")
     void shouldSuppressSqlExceptions() {
         SQLException ex = new SQLException("Table 'craftbid_db.users' doesn't exist", "42S02", 1146);
 
         ResponseEntity<Map<String, Object>> response = exceptionHandler.handleDatabaseExceptions(ex);
 
         assertNotNull(response);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         Map<String, Object> body = response.getBody();
         assertNotNull(body);
         assertFalse(((String) body.get("message")).contains("craftbid_db.users"));
         assertFalse(((String) body.get("message")).contains("42S02"));
+        assertEquals("A database error occurred while processing your request. Please try again later.", body.get("message"));
     }
 
     @Test

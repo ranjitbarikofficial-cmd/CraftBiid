@@ -69,6 +69,18 @@ public class GlobalExceptionHandler {
                 || lower.contains("foreign key")
                 || lower.contains("constraint")
                 || lower.contains("hibernate")
+                || lower.contains("jpa")
+                || lower.contains("entitymanager")
+                || lower.contains("transaction")
+                || lower.contains("hikari")
+                || lower.contains("datasource")
+                || lower.contains("connection")
+                || lower.contains("driver")
+                || lower.contains("database")
+                || lower.contains("jdbc")
+                || lower.contains("deadlock")
+                || lower.contains("timeout")
+                || lower.contains("pool")
                 || lower.contains("org.springframework")
                 || lower.contains("jakarta.")
                 || lower.contains("com.mysql")
@@ -96,12 +108,35 @@ public class GlobalExceptionHandler {
     // DATABASE / PERSISTENCE EXCEPTIONS (No SQL / table / column names exposed)
     // =========================================================================
 
-    @ExceptionHandler({DataIntegrityViolationException.class, DataAccessException.class, SQLException.class})
-    public ResponseEntity<Map<String, Object>> handleDatabaseExceptions(Exception ex) {
-        logger.error("Database operation error encountered: ", ex);
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        logger.error("Database constraint violation encountered: ", ex);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(buildErrorBody(HttpStatus.BAD_REQUEST, "A database conflict or constraint violation occurred. Please verify your data and try again."));
+    }
+
+    @ExceptionHandler({
+            org.springframework.transaction.CannotCreateTransactionException.class,
+            org.springframework.transaction.TransactionException.class,
+            org.springframework.dao.DataAccessResourceFailureException.class,
+            org.springframework.jdbc.CannotGetJdbcConnectionException.class,
+            org.hibernate.exception.JDBCConnectionException.class,
+            jakarta.persistence.PersistenceException.class
+    })
+    public ResponseEntity<Map<String, Object>> handleDatabaseConnectionExceptions(Exception ex) {
+        logger.error("Database connection failure encountered: ", ex);
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(buildErrorBody(HttpStatus.SERVICE_UNAVAILABLE, "Database service is temporarily unavailable. Please verify the database status and try again shortly."));
+    }
+
+    @ExceptionHandler({DataAccessException.class, SQLException.class})
+    public ResponseEntity<Map<String, Object>> handleDatabaseExceptions(Exception ex) {
+        logger.error("Database operation error encountered: ", ex);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(buildErrorBody(HttpStatus.INTERNAL_SERVER_ERROR, "A database error occurred while processing your request. Please try again later."));
     }
 
     // =========================================================================
