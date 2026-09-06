@@ -6,6 +6,7 @@ import { FollowService } from '../../services/follow.service';
 import { AuctionService } from '../../services/auction.service';
 import { AuthService } from '../../services/auth';
 import { ToastService } from '../../services/toast.service';
+import { resolveMediaUrl } from '../../services/api-config';
 import { Topbar } from '../home/topbar/topbar';
 import { Navbar } from '../home/navbar/navbar';
 import { Footer } from '../home/footer/footer';
@@ -18,6 +19,7 @@ import { Footer } from '../home/footer/footer';
   styleUrl: './reels.css',
 })
 export class Reels implements OnInit, AfterViewInit {
+  resolveMediaUrl = resolveMediaUrl;
   @ViewChildren('videoElement') videoElements!: QueryList<ElementRef<HTMLVideoElement>>;
   @ViewChildren('reelCard') reelCards!: QueryList<ElementRef<HTMLDivElement>>;
 

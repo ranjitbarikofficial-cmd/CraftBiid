@@ -6,6 +6,7 @@ import { CraftReelService, CraftReelItem } from '../../services/craft-reel.servi
 import { Topbar } from '../home/topbar/topbar';
 import { Navbar } from '../home/navbar/navbar';
 import { Footer } from '../home/footer/footer';
+import { resolveMediaUrl } from '../../services/api-config';
 
 @Component({
   selector: 'app-craft-details',
@@ -15,6 +16,7 @@ import { Footer } from '../home/footer/footer';
   styleUrl: './craft-details.css',
 })
 export class CraftDetails implements OnInit {
+  resolveMediaUrl = resolveMediaUrl;
   craft: CraftItem | null = null;
   reels: CraftReelItem[] = [];
   loading = true;

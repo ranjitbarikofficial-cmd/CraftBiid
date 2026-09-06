@@ -69,8 +69,8 @@
             <div class="video-wrapper">
               <video
                 #videoElement
-                [src]="reel.videoUrl"
-                [poster]="reel.thumbnailUrl"
+                [src]="resolveMediaUrl(reel.videoUrl)"
+                [poster]="resolveMediaUrl(reel.thumbnailUrl)"
                 playsinline
                 (ended)="onVideoEnded(i)"
                 (click)="togglePlayPause(videoElement)"
@@ -200,7 +200,7 @@
                 @if (reel.craft) {
                   <div class="linked-craft-card">
                     <img
-                      [src]="reel.craft.imageUrl"
+                      [src]="resolveMediaUrl(reel.craft.imageUrl)"
                       [alt]="reel.craft.title"
                       (error)="onImageError($event)"
                     />

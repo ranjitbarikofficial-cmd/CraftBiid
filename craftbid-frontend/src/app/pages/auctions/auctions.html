@@ -28,7 +28,7 @@
         <article class="auction-card" [routerLink]="['/auctions', auction.id]">
           <div class="auction-image-wrap">
             <span class="timer-badge">⏳ {{ getTimeRemaining(auction.endTime) }}</span>
-            <img [src]="auction.craft?.imageUrl" [alt]="auction.craft?.title" (error)="onImageError($event)" />
+            <img [src]="resolveMediaUrl(auction.craft?.imageUrl)" [alt]="auction.craft?.title" (error)="onImageError($event)" />
             <span class="bids-pill">{{ auction.totalBids }} bids</span>
           </div>
 

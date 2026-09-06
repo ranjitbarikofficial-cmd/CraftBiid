@@ -15,6 +15,7 @@ import { ToastService } from '../../services/toast.service';
 import { Topbar } from '../home/topbar/topbar';
 import { Navbar } from '../home/navbar/navbar';
 import { Footer } from '../home/footer/footer';
+import { resolveMediaUrl } from '../../services/api-config';
 
 @Component({
   selector: 'app-auction-details',
@@ -24,6 +25,7 @@ import { Footer } from '../home/footer/footer';
   styleUrl: './auction-details.css',
 })
 export class AuctionDetails implements OnInit, OnDestroy {
+  resolveMediaUrl = resolveMediaUrl;
   auction: AuctionItem | null = null;
   bids: BidItem[] = [];
   participants: AuctionParticipantItem[] = [];

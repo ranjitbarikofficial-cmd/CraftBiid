@@ -5,6 +5,7 @@ import { CategoryService, CategoryItem } from '../../../services/category.servic
 import { CraftService, CraftItem } from '../../../services/craft.service';
 import { CraftReelService, CraftReelItem } from '../../../services/craft-reel.service';
 import { AuthService } from '../../../services/auth';
+import { resolveMediaUrl } from '../../../services/api-config';
 
 @Component({
   selector: 'app-home-content',
@@ -14,6 +15,7 @@ import { AuthService } from '../../../services/auth';
   styleUrl: './home-content.css',
 })
 export class HomeContent implements OnInit {
+  resolveMediaUrl = resolveMediaUrl;
   categories: CategoryItem[] = [];
   crafts: CraftItem[] = [];
   craftReels: CraftReelItem[] = [];

@@ -5,6 +5,7 @@ import { AuctionService, AuctionItem } from '../../services/auction.service';
 import { Topbar } from '../home/topbar/topbar';
 import { Navbar } from '../home/navbar/navbar';
 import { Footer } from '../home/footer/footer';
+import { resolveMediaUrl } from '../../services/api-config';
 
 @Component({
   selector: 'app-auctions',
@@ -14,6 +15,7 @@ import { Footer } from '../home/footer/footer';
   styleUrl: './auctions.css',
 })
 export class Auctions implements OnInit, OnDestroy {
+  resolveMediaUrl = resolveMediaUrl;
   auctions: AuctionItem[] = [];
   loading = true;
   timerInterval: any;

@@ -8,6 +8,7 @@ import { AuctionService, AuctionOrderItem } from '../../services/auction.service
 import { FollowService } from '../../services/follow.service';
 import { AuthService, UserAuth } from '../../services/auth';
 import { ToastService } from '../../services/toast.service';
+import { resolveMediaUrl } from '../../services/api-config';
 
 @Component({
   selector: 'app-artisan-dashboard',
@@ -17,6 +18,7 @@ import { ToastService } from '../../services/toast.service';
   styleUrl: './artisan-dashboard.css',
 })
 export class ArtisanDashboard implements OnInit {
+  resolveMediaUrl = resolveMediaUrl;
   currentUser: UserAuth | null = null;
   crafts: CraftItem[] = [];
   reels: CraftReelItem[] = [];

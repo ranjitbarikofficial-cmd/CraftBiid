@@ -6,6 +6,7 @@ import { CraftService, CraftItem } from '../../services/craft.service';
 import { Topbar } from '../home/topbar/topbar';
 import { Navbar } from '../home/navbar/navbar';
 import { Footer } from '../home/footer/footer';
+import { resolveMediaUrl } from '../../services/api-config';
 
 @Component({
   selector: 'app-search',
@@ -15,6 +16,7 @@ import { Footer } from '../home/footer/footer';
   styleUrl: './search.css',
 })
 export class Search implements OnInit {
+  resolveMediaUrl = resolveMediaUrl;
   keyword = '';
   crafts: CraftItem[] = [];
   loading = false;

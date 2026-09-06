@@ -56,7 +56,7 @@
           @for (craft of crafts; track craft.id) {
             <article class="craft-card" [routerLink]="['/crafts', craft.id]">
               <div class="image-wrap">
-                <img [src]="craft.imageUrl" [alt]="craft.title" (error)="onImageError($event)" />
+                <img [src]="resolveMediaUrl(craft.imageUrl)" [alt]="craft.title" (error)="onImageError($event)" />
                 <span class="price-tag">{{ formatPrice(craft.basePrice) }}</span>
               </div>
               <div class="card-info">

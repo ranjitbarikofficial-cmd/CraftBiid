@@ -27,7 +27,7 @@
       <!-- LEFT: Image & Reels -->
       <div class="craft-media-section">
         <div class="main-image-wrap">
-          <img [src]="craft.imageUrl" [alt]="craft.title" (error)="onImageError($event)" />
+          <img [src]="resolveMediaUrl(craft.imageUrl)" [alt]="craft.title" (error)="onImageError($event)" />
           <span class="status-badge">{{ craft.status }}</span>
         </div>
 
@@ -36,7 +36,7 @@
             <h3>🎥 Making Process Reel</h3>
             @for (reel of reels; track reel.id) {
               <div class="reel-player-box">
-                <video [src]="reel.videoUrl" controls (play)="onVideoPlay(reel)"></video>
+                <video [src]="resolveMediaUrl(reel.videoUrl)" controls (play)="onVideoPlay(reel)"></video>
                 <div class="reel-meta">
                   <span>{{ reel.title }}</span>
                   <div class="reel-actions">

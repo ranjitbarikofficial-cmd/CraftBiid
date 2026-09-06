@@ -167,7 +167,7 @@
             @for (craft of crafts; track craft.id) {
               <div class="catalog-card" [class.offline-craft]="craft.status === 'OFFLINE'">
                 <div class="card-thumbnail-wrap">
-                  <img [src]="craft.imageUrl" [alt]="craft.title" (error)="onImageError($event)" />
+                  <img [src]="resolveMediaUrl(craft.imageUrl)" [alt]="craft.title" (error)="onImageError($event)" />
                   <span class="craft-category-badge">{{ craft.category?.name || 'Craft' }}</span>
                   <span class="craft-live-status-pill" [class.live]="craft.status === 'ACTIVE'" [class.offline]="craft.status === 'OFFLINE'">
                     {{ craft.status === 'ACTIVE' ? '🟢 LIVE FOR AUCTION' : '🔴 OFFLINE / SOLD' }}
@@ -233,7 +233,7 @@
             @for (reel of reels; track reel.id) {
               <div class="studio-reel-card">
                 <div class="reel-media-box">
-                  <video [src]="reel.videoUrl" controls [poster]="reel.thumbnailUrl"></video>
+                  <video [src]="resolveMediaUrl(reel.videoUrl)" controls [poster]="resolveMediaUrl(reel.thumbnailUrl)"></video>
                 </div>
                 <div class="reel-meta-box">
                   <h4>{{ reel.title }}</h4>
@@ -326,7 +326,7 @@
 
       <div class="modal-body-content">
         <div class="craft-preview-box">
-          <img [src]="selectedCraft.imageUrl" [alt]="selectedCraft.title" (error)="onImageError($event)" />
+          <img [src]="resolveMediaUrl(selectedCraft.imageUrl)" [alt]="selectedCraft.title" (error)="onImageError($event)" />
           <div>
             <h3>{{ selectedCraft.title }}</h3>
             <p>Product Base Price: <strong>{{ formatPrice(selectedCraft.basePrice) }}</strong></p>

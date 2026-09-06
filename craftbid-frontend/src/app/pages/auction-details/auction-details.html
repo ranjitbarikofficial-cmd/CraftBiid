@@ -58,7 +58,7 @@
       <!-- LEFT: CRAFT SHOWCASE -->
       <section class="craft-showcase-card">
         <div class="image-wrapper">
-          <img [src]="auction.craft.imageUrl" [alt]="auction.craft.title" (error)="onImageError($event)" />
+          <img [src]="resolveMediaUrl(auction.craft.imageUrl)" [alt]="auction.craft.title" (error)="onImageError($event)" />
         </div>
         <div class="craft-content">
           <div class="badge-row">

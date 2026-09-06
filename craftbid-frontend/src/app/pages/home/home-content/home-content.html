@@ -169,7 +169,7 @@
           @for (reel of craftReels; track reel.id) {
             <div class="reel-card-item">
               <div class="reel-video-container">
-                <video [src]="reel.videoUrl" [poster]="reel.thumbnailUrl" preload="metadata" muted playsinline></video>
+                <video [src]="resolveMediaUrl(reel.videoUrl)" [poster]="resolveMediaUrl(reel.thumbnailUrl)" preload="metadata" muted playsinline></video>
                 <div class="reel-gradient-scrim"></div>
 
                 <div class="reel-top-tags">
@@ -210,7 +210,7 @@
             <article class="craft-card-item" [routerLink]="['/crafts', craft.id]">
               <div class="craft-thumbnail-box">
                 <span class="craft-handmade-badge">✨ HANDMADE</span>
-                <img [src]="craft.imageUrl" [alt]="craft.title" (error)="onImageError($event)" />
+                <img [src]="resolveMediaUrl(craft.imageUrl)" [alt]="craft.title" (error)="onImageError($event)" />
               </div>
 
               <div class="craft-info-box">
