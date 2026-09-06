@@ -56,6 +56,8 @@ public class SecurityConfig {
                 List.of(
                         "http://localhost:[*]",
                         "http://127.0.0.1:[*]",
+                        "https://craftbid.co.in",
+                        "https://*.craftbid.co.in",
                         "https://*.vercel.app",
                         "https://vercel.app",
                         "https://*.onrender.com",
