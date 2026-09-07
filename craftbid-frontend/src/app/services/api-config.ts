@@ -12,12 +12,17 @@ export function getApiBaseUrl(): string {
       return `http://${host}:8081`;
     }
 
-    // Production
-    return 'https://craftbid.onrender.com';
+    // Custom domain production
+    if (host.includes('craftbid.co.in')) {
+      return 'https://api.craftbid.co.in';
+    }
+
+    // AWS EC2 backend production fallback
+    return 'http://15.252.117.177';
   }
 
   // Production fallback
-  return 'https://craftbid.onrender.com';
+  return 'http://15.252.117.177';
 }
 
 export function resolveMediaUrl(url: string | null | undefined): string {
