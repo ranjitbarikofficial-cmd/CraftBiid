@@ -46,9 +46,9 @@
         </div>
       </div>
 
-      <!-- Hero Right Floating Preview Card -->
-      <div class="hero-right">
-        @if (featuredAuction) {
+      <!-- Hero Right Floating Preview Card (Only shown if a real live auction is active) -->
+      @if (featuredAuction) {
+        <div class="hero-right">
           <div class="hero-featured-card">
             <div class="featured-card-media">
               <img
@@ -82,72 +82,8 @@
               </div>
             </div>
           </div>
-        } @else if (crafts.length > 0) {
-          <div class="hero-featured-card">
-            <div class="featured-card-media">
-              <img
-                [src]="resolveMediaUrl(crafts[0].imageUrl)"
-                [alt]="crafts[0].title"
-                (error)="onImageError($event)"
-              />
-              <div class="card-live-indicator">
-                <span class="live-dot-pulse"></span>
-                <span>FEATURED CREATION</span>
-              </div>
-              <div class="turn-timer-chip">
-                <span>✨ 100% Genuine Handmade</span>
-              </div>
-            </div>
-
-            <div class="featured-card-details">
-              <div class="card-meta-row">
-                <span class="category-chip">{{ crafts[0].category?.name || 'Handmade' }}</span>
-                <span class="room-slots">👨‍🎨 Verified Artisan</span>
-              </div>
-              <h3>{{ crafts[0].title }}</h3>
-              <p class="artisan-credit">By {{ crafts[0].seller?.name || 'Master Artisan' }}</p>
-
-              <div class="card-bid-footer">
-                <div>
-                  <span class="price-caption">Base Price</span>
-                  <div class="price-val">{{ formatPrice(crafts[0].basePrice) }}</div>
-                </div>
-                <a [routerLink]="['/crafts', crafts[0].id]" class="btn-join-bid">View Craft →</a>
-              </div>
-            </div>
-          </div>
-        } @else {
-          <div class="hero-featured-card">
-            <div class="featured-card-media">
-              <img
-                src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=800&q=80"
-                alt="CraftBid Handmade Marketplace"
-              />
-              <div class="card-live-indicator">
-                <span class="live-dot-pulse"></span>
-                <span>LIVE MARKETPLACE</span>
-              </div>
-            </div>
-
-            <div class="featured-card-details">
-              <div class="card-meta-row">
-                <span class="category-chip">Handmade Heritage</span>
-                <span class="room-slots">🛡️ 100% Verified</span>
-              </div>
-              <h3>Join India's Craft Marketplace</h3>
-              <p class="artisan-credit">Empowering traditional master artisans</p>
-
-              <div class="card-bid-footer">
-                <div>
-                  <span class="price-caption">Turn Bidding</span>
-                  <div class="price-val">60s Timer</div>
-                </div>
-                <a routerLink="/auctions" class="btn-join-bid">Explore →</a>
-              </div>
-            </div>
-          </div>
-        }
-      </div>
+        </div>
+      }
     </div>
   </section>
 
