@@ -138,6 +138,11 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'founder',
+    loadComponent: () =>
+      import('./pages/founder/founder').then((m) => m.Founder),
+  },
+  {
     path: '**',
     redirectTo: 'home',
   },

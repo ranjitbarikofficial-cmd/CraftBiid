@@ -1093,3 +1093,226 @@
     font-size: 0.75rem;
   }
 }
+
+/* ================= 6. MEET THE FOUNDER HOME HIGHLIGHT ================= */
+.founder-home-section {
+  padding: 30px 0 20px;
+  background-color: transparent;
+}
+
+.founder-home-card {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 36px;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 36px;
+  border: 1px solid rgba(234, 88, 12, 0.18);
+  box-shadow: 0 16px 36px -6px rgba(234, 88, 12, 0.1), 0 4px 12px rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+}
+
+.founder-home-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #ea580c, #f97316, #fb923c);
+}
+
+.founder-home-media {
+  display: flex;
+  justify-content: center;
+}
+
+.founder-home-avatar {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  padding: 5px;
+  background: linear-gradient(135deg, #ea580c, #f97316, #fed7aa);
+  box-shadow: 0 10px 24px rgba(234, 88, 12, 0.22);
+}
+
+.avatar-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #1e1b18;
+  border: 3px solid #ffffff;
+  display: block;
+}
+
+.founder-home-badge {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0f172a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+  border: 1px solid #fed7aa;
+}
+
+.founder-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.founder-tag {
+  background: #ffedd5;
+  color: #9a3412;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 9999px;
+}
+
+.founder-location {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.founder-home-heading {
+  font-family: 'Outfit', -apple-system, sans-serif;
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 2px;
+}
+
+.founder-home-sub {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ea580c;
+  margin-bottom: 12px;
+}
+
+.founder-home-quote {
+  background: linear-gradient(135deg, #fffbf5 0%, #fff7ed 100%);
+  border-left: 4px solid #f97316;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e1b18;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.founder-home-desc {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #475569;
+  margin-bottom: 20px;
+}
+
+.founder-home-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.btn-read-story {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-read-story:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.45);
+}
+
+.founder-social-quick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-social-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.mini-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.btn-li {
+  background: #0a66c2;
+  color: #ffffff;
+}
+
+.btn-li:hover {
+  background: #084e96;
+  transform: translateY(-1px);
+}
+
+.btn-gh {
+  background: #24292f;
+  color: #ffffff;
+}
+
+.btn-gh:hover {
+  background: #0f1419;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 900px) {
+  .founder-home-card {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 28px 20px;
+    text-align: center;
+  }
+
+  .founder-badge-row {
+    justify-content: center;
+  }
+
+  .founder-home-cta-row {
+    justify-content: center;
+  }
+}
+

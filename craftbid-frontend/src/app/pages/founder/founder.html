@@ -1,0 +1,287 @@
+<div class="founder-page-wrapper">
+  <!-- Topbar & Navigation -->
+  <app-topbar></app-topbar>
+  <app-navbar></app-navbar>
+
+  <main class="founder-main">
+    <!-- Breadcrumb & Header Bar -->
+    <section class="page-header-section">
+      <div class="header-container">
+        <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+          <a routerLink="/" class="breadcrumb-item">Home</a>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-current">Meet the Founder</span>
+        </nav>
+        <div class="header-badge">
+          <span class="badge-sparkle">✨</span>
+          <span>VISIONARY LEADERSHIP & ENGINEERING</span>
+        </div>
+        <h1 class="page-title">Meet the Founder of CraftBid</h1>
+        <p class="page-lead">
+          Pioneering the future of India's handmade craft marketplace through real-time technology and artisan empowerment.
+        </p>
+      </div>
+    </section>
+
+    <!-- Founder Hero & Profile Spotlight -->
+    <section class="founder-hero-section">
+      <div class="section-container hero-grid">
+        <!-- Left: Founder Card -->
+        <div class="founder-card glass-panel">
+          <div class="founder-card-inner">
+            <!-- Photo Frame with Placeholder Support -->
+            <div class="avatar-frame">
+              @if (!imageError) {
+                <img
+                  src="/founder-placeholder.svg"
+                  [alt]="founderName + ' – ' + founderRole"
+                  class="founder-photo"
+                  (error)="onImageError()"
+                />
+              } @else {
+                <div class="avatar-fallback">
+                  <div class="fallback-monogram">RB</div>
+                  <span class="fallback-name">Ranjit Barik</span>
+                </div>
+              }
+              <div class="avatar-status-badge">
+                <span class="status-pulse"></span>
+                <span>Founder & Creator</span>
+              </div>
+            </div>
+
+            <!-- Profile Info -->
+            <div class="founder-info">
+              <h2 class="founder-name">{{ founderName }}</h2>
+              <p class="founder-role-title">{{ founderRole }}</p>
+              
+              <div class="founder-meta-pills">
+                <span class="meta-pill">📍 {{ location }}</span>
+                <span class="meta-pill">💻 Full-Stack Architect</span>
+                <span class="meta-pill">🇮🇳 Made in India</span>
+              </div>
+
+              <!-- Social Action Buttons -->
+              <div class="founder-social-actions">
+                <a
+                  [href]="linkedInUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn-social btn-linkedin"
+                  aria-label="Connect with Ranjit Barik on LinkedIn"
+                >
+                  <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+                  </svg>
+                  <span>Connect on LinkedIn</span>
+                </a>
+
+                <a
+                  [href]="githubUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn-social btn-github"
+                  aria-label="View Ranjit Barik's GitHub Profile"
+                >
+                  <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/>
+                  </svg>
+                  <span>View GitHub</span>
+                </a>
+              </div>
+
+              <!-- Quick Contact -->
+              <div class="founder-contact-bar">
+                <span class="contact-label">Direct Inquiries:</span>
+                <a [href]="'mailto:' + email" class="contact-email">
+                  <span>✉️</span> {{ email }}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Vision, Quote & Mission -->
+        <div class="vision-column">
+          <!-- Featured Quote Box -->
+          <div class="quote-card">
+            <div class="quote-icon-top">“</div>
+            <blockquote class="founder-quote-text">
+              {{ quote }}
+            </blockquote>
+            <div class="quote-author-row">
+              <div class="author-line"></div>
+              <span class="quote-author-name">Ranjit Barik</span>
+              <span class="quote-author-sub">— Founder & Developer of CraftBid</span>
+            </div>
+          </div>
+
+          <!-- Mission Narrative -->
+          <div class="mission-card glass-panel">
+            <h3 class="mission-title">The CraftBid Vision</h3>
+            <p class="mission-body">
+              {{ mainDescription }}
+            </p>
+            <p class="mission-subbody">
+              Across thousands of villages and towns in India, master artisans spend weeks crafting extraordinary heritage pieces — from intricately carved terracotta and Dhokra brass to hand-painted Pattachitra and delicate handlooms. Yet, traditional supply chains capture most of the value, leaving the creator with a fraction of the reward. CraftBid was engineered to bridge this gap completely.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Platform Impact & Pillars -->
+    <section class="impact-stats-section">
+      <div class="section-container">
+        <div class="section-header text-center">
+          <span class="section-pill">OUR COMMITMENTS</span>
+          <h2>Empowering Indian Artisans with Technology</h2>
+          <p>The core foundational principles on which Ranjit Barik architected CraftBid.</p>
+        </div>
+
+        <div class="milestones-grid">
+          @for (item of milestones; track item.label) {
+            <div class="milestone-card">
+              <div class="milestone-figure">{{ item.figure }}</div>
+              <h4 class="milestone-label">{{ item.label }}</h4>
+              <p class="milestone-sub">{{ item.subtext }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Founder Journey & Engineering Story -->
+    <section class="journey-story-section">
+      <div class="section-container story-layout">
+        <div class="story-left">
+          <span class="section-pill">THE STORY BEHIND CRAFTBID</span>
+          <h2>From Inspiration to a Live Digital Marketplace</h2>
+          
+          <div class="story-paragraphs">
+            <p>
+              Growing up with an appreciation for India's immense cultural depth and traditional craftsmanship, <strong>Ranjit Barik</strong> recognized that while the digital commerce revolution swept the nation, traditional artisans remained left behind due to complex portals, exorbitant listing fees, and opaque commission structures.
+            </p>
+            <p>
+              Ranjit set out to build an end-to-end digital ecosystem combining three powerful pillars:
+            </p>
+            <ul class="story-highlights-list">
+              <li>
+                <span class="hl-bullet">🎥</span>
+                <div>
+                  <strong>Engaging Visual Storytelling:</strong> Craft Reels that let artisans upload short-form videos showcasing how their art is molded, painted, or woven.
+                </div>
+              </li>
+              <li>
+                <span class="hl-bullet">⏱️</span>
+                <div>
+                  <strong>Fair & Thrilling Live Auctions:</strong> A 60-second real-time turn auction system with a pay-to-bid base deposit and differential bidding that ensures authentic bids.
+                </div>
+              </li>
+              <li>
+                <span class="hl-bullet">🛡️</span>
+                <div>
+                  <strong>100% Guaranteed Escrow & Refunds:</strong> Instant automated deposit reversals for non-winning bidders and guaranteed 90% direct payouts for artisans.
+                </div>
+              </li>
+            </ul>
+            <p>
+              Today, CraftBid stands as a modern, high-performance platform engineered from scratch with clean, scalable, cloud-native architecture.
+            </p>
+          </div>
+        </div>
+
+        <div class="story-right">
+          <div class="story-visual-card">
+            <div class="visual-header">
+              <span class="visual-chip">🚀 Platform Highlights</span>
+            </div>
+            <div class="visual-items">
+              <div class="visual-row">
+                <span class="v-icon">🏛️</span>
+                <div>
+                  <h4>Preserving Heritage</h4>
+                  <p>Documenting centuries-old Indian craft techniques for the modern digital era.</p>
+                </div>
+              </div>
+              <div class="visual-row">
+                <span class="v-icon">🤝</span>
+                <div>
+                  <h4>Zero Intermediaries</h4>
+                  <p>Connecting craft collectors directly with verified local master artisans.</p>
+                </div>
+              </div>
+              <div class="visual-row">
+                <span class="v-icon">⚡</span>
+                <div>
+                  <h4>Real-Time WebSocket Sync</h4>
+                  <p>Ultra-responsive turn bidding with sub-50ms synchronized room updates.</p>
+                </div>
+              </div>
+              <div class="visual-row">
+                <span class="v-icon">🌐</span>
+                <div>
+                  <h4>Scalable Cloud Architecture</h4>
+                  <p>Built with enterprise-grade Spring Boot 3, Angular, AWS EC2, and RDS MySQL.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Technical Architecture & Innovation Section -->
+    <section class="tech-architecture-section">
+      <div class="section-container">
+        <div class="section-header text-center">
+          <span class="section-pill">FULL-STACK ENGINEERING</span>
+          <h2>Architected & Built by Ranjit Barik</h2>
+          <p>
+            CraftBid is engineered with modern, cloud-native technologies ensuring sub-second responsiveness, bank-grade transaction security, and 99.9% uptime.
+          </p>
+        </div>
+
+        <div class="tech-grid">
+          @for (tech of techStack; track tech.name) {
+            <div class="tech-card">
+              <div class="tech-card-top">
+                <span class="tech-icon">{{ tech.icon }}</span>
+                <span class="tech-cat">{{ tech.category }}</span>
+              </div>
+              <h3 class="tech-name">{{ tech.name }}</h3>
+              <p class="tech-desc">{{ tech.desc }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Call to Action Banner -->
+    <section class="founder-cta-section">
+      <div class="section-container cta-box">
+        <div class="cta-content">
+          <span class="cta-pill">✨ JOIN THE CRAFTBID REVOLUTION</span>
+          <h2>Experience the Magic of Live Handmade Auctions</h2>
+          <p>
+            Discover unique handcrafted masterpieces, watch inspiring artisan reels, or start selling your craft creations directly to passionate collectors.
+          </p>
+          <div class="cta-button-group">
+            <a routerLink="/auctions" class="btn-cta-primary">
+              <span>🔨 Enter Live Auctions</span>
+            </a>
+            <a routerLink="/reels" class="btn-cta-secondary">
+              <span>🎥 Watch Craft Reels</span>
+            </a>
+            <a routerLink="/artisan" class="btn-cta-artisan">
+              <span>🎨 Sell as an Artisan</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <app-footer></app-footer>
+</div>
