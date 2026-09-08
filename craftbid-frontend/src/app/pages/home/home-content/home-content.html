@@ -48,38 +48,105 @@
 
       <!-- Hero Right Floating Preview Card -->
       <div class="hero-right">
-        <div class="hero-featured-card">
-          <div class="featured-card-media">
-            <img
-              src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=800&q=80"
-              alt="Handcrafted Clay Pot"
-            />
-            <div class="card-live-indicator">
-              <span class="live-dot-pulse"></span>
-              <span>LIVE AUCTION ROOM</span>
-            </div>
-            <div class="turn-timer-chip">
-              <span>⏱️ Turn Timer: <strong>48s</strong></span>
-            </div>
-          </div>
-
-          <div class="featured-card-details">
-            <div class="card-meta-row">
-              <span class="category-chip">Pottery & Clay</span>
-              <span class="room-slots">👥 4/10 Joined</span>
-            </div>
-            <h3>Terracotta Masterpiece Vase</h3>
-            <p class="artisan-credit">By Master Artisan Rajesh Sharma</p>
-
-            <div class="card-bid-footer">
-              <div>
-                <span class="price-caption">Current Highest Bid</span>
-                <div class="price-val">₹1,800</div>
+        @if (featuredAuction) {
+          <div class="hero-featured-card">
+            <div class="featured-card-media">
+              <img
+                [src]="resolveMediaUrl(featuredAuction.craft?.imageUrl)"
+                [alt]="featuredAuction.craft?.title || 'Live Auction Craft'"
+                (error)="onImageError($event)"
+              />
+              <div class="card-live-indicator">
+                <span class="live-dot-pulse"></span>
+                <span>LIVE AUCTION ROOM</span>
               </div>
-              <a routerLink="/auctions/1" class="btn-join-bid">Bid Now →</a>
+              <div class="turn-timer-chip">
+                <span>⏱️ Live Turn Bidding</span>
+              </div>
+            </div>
+
+            <div class="featured-card-details">
+              <div class="card-meta-row">
+                <span class="category-chip">{{ featuredAuction.craft?.category?.name || 'Handmade Craft' }}</span>
+                <span class="room-slots">👥 {{ featuredAuction.totalBids || 0 }} Bids Placed</span>
+              </div>
+              <h3>{{ featuredAuction.craft?.title }}</h3>
+              <p class="artisan-credit">By {{ featuredAuction.seller?.name || 'Master Artisan' }}</p>
+
+              <div class="card-bid-footer">
+                <div>
+                  <span class="price-caption">Current Bid</span>
+                  <div class="price-val">{{ formatPrice(featuredAuction.currentHighestBid || featuredAuction.startingPrice) }}</div>
+                </div>
+                <a [routerLink]="['/auctions', featuredAuction.id]" class="btn-join-bid">Bid Now →</a>
+              </div>
             </div>
           </div>
-        </div>
+        } @else if (crafts.length > 0) {
+          <div class="hero-featured-card">
+            <div class="featured-card-media">
+              <img
+                [src]="resolveMediaUrl(crafts[0].imageUrl)"
+                [alt]="crafts[0].title"
+                (error)="onImageError($event)"
+              />
+              <div class="card-live-indicator">
+                <span class="live-dot-pulse"></span>
+                <span>FEATURED CREATION</span>
+              </div>
+              <div class="turn-timer-chip">
+                <span>✨ 100% Genuine Handmade</span>
+              </div>
+            </div>
+
+            <div class="featured-card-details">
+              <div class="card-meta-row">
+                <span class="category-chip">{{ crafts[0].category?.name || 'Handmade' }}</span>
+                <span class="room-slots">👨‍🎨 Verified Artisan</span>
+              </div>
+              <h3>{{ crafts[0].title }}</h3>
+              <p class="artisan-credit">By {{ crafts[0].seller?.name || 'Master Artisan' }}</p>
+
+              <div class="card-bid-footer">
+                <div>
+                  <span class="price-caption">Base Price</span>
+                  <div class="price-val">{{ formatPrice(crafts[0].basePrice) }}</div>
+                </div>
+                <a [routerLink]="['/crafts', crafts[0].id]" class="btn-join-bid">View Craft →</a>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="hero-featured-card">
+            <div class="featured-card-media">
+              <img
+                src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=800&q=80"
+                alt="CraftBid Handmade Marketplace"
+              />
+              <div class="card-live-indicator">
+                <span class="live-dot-pulse"></span>
+                <span>LIVE MARKETPLACE</span>
+              </div>
+            </div>
+
+            <div class="featured-card-details">
+              <div class="card-meta-row">
+                <span class="category-chip">Handmade Heritage</span>
+                <span class="room-slots">🛡️ 100% Verified</span>
+              </div>
+              <h3>Join India's Craft Marketplace</h3>
+              <p class="artisan-credit">Empowering traditional master artisans</p>
+
+              <div class="card-bid-footer">
+                <div>
+                  <span class="price-caption">Turn Bidding</span>
+                  <div class="price-val">60s Timer</div>
+                </div>
+                <a routerLink="/auctions" class="btn-join-bid">Explore →</a>
+              </div>
+            </div>
+          </div>
+        }
       </div>
     </div>
   </section>

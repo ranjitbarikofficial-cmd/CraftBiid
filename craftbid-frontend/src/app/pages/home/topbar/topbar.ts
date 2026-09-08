@@ -30,14 +30,14 @@ export class Topbar implements OnInit {
   settingsForm = {
     displayName: '',
     phone: '',
-    workshopCity: 'Bhubaneswar, Odisha',
-    bio: 'Traditional handcrafted artist preserving Indian cultural heritage.',
+    workshopCity: '',
+    bio: '',
     notifyOutbid: true,
     notifyTurnTimer: true,
     notifyReels: false,
-    upiId: 'artisan@okaxis',
-    bankAccount: '918237491823',
-    ifscCode: 'HDFC0001234',
+    upiId: '',
+    bankAccount: '',
+    ifscCode: '',
   };
 
   constructor(
@@ -54,7 +54,7 @@ export class Topbar implements OnInit {
       this.isLoggedIn = this.authService.isLoggedIn();
       if (user) {
         this.settingsForm.displayName = user.name || '';
-        this.settingsForm.phone = user.phone || '7077476718';
+        this.settingsForm.phone = user.phone || '';
       }
     });
 

@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { CategoryService, CategoryItem } from '../../../services/category.service';
 import { CraftService, CraftItem } from '../../../services/craft.service';
 import { CraftReelService, CraftReelItem } from '../../../services/craft-reel.service';
+import { AuctionService, AuctionItem } from '../../../services/auction.service';
 import { AuthService } from '../../../services/auth';
 import { resolveMediaUrl } from '../../../services/api-config';
 
@@ -19,6 +20,7 @@ export class HomeContent implements OnInit {
   categories: CategoryItem[] = [];
   crafts: CraftItem[] = [];
   craftReels: CraftReelItem[] = [];
+  featuredAuction: AuctionItem | null = null;
   isSeller = false;
 
   loading = true;
@@ -38,6 +40,7 @@ export class HomeContent implements OnInit {
     private categoryService: CategoryService,
     private craftService: CraftService,
     private craftReelService: CraftReelService,
+    private auctionService: AuctionService,
     private authService: AuthService
   ) {}
 
@@ -50,6 +53,15 @@ export class HomeContent implements OnInit {
 
   loadHomeData(): void {
     this.loading = true;
+
+    this.auctionService.getActiveAuctions().subscribe({
+      next: (auctions) => {
+        if (auctions && auctions.length > 0) {
+          this.featuredAuction = auctions[0];
+        }
+      },
+      error: (err) => console.error('Failed to load active auctions:', err),
+    });
 
     this.categoryService.getAllCategories().subscribe({
       next: (cats) => {
