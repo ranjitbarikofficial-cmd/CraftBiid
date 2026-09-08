@@ -12,10 +12,13 @@
 
 .startup-hero {
   position: relative;
-  background-color: #faf8f5;
-  padding: 60px 0 80px;
+  background-color: #2b211b;
+  padding: 42px 0 54px;
   overflow: hidden;
   border-bottom: 1px solid #ede8e1;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
 }
 
 .hero-bg-image {
@@ -23,10 +26,9 @@
   inset: 0;
   background-image: url('/hero-bg.png');
   background-size: cover;
-  background-position: right 30%;
+  background-position: center 36%;
   background-repeat: no-repeat;
   z-index: 0;
-  opacity: 1;
 }
 
 .hero-bg-overlay {
@@ -34,46 +36,37 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    rgba(255, 253, 250, 0.88) 0%,
-    rgba(255, 251, 246, 0.68) 35%,
-    rgba(255, 250, 244, 0.28) 65%,
-    rgba(255, 248, 240, 0.05) 100%
+    rgba(255, 252, 248, 0.90) 0%,
+    rgba(255, 250, 244, 0.72) 35%,
+    rgba(255, 248, 240, 0.20) 65%,
+    rgba(255, 245, 238, 0.0) 100%
   );
   z-index: 1;
   pointer-events: none;
 }
 
-.hero-bg-glow {
-  position: absolute;
-  top: -100px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 650px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0) 70%);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.hero-grid-pattern {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px);
-  background-size: 24px 24px;
-  pointer-events: none;
-  z-index: 1;
-}
-
 .hero-container {
   max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
   padding: 0 24px;
-  display: grid;
-  grid-template-columns: 1.35fr 0.65fr;
-  gap: 36px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  gap: 32px;
   position: relative;
   z-index: 2;
+}
+
+.hero-left {
+  max-width: 580px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  padding: 28px 34px;
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.12);
 }
 
 .hero-badge {
@@ -84,11 +77,11 @@
   border: 1px solid #fed7aa;
   padding: 6px 14px;
   border-radius: 9999px;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 800;
   color: #ea580c;
   letter-spacing: 0.06em;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .badge-dot {
@@ -99,28 +92,28 @@
 }
 
 .hero-title {
-  font-size: 3.2rem;
-  line-height: 1.12;
+  font-size: 2.75rem;
+  line-height: 1.14;
   font-weight: 800;
   color: #18181b;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   letter-spacing: -0.03em;
 }
 
 .hero-subtext {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: #52525b;
-  margin-bottom: 32px;
-  max-width: 540px;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  color: #3f3f46;
+  margin-bottom: 24px;
+  max-width: 500px;
 }
 
 .hero-cta-group {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 36px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .btn-hero-primary {
@@ -895,9 +888,24 @@
   }
 
   .hero-container {
-    grid-template-columns: 1fr;
-    gap: 24px;
+    flex-direction: column;
+    gap: 20px;
     padding: 0 16px;
+  }
+
+  .hero-left {
+    max-width: 100%;
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .hero-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-featured-card {
+    max-width: 100%;
   }
 
   .hero-badge {
