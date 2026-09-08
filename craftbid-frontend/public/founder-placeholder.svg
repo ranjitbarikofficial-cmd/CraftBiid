@@ -15,6 +15,6 @@
   <path d="M100 340 C 100 245, 300 245, 300 340 Z" fill="url(#founderGrad)" opacity="0.9"/>
   <circle cx="200" cy="145" r="64" fill="#18181b"/>
   <text x="200" y="162" font-family="'Outfit', 'Segoe UI', sans-serif" font-size="52" font-weight="800" fill="#f97316" text-anchor="middle">RB</text>
-  <rect x="70" y="320" width="260" height="46" rx="23" fill="#ffffff" fill-opacity="0.95" stroke="#f97316" stroke-width="2"/>
-  <text x="200" y="349" font-family="'Plus Jakarta Sans', sans-serif" font-size="16" font-weight="700" fill="#0f172a" text-anchor="middle">Ranjit Barik • Founder</text>
+  <rect x="55" y="320" width="290" height="46" rx="23" fill="#ffffff" fill-opacity="0.95" stroke="#f97316" stroke-width="2"/>
+  <text x="200" y="349" font-family="'Plus Jakarta Sans', sans-serif" font-size="15.5" font-weight="700" fill="#0f172a" text-anchor="middle">Ranjit Barik • Founder &amp; CEO</text>
 </svg>
