@@ -47,7 +47,7 @@
 }
 
 .hero-left {
-  max-width: 540px;
+  max-width: 650px;
   background: transparent;
   padding: 0;
   border: none;
@@ -66,7 +66,7 @@
   font-weight: 800;
   color: #ea580c;
   letter-spacing: 0.06em;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .badge-dot {
@@ -78,63 +78,69 @@
 
 .hero-title {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 3.3rem;
-  line-height: 1.1;
+  font-size: clamp(2.1rem, 3.4vw, 3.1rem);
+  line-height: 1.12;
   font-weight: 850;
-  color: #111827;
-  margin-bottom: 20px;
-  letter-spacing: -0.04em;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  margin-bottom: 16px;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
 }
 
 .hero-subtext {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 1.05rem;
-  line-height: 1.62;
+  font-size: 0.98rem;
+  line-height: 1.58;
   color: #4b5563;
-  margin-bottom: 30px;
+  margin-bottom: 22px;
   max-width: 520px;
 }
 
 .hero-cta-group {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 30px;
+  gap: 10px;
+  margin-bottom: 22px;
 }
 
 .btn-hero-primary {
   background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
   color: #ffffff;
-  padding: 13px 24px;
-  border-radius: 12px;
+  padding: 9px 16px;
+  border-radius: 10px;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   text-decoration: none;
-  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.35);
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.3);
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
+  gap: 6px;
 }
 
 .btn-hero-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(234, 88, 12, 0.45);
+  box-shadow: 0 8px 18px rgba(234, 88, 12, 0.4);
 }
 
 .btn-hero-secondary {
   background: #ffffff;
-  border: 1px solid #e8e2d9;
+  border: 1px solid #e5e0d8;
   color: #18181b;
-  padding: 13px 22px;
-  border-radius: 12px;
+  padding: 9px 15px;
+  border-radius: 10px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   text-decoration: none;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
+  gap: 6px;
 }
 
 .btn-hero-secondary:hover {
@@ -144,17 +150,19 @@
 }
 
 .btn-hero-artisan {
-  background: #fff7ed;
+  background: #fff8f1;
   border: 1px solid #fed7aa;
   color: #ea580c;
-  padding: 13px 20px;
-  border-radius: 12px;
+  padding: 9px 15px;
+  border-radius: 10px;
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.82rem;
   text-decoration: none;
   transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
+  gap: 6px;
 }
 
 .btn-hero-artisan:hover {
@@ -163,19 +171,22 @@
 
 .hero-trust-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 22px;
-  padding-top: 20px;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 18px;
+  padding-top: 16px;
   border-top: 1px solid rgba(229, 224, 216, 0.85);
+  white-space: nowrap;
 }
 
 .trust-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.86rem;
+  gap: 6px;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #4b5563;
+  white-space: nowrap;
 }
 
 .hero-right {
