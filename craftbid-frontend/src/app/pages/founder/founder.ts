@@ -153,7 +153,7 @@ export class Founder implements OnInit, OnDestroy {
 
     this.metaService.updateTag({
       property: 'og:image',
-      content: 'https://craftbid.co.in/craftbid.jpg',
+      content: 'https://craftbid.co.in/ranjit-barik.png',
     });
 
     this.metaService.updateTag({
@@ -181,7 +181,7 @@ export class Founder implements OnInit, OnDestroy {
 
     this.metaService.updateTag({
       name: 'twitter:image',
-      content: 'https://craftbid.co.in/craftbid.jpg',
+      content: 'https://craftbid.co.in/ranjit-barik.png',
     });
 
     // 5. Inject Canonical URL
@@ -229,7 +229,7 @@ export class Founder implements OnInit, OnDestroy {
           'description':
             "Founder and Developer of CraftBid, India's live handmade craft marketplace connecting artisans and customers through craft reels and live auctions.",
           'url': 'https://craftbid.co.in/founder',
-          'image': 'https://craftbid.co.in/founder-placeholder.svg',
+          'image': 'https://craftbid.co.in/ranjit-barik.png',
           'sameAs': [
             'https://www.linkedin.com/in/ranjitbarikofficial',
             'https://github.com/ranjitbarikofficial-cmd',

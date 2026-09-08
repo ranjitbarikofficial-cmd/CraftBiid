@@ -149,6 +149,8 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  object-position: center top;
+  filter: grayscale(100%) contrast(105%);
   background-color: #1e1b18;
   border: 3px solid #ffffff;
   display: block;
