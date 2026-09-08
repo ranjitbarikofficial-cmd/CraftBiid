@@ -18,7 +18,6 @@ export class Founder implements OnInit, OnDestroy {
   founderRole = 'Founder & CEO of CraftBid';
   location = 'Bhubaneswar, Odisha, India';
   linkedInUrl = 'https://www.linkedin.com/in/ranjitbarikofficial';
-  githubUrl = 'https://github.com/ranjitbarikofficial-cmd';
   email = 'support@craftbid.in';
 
   quote = 'Every handmade craft has a story. CraftBid gives that story a digital stage.';
@@ -232,7 +231,6 @@ export class Founder implements OnInit, OnDestroy {
           'image': 'https://craftbid.co.in/ranjit-barik.png',
           'sameAs': [
             'https://www.linkedin.com/in/ranjitbarikofficial',
-            'https://github.com/ranjitbarikofficial-cmd',
             'https://craftbid.co.in'
           ],
           'worksFor': {
