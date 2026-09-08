@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { AuthService } from './auth';
 
 export interface NotificationItem {
   id: string;
@@ -15,79 +16,68 @@ export interface NotificationItem {
   providedIn: 'root',
 })
 export class NotificationService {
-  private storageKey = 'craftbid_notifications';
-  private notificationsSubject: BehaviorSubject<NotificationItem[]>;
-  public notifications$: Observable<NotificationItem[]>;
+  private currentUserId: string = 'guest';
+  private notificationsSubject = new BehaviorSubject<NotificationItem[]>([]);
+  public notifications$: Observable<NotificationItem[]> = this.notificationsSubject.asObservable();
 
-  constructor() {
-    const initial = this.loadFromStorage();
-    this.notificationsSubject = new BehaviorSubject<NotificationItem[]>(initial);
-    this.notifications$ = this.notificationsSubject.asObservable();
+  constructor(private authService: AuthService) {
+    // Purge legacy mock notifications if stored under the old generic key
+    try {
+      const oldData = localStorage.getItem('craftbid_notifications');
+      if (oldData && oldData.includes('notif-1')) {
+        localStorage.removeItem('craftbid_notifications');
+      }
+    } catch (_) {}
+
+    // Subscribe to user changes to load user-specific notifications
+    this.authService.currentUser$.subscribe((user) => {
+      this.currentUserId = user?.userId ? String(user.userId) : (user?.email || 'guest');
+      this.loadUserNotifications();
+    });
   }
 
-  private loadFromStorage(): NotificationItem[] {
+  private getStorageKey(): string {
+    return `craftbid_notifs_${this.currentUserId}`;
+  }
+
+  private loadUserNotifications(): void {
     try {
-      const data = localStorage.getItem(this.storageKey);
-      if (data) {
-        return JSON.parse(data);
+      const raw = localStorage.getItem(this.getStorageKey());
+      if (raw) {
+        const parsed: NotificationItem[] = JSON.parse(raw);
+        // Filter out any stale mock notif-1/2/3 data
+        const clean = parsed.filter((n) => !n.id.startsWith('notif-'));
+        if (clean.length !== parsed.length) {
+          this.saveToStorage(clean);
+          return;
+        }
+        this.notificationsSubject.next(clean);
+        return;
       }
     } catch (e) {
       console.error('Failed to load notifications from storage:', e);
     }
 
-    // Default notifications for real startup experience
-    return [
+    // Default for newly registered or first-time users: A clean, genuine welcome message
+    const defaultWelcome: NotificationItem[] = [
       {
-        id: 'notif-1',
-        title: '🏆 You Won Auction #1!',
-        message: 'Congratulations! Your highest bid won "Handcrafted Clay Vase". Please confirm shipping address.',
-        type: 'AUCTION',
+        id: 'welcome-' + Date.now(),
+        title: '✨ Welcome to CraftBid!',
+        message:
+          "Explore India's 1st live turn craft marketplace. Join live auctions, watch artisan reels, and connect with master artisans.",
+        type: 'SYSTEM',
         time: 'Just now',
         read: false,
-        link: '/auctions/1',
-      },
-      {
-        id: 'notif-2',
-        title: '💳 100% Refund Processed',
-        message: 'Automated refund of ₹1,600 has been credited to your UPI account for non-winning auction turn.',
-        type: 'REFUND',
-        time: '10 mins ago',
-        read: false,
-        link: '/profile',
-      },
-      {
-        id: 'notif-3',
-        title: '📦 New Dispatch Order Received',
-        message: 'Buyer Ranjit Barik submitted delivery address for Order #CB-ORD-1. Net payout: ₹1,620.',
-        type: 'ORDER',
-        time: '25 mins ago',
-        read: false,
-        link: '/artisan-dashboard',
-      },
-      {
-        id: 'notif-4',
-        title: '🎥 New Craft Reel Published',
-        message: 'Artisan Rajesh Sharma uploaded a new process reel: "Sculpting Terracotta Clay".',
-        type: 'REEL',
-        time: '1 hour ago',
-        read: true,
-        link: '/reels',
-      },
-      {
-        id: 'notif-5',
-        title: '⚡ 1-Minute Live Turn Alert',
-        message: 'A new live turn auction for "Wood Carved Elephant" has opened with 10 collector seats.',
-        type: 'SYSTEM',
-        time: '3 hours ago',
-        read: true,
         link: '/auctions',
       },
     ];
+
+    this.saveToStorage(defaultWelcome);
   }
 
   private saveToStorage(notifications: NotificationItem[]): void {
     try {
-      localStorage.setItem(this.storageKey, JSON.stringify(notifications));
+      localStorage.setItem(this.getStorageKey(), JSON.stringify(notifications));
       this.notificationsSubject.next(notifications);
     } catch (e) {
       console.error('Failed to save notifications to storage:', e);
