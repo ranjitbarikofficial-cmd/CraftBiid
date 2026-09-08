@@ -12,8 +12,12 @@
 
 .startup-hero {
   position: relative;
-  background-color: #faf7f2;
-  padding: 48px 0 60px;
+  background-color: #fdf8f4;
+  background-image: url('/hero-bg.png');
+  background-size: cover;
+  background-position: right center;
+  background-repeat: no-repeat;
+  padding: 44px 0 52px;
   overflow: hidden;
   border-bottom: 1px solid #ede8e1;
   min-height: 480px;
@@ -22,29 +26,11 @@
 }
 
 .hero-bg-image {
-  position: absolute;
-  inset: 0;
-  background-image: url('/hero-bg.png');
-  background-size: cover;
-  background-position: right center;
-  background-repeat: no-repeat;
-  z-index: 0;
+  display: none;
 }
 
 .hero-bg-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    #faf7f2 0%,
-    #faf7f2 20%,
-    rgba(250, 247, 242, 0.95) 34%,
-    rgba(250, 247, 242, 0.70) 48%,
-    rgba(250, 247, 242, 0.20) 62%,
-    rgba(250, 247, 242, 0.0) 75%
-  );
-  z-index: 1;
-  pointer-events: none;
+  display: none;
 }
 
 .hero-container {
