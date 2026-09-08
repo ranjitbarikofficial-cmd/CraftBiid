@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { getApiBaseUrl } from './api-config';
 
 export interface UserAuth {
   userId: number;
@@ -25,8 +26,8 @@ export interface LoginResponse {
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = 'https://craftbid.onrender.com/api/auth';
-  private artisanUrl = 'https://craftbid.onrender.com/api/artisan';
+  private apiUrl = `${getApiBaseUrl()}/api/auth`;
+  private artisanUrl = `${getApiBaseUrl()}/api/artisan`;
 
   private currentUserSubject = new BehaviorSubject<UserAuth | null>(this.getStoredUser());
   public currentUser$ = this.currentUserSubject.asObservable();

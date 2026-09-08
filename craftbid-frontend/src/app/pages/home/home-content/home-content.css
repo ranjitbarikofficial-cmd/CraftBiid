@@ -12,10 +12,35 @@
 
 .startup-hero {
   position: relative;
-  background: linear-gradient(180deg, #fffaf5 0%, #faf8f5 100%);
+  background-color: #faf8f5;
   padding: 60px 0 80px;
   overflow: hidden;
   border-bottom: 1px solid #ede8e1;
+}
+
+.hero-bg-image {
+  position: absolute;
+  inset: 0;
+  background-image: url('/hero-bg.png');
+  background-size: cover;
+  background-position: center 30%;
+  background-repeat: no-repeat;
+  z-index: 0;
+  opacity: 0.95;
+}
+
+.hero-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 252, 248, 0.96) 0%,
+    rgba(255, 250, 245, 0.90) 42%,
+    rgba(255, 248, 242, 0.74) 75%,
+    rgba(255, 245, 238, 0.55) 100%
+  );
+  z-index: 1;
+  pointer-events: none;
 }
 
 .hero-bg-glow {
@@ -27,6 +52,16 @@
   height: 400px;
   background: radial-gradient(circle, rgba(249, 115, 22, 0.12) 0%, rgba(249, 115, 22, 0) 70%);
   pointer-events: none;
+  z-index: 1;
+}
+
+.hero-grid-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .hero-container {
@@ -833,6 +868,15 @@
 @media (max-width: 767px) {
   .startup-hero {
     padding: 32px 0 44px;
+  }
+
+  .hero-bg-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 252, 248, 0.95) 0%,
+      rgba(255, 250, 245, 0.88) 50%,
+      rgba(255, 248, 242, 0.82) 100%
+    );
   }
 
   .hero-container {
