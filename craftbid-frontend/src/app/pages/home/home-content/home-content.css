@@ -91,20 +91,22 @@
 }
 
 .hero-title {
-  font-size: 3.1rem;
-  line-height: 1.12;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 3.3rem;
+  line-height: 1.1;
   font-weight: 850;
-  color: #18181b;
-  margin-bottom: 18px;
-  letter-spacing: -0.035em;
+  color: #111827;
+  margin-bottom: 20px;
+  letter-spacing: -0.04em;
 }
 
 .hero-subtext {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 1.05rem;
-  line-height: 1.6;
-  color: #52525b;
-  margin-bottom: 28px;
-  max-width: 500px;
+  line-height: 1.62;
+  color: #4b5563;
+  margin-bottom: 30px;
+  max-width: 520px;
 }
 
 .hero-cta-group {
@@ -176,18 +178,18 @@
 .hero-trust-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  padding-top: 0;
-  border-top: none;
+  gap: 22px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(229, 224, 216, 0.85);
 }
 
 .trust-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   font-weight: 600;
-  color: #52525b;
+  color: #4b5563;
 }
 
 .hero-right {
