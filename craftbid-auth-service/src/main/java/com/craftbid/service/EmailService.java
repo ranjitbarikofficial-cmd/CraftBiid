@@ -501,11 +501,19 @@ public class EmailService {
     // =====================================================
     public void sendRegistrationSuccessEmail(String email, String name, String loginId, String password) {
         String subject = "🎉 Welcome to CraftBid - Account Created Successfully!";
-        String html = "<div style='font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 24px; background: #faf8f5; border: 1px solid #e8e2d9; border-radius: 12px;'>"
-                + "<h2 style='color: #10b981;'>🎉 Welcome to CraftBid!</h2>"
-                + "<p>Hello <strong>" + name + "</strong>,</p>"
-                + "<p>Your account is active. Login ID: <strong>" + loginId + "</strong></p>"
+        String displayName = (name != null && !name.isBlank()) ? name.trim() : "CraftBid Member";
+        String pwd = (password != null && !password.isBlank()) ? password : "your chosen password";
+
+        String html = "<div style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #111827; max-width: 600px;\">"
+                + "<p>Hello " + displayName + ",</p>"
+                + "<p>Congratulations! Your CraftBid registration has been completed successfully.</p>"
+                + "<p>Your login details are:<br/>"
+                + "Login ID: <a href=\"mailto:" + loginId + "\" style=\"color: #0284c7; text-decoration: underline;\">" + loginId + "</a><br/>"
+                + "Password: " + pwd + "</p>"
+                + "<p>You can now explore handcrafted items, participate in 1-minute live auctions, and follow master artisans.</p>"
+                + "<p>Regards,<br/>CraftBid Team</p>"
                 + "</div>";
+
         dispatchEmail(email, subject, html);
     }
 
