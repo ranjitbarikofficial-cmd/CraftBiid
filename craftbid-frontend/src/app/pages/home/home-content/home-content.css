@@ -23,10 +23,10 @@
   inset: 0;
   background-image: url('/hero-bg.png');
   background-size: cover;
-  background-position: center 30%;
+  background-position: right 30%;
   background-repeat: no-repeat;
   z-index: 0;
-  opacity: 0.95;
+  opacity: 1;
 }
 
 .hero-bg-overlay {
@@ -34,10 +34,10 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    rgba(255, 252, 248, 0.96) 0%,
-    rgba(255, 250, 245, 0.90) 42%,
-    rgba(255, 248, 242, 0.74) 75%,
-    rgba(255, 245, 238, 0.55) 100%
+    rgba(255, 253, 250, 0.88) 0%,
+    rgba(255, 251, 246, 0.68) 35%,
+    rgba(255, 250, 244, 0.28) 65%,
+    rgba(255, 248, 240, 0.05) 100%
   );
   z-index: 1;
   pointer-events: none;
@@ -50,7 +50,7 @@
   transform: translateX(-50%);
   width: 650px;
   height: 400px;
-  background: radial-gradient(circle, rgba(249, 115, 22, 0.12) 0%, rgba(249, 115, 22, 0) 70%);
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0) 70%);
   pointer-events: none;
   z-index: 1;
 }
@@ -58,7 +58,7 @@
 .hero-grid-pattern {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px);
   background-size: 24px 24px;
   pointer-events: none;
   z-index: 1;
@@ -69,8 +69,8 @@
   margin: 0 auto;
   padding: 0 24px;
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 48px;
+  grid-template-columns: 1.35fr 0.65fr;
+  gap: 36px;
   align-items: center;
   position: relative;
   z-index: 2;
@@ -194,23 +194,33 @@
   color: #52525b;
 }
 
-/* Hero Right Featured Card */
+.hero-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Hero Right Featured Card (Compact Half-Size) */
 .hero-featured-card {
-  background: #ffffff;
-  border: 1px solid #ede8e1;
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(237, 232, 225, 0.9);
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.08);
-  transition: transform 0.3s ease;
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.12);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  width: 100%;
+  max-width: 290px;
 }
 
 .hero-featured-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
+  box-shadow: 0 20px 42px -6px rgba(234, 88, 12, 0.18);
 }
 
 .featured-card-media {
   position: relative;
-  height: 260px;
+  height: 145px;
   background: #f4efe9;
 }
 
@@ -222,24 +232,24 @@
 
 .card-live-indicator {
   position: absolute;
-  top: 14px;
-  left: 14px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(8px);
+  top: 8px;
+  left: 8px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(6px);
   color: #ffffff;
-  padding: 5px 12px;
+  padding: 3px 8px;
   border-radius: 9999px;
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .live-dot-pulse {
-  width: 7px;
-  height: 7px;
+  width: 5px;
+  height: 5px;
   background: #ef4444;
   border-radius: 50%;
   animation: pulseDot 1.5s infinite;
@@ -247,15 +257,15 @@
 
 .turn-timer-chip {
   position: absolute;
-  bottom: 14px;
-  right: 14px;
+  bottom: 8px;
+  right: 8px;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  backdrop-filter: blur(6px);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.68rem;
   color: #18181b;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .turn-timer-chip strong {
@@ -263,78 +273,83 @@
 }
 
 .featured-card-details {
-  padding: 22px;
+  padding: 12px 14px;
 }
 
 .card-meta-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .category-chip {
   background: #f4efe9;
   color: #71717a;
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .room-slots {
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: #0284c7;
 }
 
 .featured-card-details h3 {
-  font-size: 1.25rem;
-  margin-bottom: 4px;
+  font-size: 0.96rem;
+  font-weight: 700;
+  margin-bottom: 2px;
   color: #18181b;
+  line-height: 1.25;
 }
 
 .artisan-credit {
-  font-size: 0.85rem;
+  font-size: 0.74rem;
   color: #71717a;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 }
 
 .card-bid-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 14px;
+  padding-top: 8px;
   border-top: 1px solid #f4efe9;
 }
 
 .price-caption {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   font-weight: 600;
   text-transform: uppercase;
   color: #a1a1aa;
+  letter-spacing: 0.02em;
 }
 
 .price-val {
-  font-size: 1.4rem;
+  font-size: 1.08rem;
   font-weight: 800;
   color: #ea580c;
+  line-height: 1.1;
 }
 
 .btn-join-bid {
   background: #ea580c;
   color: #ffffff;
   text-decoration: none;
-  padding: 8px 18px;
+  padding: 6px 13px;
   border-radius: 8px;
   font-weight: 700;
-  font-size: 0.88rem;
-  transition: background 0.15s ease;
+  font-size: 0.78rem;
+  transition: all 0.15s ease;
 }
 
 .btn-join-bid:hover {
   background: #c2410c;
+  transform: translateY(-1px);
 }
 
 /* ================= 2. HOW IT WORKS ================= */
