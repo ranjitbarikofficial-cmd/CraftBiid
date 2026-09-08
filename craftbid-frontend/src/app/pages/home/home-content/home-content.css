@@ -12,8 +12,8 @@
 
 .startup-hero {
   position: relative;
-  background-color: #2b211b;
-  padding: 42px 0 54px;
+  background-color: #faf7f2;
+  padding: 48px 0 60px;
   overflow: hidden;
   border-bottom: 1px solid #ede8e1;
   min-height: 480px;
@@ -26,7 +26,7 @@
   inset: 0;
   background-image: url('/hero-bg.png');
   background-size: cover;
-  background-position: center 36%;
+  background-position: right center;
   background-repeat: no-repeat;
   z-index: 0;
 }
@@ -36,10 +36,12 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    rgba(255, 252, 248, 0.90) 0%,
-    rgba(255, 250, 244, 0.72) 35%,
-    rgba(255, 248, 240, 0.20) 65%,
-    rgba(255, 245, 238, 0.0) 100%
+    #faf7f2 0%,
+    #faf7f2 20%,
+    rgba(250, 247, 242, 0.95) 34%,
+    rgba(250, 247, 242, 0.70) 48%,
+    rgba(250, 247, 242, 0.20) 62%,
+    rgba(250, 247, 242, 0.0) 75%
   );
   z-index: 1;
   pointer-events: none;
@@ -49,31 +51,28 @@
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 32px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 32px;
   position: relative;
   z-index: 2;
 }
 
 .hero-left {
-  max-width: 580px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 20px;
-  padding: 28px 34px;
-  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.12);
+  max-width: 540px;
+  background: transparent;
+  padding: 0;
+  border: none;
+  box-shadow: none;
 }
 
 .hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #fff7ed;
+  background: #fff8f1;
   border: 1px solid #fed7aa;
   padding: 6px 14px;
   border-radius: 9999px;
@@ -81,7 +80,7 @@
   font-weight: 800;
   color: #ea580c;
   letter-spacing: 0.06em;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .badge-dot {
@@ -92,19 +91,19 @@
 }
 
 .hero-title {
-  font-size: 2.75rem;
-  line-height: 1.14;
-  font-weight: 800;
+  font-size: 3.1rem;
+  line-height: 1.12;
+  font-weight: 850;
   color: #18181b;
-  margin-bottom: 16px;
-  letter-spacing: -0.03em;
+  margin-bottom: 18px;
+  letter-spacing: -0.035em;
 }
 
 .hero-subtext {
-  font-size: 1.02rem;
-  line-height: 1.55;
-  color: #3f3f46;
-  margin-bottom: 24px;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #52525b;
+  margin-bottom: 28px;
   max-width: 500px;
 }
 
@@ -113,18 +112,18 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
 }
 
 .btn-hero-primary {
   background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
   color: #ffffff;
-  padding: 13px 26px;
+  padding: 13px 24px;
   border-radius: 12px;
   font-weight: 700;
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   text-decoration: none;
-  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.35);
+  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.35);
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
@@ -146,6 +145,8 @@
   text-decoration: none;
   box-shadow: 0 2px 6px rgba(0,0,0,0.04);
   transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
 }
 
 .btn-hero-secondary:hover {
@@ -164,6 +165,8 @@
   font-size: 0.92rem;
   text-decoration: none;
   transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
 }
 
 .btn-hero-artisan:hover {
@@ -174,8 +177,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  padding-top: 24px;
-  border-top: 1px solid #ede8e1;
+  padding-top: 0;
+  border-top: none;
 }
 
 .trust-item {
@@ -190,20 +193,20 @@
 .hero-right {
   display: flex;
   justify-content: flex-end;
-  align-items: center;
+  align-items: flex-start;
+  padding-top: 6px;
 }
 
 /* Hero Right Featured Card (Compact Half-Size) */
 .hero-featured-card {
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(237, 232, 225, 0.9);
+  background: #ffffff;
+  border: 1px solid #ede8e1;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.12);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   width: 100%;
-  max-width: 290px;
+  max-width: 275px;
 }
 
 .hero-featured-card:hover {
@@ -213,7 +216,7 @@
 
 .featured-card-media {
   position: relative;
-  height: 145px;
+  height: 135px;
   background: #f4efe9;
 }
 
@@ -232,7 +235,7 @@
   color: #ffffff;
   padding: 3px 8px;
   border-radius: 9999px;
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   display: flex;
