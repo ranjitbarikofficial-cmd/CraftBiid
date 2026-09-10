@@ -67,13 +67,6 @@ public class EmailVerificationService {
             pendingPlainPasswords.put(recipient, request.getPassword());
         }
 
-        System.out.println("======================================");
-        System.out.println("⚡ CRAFTBID REGISTRATION OTP GENERATED");
-        System.out.println("Recipient: " + recipient);
-        System.out.println("OTP Code:  " + otp);
-        System.out.println("Expires in 5 minutes");
-        System.out.println("======================================");
-
         if (email != null) {
             try {
                 emailService.sendRegistrationOtpEmail(email, otp);
@@ -125,11 +118,6 @@ public class EmailVerificationService {
             }
             return "New OTP sent successfully to " + key;
         } else {
-            System.out.println("======================================");
-            System.out.println("CRAFTBID RESEND MOBILE OTP");
-            System.out.println("Mobile: " + key);
-            System.out.println("OTP: " + otp);
-            System.out.println("======================================");
             return "New OTP generated successfully for " + key;
         }
     }

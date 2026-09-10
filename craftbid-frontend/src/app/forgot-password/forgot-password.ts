@@ -41,8 +41,7 @@ export class ForgotPassword {
     this.http
       .post('/api/auth/forgot-password', data, { responseType: 'text' })
       .subscribe({
-        next: (response: string) => {
-          console.log('Backend response:', response);
+        next: () => {
           this.loading = false;
           sessionStorage.setItem('resetEmail', email);
           this.router.navigate(['/verify-otp']);

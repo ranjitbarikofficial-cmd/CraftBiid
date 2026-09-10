@@ -62,8 +62,7 @@ export class Register {
     };
 
     this.authService.register(registerData).subscribe({
-      next: (response) => {
-        console.log('Registration response:', response);
+      next: () => {
         this.loading = false;
 
         // Navigate to OTP verification with the identifier and password state for seamless auto-login

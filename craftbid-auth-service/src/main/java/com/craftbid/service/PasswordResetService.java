@@ -47,18 +47,11 @@ public class PasswordResetService {
             throw new RuntimeException("Account is inactive. Please complete account verification.");
         }
 
-        // Generate 6 digit OTP and persist in database
+        // Generate 6 digit OTP, hash with BCrypt, and persist in database
         String otp = String.format("%06d", random.nextInt(1_000_000));
-        user.setOtp(otp);
+        user.setOtp(passwordEncoder.encode(otp));
         user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
         userRepository.save(user);
-
-        System.out.println("======================================");
-        System.out.println("⚡ CRAFTBID PASSWORD RESET OTP GENERATED");
-        System.out.println("User Email:  " + cleanEmail);
-        System.out.println("OTP Code:    " + otp);
-        System.out.println("Expires in 5 minutes");
-        System.out.println("======================================");
 
         // Send OTP email
         try {
@@ -116,8 +109,10 @@ public class PasswordResetService {
             throw new RuntimeException("OTP expired. Please request a new verification code.");
         }
 
-        // Check OTP (accepts generated real OTP only)
-        if (!user.getOtp().equals(otp.trim())) {
+        // Check OTP (accepts BCrypt hashed or plain fallback)
+        String storedOtp = user.getOtp();
+        boolean matches = passwordEncoder.matches(otp.trim(), storedOtp) || storedOtp.equals(otp.trim());
+        if (!matches) {
             throw new RuntimeException("Invalid OTP code. Please enter the 6-digit code sent to your email.");
         }
 

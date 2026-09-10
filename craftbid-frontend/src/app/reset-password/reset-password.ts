@@ -77,8 +77,7 @@ export class ResetPassword {
         responseType: 'text',
       })
       .subscribe({
-        next: (response: string) => {
-          console.log('Password reset:', response);
+        next: () => {
           this.loading = false;
           this.successMessage = 'Password updated successfully! Redirecting to login...';
 

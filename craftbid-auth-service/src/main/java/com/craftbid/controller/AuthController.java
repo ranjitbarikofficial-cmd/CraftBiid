@@ -108,16 +108,16 @@ public class AuthController {
     // ==========================================
 
     @PostMapping("/admin/send-otp")
-    public ResponseEntity<java.util.Map<String, String>> sendAdminOtp(
+    public ResponseEntity<java.util.Map<String, Object>> sendAdminOtp(
             @Valid @RequestBody AdminOtpRequest request) {
 
-        String otp = adminOtpService.sendOtp(
+        adminOtpService.sendOtp(
                 request.getEmail()
         );
         return ResponseEntity.ok(
                 java.util.Map.of(
-                        "message", "Admin login OTP sent successfully to " + request.getEmail(),
-                        "otp", otp
+                        "success", true,
+                        "message", "Admin login OTP sent successfully to authorized admin email"
                 )
         );
     }

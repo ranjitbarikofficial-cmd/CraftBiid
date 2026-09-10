@@ -82,7 +82,7 @@ export class Login implements OnInit {
       this.password = 'buyer123';
     } else if (role === 'admin') {
       this.loginMode = 'admin_otp';
-      this.adminOtp = '123456';
+      this.adminOtp = '';
     }
   }
 
@@ -113,7 +113,6 @@ export class Login implements OnInit {
 
     this.authService.login(loginData).subscribe({
       next: (response) => {
-        console.log('Login successful:', response);
         this.loading = false;
         if (response.role === 'ADMIN') {
           this.router.navigate(['/admin-dashboard']);
@@ -123,7 +122,6 @@ export class Login implements OnInit {
       },
 
       error: (error) => {
-        console.error('Login failed:', error);
         this.loading = false;
 
         let msg = 'Invalid email/mobile or password.';
@@ -156,14 +154,12 @@ export class Login implements OnInit {
 
     this.authService.sendAdminOtp(this.adminEmail).subscribe({
       next: (response: any) => {
-        console.log('Admin OTP response:', response);
         this.adminOtpLoading = false;
         this.adminOtpSent = true;
         this.adminOtp = '';
-        this.successMessage = 'Security code dispatched to admin email. Please check your inbox.';
+        this.successMessage = response?.message || 'Security code dispatched to admin email. Please check your inbox.';
       },
       error: (error) => {
-        console.error('Failed to send admin OTP:', error);
         this.adminOtpLoading = false;
         let msg = 'Failed to send OTP to admin email.';
         if (typeof error.error === 'string') {
@@ -181,11 +177,6 @@ export class Login implements OnInit {
     });
   }
 
-  instantAdminLogin(): void {
-    this.adminOtp = '123456';
-    this.verifyAdminOtp();
-  }
-
   verifyAdminOtp(): void {
     this.errorMessage = '';
     this.infoMessage = '';
@@ -199,13 +190,11 @@ export class Login implements OnInit {
     this.loading = true;
 
     this.authService.verifyAdminOtp(this.adminOtp.trim(), this.adminEmail).subscribe({
-      next: (response) => {
-        console.log('Admin OTP verification success:', response);
+      next: () => {
         this.loading = false;
         this.router.navigate(['/admin-dashboard']);
       },
       error: (error) => {
-        console.error('Admin OTP verification failed:', error);
         this.loading = false;
         let msg = 'Invalid or expired OTP code.';
         if (typeof error.error === 'string') {

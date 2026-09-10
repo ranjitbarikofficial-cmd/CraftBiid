@@ -97,7 +97,7 @@ public class AuthService {
         user.setPhone(phone);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setActive(false);
-        user.setOtp(otp);
+        user.setOtp(passwordEncoder.encode(otp));
         user.setOtpExpiry(expiry);
 
         return userRepository.save(user);
@@ -131,7 +131,9 @@ public class AuthService {
             throw new RuntimeException("OTP expired. Please click 'Resend OTP' to get a new code.");
         }
 
-        if (!user.getOtp().equals(otp.trim())) {
+        String storedOtp = user.getOtp();
+        boolean matches = passwordEncoder.matches(otp.trim(), storedOtp) || storedOtp.equals(otp.trim());
+        if (!matches) {
             throw new RuntimeException("Invalid OTP code. Please enter the 6-digit code sent to your email.");
         }
 
