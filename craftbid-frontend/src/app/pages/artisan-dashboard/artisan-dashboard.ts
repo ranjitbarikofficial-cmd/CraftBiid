@@ -115,6 +115,21 @@ export class ArtisanDashboard implements OnInit {
     });
   }
 
+  updateOrderStatus(order: AuctionOrderItem, newStatus: string): void {
+    const trackingNotes = prompt(`Enter courier/tracking details for order #CB-ORD-${order.id}:`, 'Shipped via Express Logistics');
+    if (trackingNotes === null) return;
+
+    this.auctionService.updateOrderStatus(order.id, newStatus, trackingNotes, 'Standard Express').subscribe({
+      next: (updated) => {
+        order.status = updated.status;
+        this.toastService.success(`📦 Order #CB-ORD-${order.id} status updated to "${newStatus}"!`);
+      },
+      error: (err) => {
+        this.toastService.error('Failed to update order status.');
+      }
+    });
+  }
+
   openAuctionModal(craft: CraftItem, event: Event): void {
     event.stopPropagation();
     this.selectedCraft = craft;

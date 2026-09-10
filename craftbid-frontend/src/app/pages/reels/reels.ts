@@ -39,6 +39,7 @@ export class Reels implements OnInit, AfterViewInit {
 
   // Active auctions mapping (craftId -> auctionId)
   activeAuctionsMap: Map<number, number> = new Map();
+  craftAuctionMap: Map<number, any> = new Map();
 
   constructor(
     private craftReelService: CraftReelService,
@@ -107,9 +108,11 @@ export class Reels implements OnInit, AfterViewInit {
     this.auctionService.getActiveAuctions().subscribe({
       next: (auctions) => {
         this.activeAuctionsMap.clear();
+        this.craftAuctionMap.clear();
         auctions.forEach((a) => {
-          if (a.craft && a.craft.id && a.status === 'ACTIVE') {
+          if (a.craft && a.craft.id && a.status !== 'ENDED' && a.status !== 'CANCELLED') {
             this.activeAuctionsMap.set(a.craft.id, a.id);
+            this.craftAuctionMap.set(a.craft.id, a);
           }
         });
       },
@@ -120,6 +123,11 @@ export class Reels implements OnInit, AfterViewInit {
   getAuctionIdForCraft(craftId?: number): number | null {
     if (!craftId) return null;
     return this.activeAuctionsMap.get(craftId) || null;
+  }
+
+  getAuctionForCraft(craftId?: number): any | null {
+    if (!craftId) return null;
+    return this.craftAuctionMap.get(craftId) || null;
   }
 
   checkFollowStatuses(): void {

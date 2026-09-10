@@ -296,7 +296,22 @@
                     <td class="fee-text">- {{ formatPrice(o.platformFee) }}</td>
                     <td class="payout-text"><strong>{{ formatPrice(o.artisanPayout) }}</strong></td>
                     <td>
-                      <span class="status-badge-chip">{{ o.status }}</span>
+                      <span class="status-badge-chip" [class.delivered]="o.status === 'DELIVERED'" [class.shipped]="o.status === 'SHIPPED'">
+                        {{ o.status }}
+                      </span>
+                      @if (o.status !== 'DELIVERED') {
+                        <div class="status-actions-mini">
+                          @if (o.status === 'PAID' || o.status === 'PENDING_DISPATCH' || o.status === 'PENDING_ADDRESS') {
+                            <button type="button" class="btn-status-quick" (click)="updateOrderStatus(o, 'PACKED')">📦 Pack</button>
+                          }
+                          @if (o.status === 'PACKED' || o.status === 'PAID' || o.status === 'PENDING_DISPATCH') {
+                            <button type="button" class="btn-status-quick ship" (click)="updateOrderStatus(o, 'SHIPPED')">🚚 Ship</button>
+                          }
+                          @if (o.status === 'SHIPPED') {
+                            <button type="button" class="btn-status-quick deliver" (click)="updateOrderStatus(o, 'DELIVERED')">✅ Delivered</button>
+                          }
+                        </div>
+                      }
                     </td>
                   </tr>
                 }

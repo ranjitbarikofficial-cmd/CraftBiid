@@ -16,6 +16,8 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
 
     List<Auction> findByStatusOrderByEndTimeAsc(AuctionStatus status);
 
+    List<Auction> findByStatusInOrderByCreatedAtDesc(List<AuctionStatus> statuses);
+
     List<Auction> findBySellerOrderByCreatedAtDesc(User seller);
 
     Optional<Auction> findByCraftAndStatus(Craft craft, AuctionStatus status);
@@ -27,4 +29,10 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
             @Param("status") AuctionStatus status,
             @Param("now") LocalDateTime now
     );
+
+    @Query("SELECT a FROM Auction a WHERE (a.status = 'SCHEDULED' OR a.status = 'ACTIVE') AND a.liveTurnActive = false AND a.participationDeadline IS NOT NULL AND a.participationDeadline <= :now")
+    List<Auction> findExpiredParticipationAuctions(@Param("now") LocalDateTime now);
+
+    @Query("SELECT a FROM Auction a WHERE (a.status = 'LIVE' OR a.status = 'ACTIVE') AND a.liveTurnActive = true AND a.turnDeadline IS NOT NULL AND a.turnDeadline <= :now")
+    List<Auction> findExpiredTurnAuctions(@Param("now") LocalDateTime now);
 }

@@ -58,6 +58,8 @@ public class Auction {
 
     private LocalDateTime lastBidTime;
 
+    private LocalDateTime participationDeadline; // 24-hour participation window deadline
+
     private LocalDateTime turnDeadline; // 60-second countdown timestamp
 
     private boolean liveTurnActive = false;
@@ -200,6 +202,14 @@ public class Auction {
 
     public void setLastBidTime(LocalDateTime lastBidTime) {
         this.lastBidTime = lastBidTime;
+    }
+
+    public LocalDateTime getParticipationDeadline() {
+        return participationDeadline;
+    }
+
+    public void setParticipationDeadline(LocalDateTime participationDeadline) {
+        this.participationDeadline = participationDeadline;
     }
 
     public LocalDateTime getTurnDeadline() {

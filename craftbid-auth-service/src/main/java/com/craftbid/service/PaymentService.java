@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,15 +19,71 @@ public class PaymentService {
 
     private final PaymentTransactionRepository paymentRepository;
     private final UserRepository userRepository;
+    private final RazorpayService razorpayService;
 
-    public PaymentService(PaymentTransactionRepository paymentRepository, UserRepository userRepository) {
+    public PaymentService(
+            PaymentTransactionRepository paymentRepository,
+            UserRepository userRepository,
+            RazorpayService razorpayService) {
         this.paymentRepository = paymentRepository;
         this.userRepository = userRepository;
+        this.razorpayService = razorpayService;
     }
 
     private User getUserByIdentifier(String identifier) {
         return userRepository.findByIdentifier(identifier)
                 .orElseThrow(() -> new RuntimeException("User not found: " + identifier));
+    }
+
+    /**
+     * Create Razorpay Order
+     */
+    public Map<String, Object> createRazorpayOrder(String identifier, BigDecimal amount, Long auctionId, Long craftId, String type) {
+        User user = getUserByIdentifier(identifier);
+        String receipt = "rcpt_" + System.currentTimeMillis() + "_" + (auctionId != null ? auctionId : 0);
+        String notes = (type != null ? type : "AUCTION_PAYMENT") + " by " + user.getEmail();
+        return razorpayService.createOrder(amount, receipt, notes);
+    }
+
+    /**
+     * Verify Razorpay Payment Signature and Record Transaction
+     */
+    @Transactional
+    public PaymentTransaction verifyAndRecordRazorpayPayment(
+            String identifier,
+            String razorpayOrderId,
+            String razorpayPaymentId,
+            String razorpaySignature,
+            Long auctionId,
+            Long craftId,
+            BigDecimal amount,
+            String type,
+            String method) {
+
+        User user = getUserByIdentifier(identifier);
+
+        boolean isValid = razorpayService.verifySignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
+        if (!isValid) {
+            throw new RuntimeException("Invalid Razorpay payment signature");
+        }
+
+        String txnRef = "CB-RZP-" + (razorpayPaymentId != null ? razorpayPaymentId : System.currentTimeMillis());
+        String paymentType = type != null ? type.toUpperCase() : "BASE_DEPOSIT";
+        String payMethod = method != null ? method.toUpperCase() : "RAZORPAY";
+
+        PaymentTransaction tx = new PaymentTransaction(
+                user,
+                auctionId,
+                craftId,
+                amount,
+                paymentType,
+                payMethod,
+                txnRef,
+                "SUCCESS",
+                "Razorpay payment verified. Order ID: " + razorpayOrderId + ", Payment ID: " + razorpayPaymentId
+        );
+
+        return paymentRepository.save(tx);
     }
 
     @Transactional
@@ -79,6 +135,11 @@ public class PaymentService {
     public List<PaymentTransaction> getMyTransactions(String identifier) {
         User user = getUserByIdentifier(identifier);
         return paymentRepository.findByUserOrderByCreatedAtDesc(user);
+    }
+
+    public List<PaymentTransaction> getMyRefunds(String identifier) {
+        User user = getUserByIdentifier(identifier);
+        return paymentRepository.findByUserAndTypeContainingIgnoreCaseOrderByCreatedAtDesc(user, "REFUND");
     }
 
     public Optional<PaymentTransaction> getByTransactionRef(String txnRef) {

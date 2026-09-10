@@ -2,14 +2,17 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import {
   AuctionService,
   AuctionItem,
   BidItem,
   AuctionParticipantItem,
   AuctionOrderItem,
-  SubmitAddressPayload
+  SubmitAddressPayload,
 } from '../../services/auction.service';
+import { PaymentService } from '../../services/payment.service';
+import { WebSocketService, WebSocketEvent } from '../../services/websocket.service';
 import { AuthService, UserAuth } from '../../services/auth';
 import { ToastService } from '../../services/toast.service';
 import { Topbar } from '../home/topbar/topbar';
@@ -59,15 +62,19 @@ export class AuctionDetails implements OnInit, OnDestroy {
 
   // 1-minute turn timer state
   secondsRemainingInTurn = 60;
+  participationTimeLeft = '';
   timerInterval: any;
   pollingInterval: any;
+  private wsSubscription: Subscription | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private auctionService: AuctionService,
+    private paymentService: PaymentService,
+    private wsService: WebSocketService,
     private authService: AuthService,
-    private toastService: ToastService
+    private toastService: ToastService,
   ) {}
 
   ngOnInit(): void {
@@ -76,17 +83,69 @@ export class AuctionDetails implements OnInit, OnDestroy {
       const id = Number(params['id']);
       if (id) {
         this.loadAuction(id);
+        this.setupWebSocket(id);
       }
     });
 
     this.timerInterval = setInterval(() => {
       this.updateTurnTimer();
+      this.updateParticipationCountdown();
     }, 1000);
   }
 
   ngOnDestroy(): void {
     if (this.timerInterval) clearInterval(this.timerInterval);
     if (this.pollingInterval) clearInterval(this.pollingInterval);
+    if (this.wsSubscription) this.wsSubscription.unsubscribe();
+  }
+
+  setupWebSocket(auctionId: number): void {
+    if (this.wsSubscription) this.wsSubscription.unsubscribe();
+    this.wsSubscription = this.wsService.subscribeToAuction(auctionId).subscribe({
+      next: (event: WebSocketEvent) => {
+        this.handleWebSocketEvent(event);
+      },
+    });
+  }
+
+  private handleWebSocketEvent(event: WebSocketEvent): void {
+    if (!event) return;
+
+    if (event.eventType === 'auction:joined') {
+      if (event.data?.currentParticipants !== undefined && this.auction) {
+        this.auction.currentParticipantsCount = event.data.currentParticipants;
+      }
+      if (this.auction) {
+        this.loadParticipants(this.auction.id);
+      }
+    } else if (event.eventType === 'auction:started') {
+      if (this.auction) {
+        this.auction.liveTurnActive = true;
+        this.auction.status = 'ACTIVE';
+        if (event.data?.turnDeadline) {
+          this.auction.turnDeadline = event.data.turnDeadline;
+        }
+        this.toastService.info('⚡ Live 1-Minute Auction has officially started! Place your bids.');
+      }
+    } else if (event.eventType === 'auction:bid') {
+      if (this.auction) {
+        this.auction.currentHighestBid = event.data?.amount || this.auction.currentHighestBid;
+        this.auction.totalBids = event.data?.totalBids || (this.auction.totalBids + 1);
+        if (event.data?.turnDeadline) {
+          this.auction.turnDeadline = event.data.turnDeadline;
+        }
+        this.calculateMinNextBid();
+        this.loadBids(this.auction.id);
+        this.loadParticipants(this.auction.id);
+      }
+    } else if (event.eventType === 'auction:ended' || event.eventType === 'auction:winner') {
+      if (this.auction) {
+        this.auction.status = 'ENDED';
+        this.auction.liveTurnActive = false;
+        this.refreshData(this.auction.id);
+        this.loadOrder(this.auction.id);
+      }
+    }
   }
 
   loadAuction(id: number): void {
@@ -103,11 +162,10 @@ export class AuctionDetails implements OnInit, OnDestroy {
         if (!this.pollingInterval) {
           this.pollingInterval = setInterval(() => {
             this.refreshData(id);
-          }, 3000);
+          }, 4000);
         }
       },
       error: (err) => {
-        console.error('Failed to load auction:', err);
         this.loading = false;
         this.errorMessage = 'Auction not found.';
       },
@@ -117,7 +175,7 @@ export class AuctionDetails implements OnInit, OnDestroy {
   loadBids(auctionId: number): void {
     this.auctionService.getAuctionBids(auctionId).subscribe({
       next: (data) => (this.bids = data),
-      error: (err) => console.error('Failed to load bids:', err),
+      error: (err) => {},
     });
   }
 
@@ -127,11 +185,13 @@ export class AuctionDetails implements OnInit, OnDestroy {
         this.participants = data;
         if (this.currentUser) {
           this.currentParticipant =
-            this.participants.find((p) => p.user.id === this.currentUser!.userId) || null;
+            this.participants.find(
+              (p) => (p.user && p.user.id === this.currentUser!.userId) || (p.userId === this.currentUser!.userId),
+            ) || null;
         }
         this.updateDifferentialToPay();
       },
-      error: (err) => console.error('Failed to load participants:', err),
+      error: (err) => {},
     });
   }
 
@@ -159,7 +219,9 @@ export class AuctionDetails implements OnInit, OnDestroy {
         this.participants = participants;
         if (this.currentUser) {
           this.currentParticipant =
-            this.participants.find((p) => p.user.id === this.currentUser!.userId) || null;
+            this.participants.find(
+              (p) => (p.user && p.user.id === this.currentUser!.userId) || (p.userId === this.currentUser!.userId),
+            ) || null;
         }
         this.updateDifferentialToPay();
       },
@@ -167,7 +229,12 @@ export class AuctionDetails implements OnInit, OnDestroy {
   }
 
   updateTurnTimer(): void {
-    if (!this.auction || this.auction.status !== 'ACTIVE' || !this.auction.turnDeadline) {
+    if (!this.auction || this.auction.status === 'ENDED' || this.auction.status === 'CANCELLED') {
+      this.secondsRemainingInTurn = 0;
+      return;
+    }
+
+    if (!this.auction.liveTurnActive || !this.auction.turnDeadline) {
       this.secondsRemainingInTurn = 60;
       return;
     }
@@ -177,9 +244,31 @@ export class AuctionDetails implements OnInit, OnDestroy {
     const diffSeconds = Math.max(0, Math.floor((deadline - now) / 1000));
     this.secondsRemainingInTurn = diffSeconds;
 
-    if (diffSeconds === 0 && this.auction.status === 'ACTIVE') {
+    if (diffSeconds === 0 && (this.auction.status === 'ACTIVE' || this.auction.status === 'LIVE')) {
       this.refreshData(this.auction.id);
     }
+  }
+
+  updateParticipationCountdown(): void {
+    if (!this.auction || !this.auction.participationDeadline) {
+      this.participationTimeLeft = '';
+      return;
+    }
+
+    const deadline = new Date(this.auction.participationDeadline).getTime();
+    const now = new Date().getTime();
+    const diffMs = deadline - now;
+
+    if (diffMs <= 0) {
+      this.participationTimeLeft = 'Participation Window Closed';
+      return;
+    }
+
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+    this.participationTimeLeft = `${hours}h ${minutes}m ${seconds}s`;
   }
 
   calculateMinNextBid(): void {
@@ -192,6 +281,13 @@ export class AuctionDetails implements OnInit, OnDestroy {
     if (!this.bidAmount || this.bidAmount < this.minNextBid) {
       this.bidAmount = this.minNextBid;
     }
+    this.updateDifferentialToPay();
+  }
+
+  addBidIncrement(increment: number): void {
+    if (!this.auction) return;
+    const base = this.auction.totalBids === 0 ? this.auction.startingPrice : this.auction.currentHighestBid;
+    this.bidAmount = base + increment;
     this.updateDifferentialToPay();
   }
 
@@ -229,19 +325,47 @@ export class AuctionDetails implements OnInit, OnDestroy {
     if (!this.auction) return;
     this.joining = true;
 
-    this.auctionService.joinAuctionWithDeposit(this.auction.id, this.selectedPaymentMethod).subscribe({
-      next: (participant) => {
-        this.joining = false;
-        this.currentParticipant = participant;
-        this.closeJoinModal();
-        this.toastService.success(`🎉 Base deposit of ₹${participant.basePricePaid} paid! You joined the auction room.`);
-        this.refreshData(this.auction!.id);
+    // Call payment order & join API
+    this.paymentService.createRazorpayOrder(
+      this.auction.startingPrice,
+      this.auction.id,
+      this.auction.craft?.id,
+      'BASE_DEPOSIT'
+    ).subscribe({
+      next: (orderRes) => {
+        // Authoritative server records join
+        this.auctionService.joinAuctionWithDeposit(this.auction!.id, this.selectedPaymentMethod).subscribe({
+          next: (participant) => {
+            this.joining = false;
+            this.currentParticipant = participant;
+            this.closeJoinModal();
+            this.toastService.success(`🎉 Base deposit of ₹${participant.basePricePaid} paid! You joined the 24h auction room.`);
+            this.refreshData(this.auction!.id);
+          },
+          error: (err) => {
+            this.joining = false;
+            const msg = err.error?.message || err.error || 'Failed to join auction.';
+            this.toastService.error(msg);
+          },
+        });
       },
-      error: (err) => {
-        this.joining = false;
-        const msg = err.error?.message || err.error || 'Failed to join auction.';
-        this.toastService.error(msg);
-      },
+      error: () => {
+        // Direct join fallback
+        this.auctionService.joinAuctionWithDeposit(this.auction!.id, this.selectedPaymentMethod).subscribe({
+          next: (participant) => {
+            this.joining = false;
+            this.currentParticipant = participant;
+            this.closeJoinModal();
+            this.toastService.success(`🎉 Base deposit of ₹${participant.basePricePaid} paid! You joined the auction room.`);
+            this.refreshData(this.auction!.id);
+          },
+          error: (err) => {
+            this.joining = false;
+            const msg = err.error?.message || err.error || 'Failed to join auction.';
+            this.toastService.error(msg);
+          },
+        });
+      }
     });
   }
 
@@ -275,7 +399,7 @@ export class AuctionDetails implements OnInit, OnDestroy {
     this.auctionService.placeDifferentialBid(this.auction.id, this.bidAmount).subscribe({
       next: () => {
         this.bidding = false;
-        this.toastService.success(`🎉 Differential ₹${this.differentialToPay} paid! Highest Bid set to ₹${this.bidAmount}`);
+        this.toastService.success(`🎉 Differential of ₹${this.differentialToPay} paid! Highest Bid set to ₹${this.bidAmount}`);
         this.refreshData(this.auction!.id);
       },
       error: (err) => {
@@ -300,7 +424,13 @@ export class AuctionDetails implements OnInit, OnDestroy {
 
   submitAddress(): void {
     if (!this.auction) return;
-    if (!this.addressForm.fullName || !this.addressForm.streetAddress || !this.addressForm.city || !this.addressForm.pincode || !this.addressForm.phone) {
+    if (
+      !this.addressForm.fullName ||
+      !this.addressForm.streetAddress ||
+      !this.addressForm.city ||
+      !this.addressForm.pincode ||
+      !this.addressForm.phone
+    ) {
       this.toastService.error('Please fill in all delivery address fields');
       return;
     }
@@ -343,6 +473,7 @@ export class AuctionDetails implements OnInit, OnDestroy {
   }
 
   formatDate(dateStr: string): string {
+    if (!dateStr) return '';
     return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 

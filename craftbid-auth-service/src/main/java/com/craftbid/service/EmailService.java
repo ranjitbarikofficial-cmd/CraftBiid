@@ -12,6 +12,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -563,6 +564,118 @@ public class EmailService {
     public void sendSellerEnabledEmail(String email, String name) {
         String subject = "🎨 Welcome to CraftBid Artisan Studio!";
         String html = "<p>Hello " + name + ",</p><p>Your Artisan Studio profile has been activated.</p>";
+        dispatchEmail(email, subject, html);
+    }
+
+    // =====================================================
+    // AUCTION JOINED CONFIRMATION EMAIL
+    // =====================================================
+    public void sendAuctionJoinedEmail(String email, String name, String craftName, BigDecimal basePrice, Long auctionId) {
+        String subject = "🏺 Joined Auction Room: " + craftName;
+        String displayName = (name != null && !name.isBlank()) ? name : "Craft Enthusiast";
+        String html = "<div style='font-family: Arial, sans-serif; max-width: 550px; margin: auto; padding: 24px; background: #faf8f5; border: 1px solid #e8e2d9; border-radius: 12px;'>"
+                + "<div style='text-align: center; margin-bottom: 20px;'><span style='font-size: 36px;'>🏺</span><h2 style='color: #ea580c; margin: 4px 0;'>Auction Room Confirmation</h2></div>"
+                + "<p style='color: #27272a; font-size: 15px;'>Hello <strong>" + displayName + "</strong>,</p>"
+                + "<p style='color: #52525b; font-size: 14px;'>You have successfully joined the 24-hour participation window for <strong>" + craftName + "</strong>.</p>"
+                + "<div style='background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin: 16px 0;'>"
+                + "<p style='margin: 4px 0; color: #9a3412;'><strong>Base Deposit Paid:</strong> ₹" + basePrice + "</p>"
+                + "<p style='margin: 4px 0; color: #9a3412;'><strong>Max Participants:</strong> 10</p>"
+                + "<p style='margin: 4px 0; color: #9a3412;'><strong>100% Refund Guarantee:</strong> If outbid, your entire deposit is refunded automatically.</p>"
+                + "</div>"
+                + "<p style='color: #71717a; font-size: 12px; text-align: center;'>CraftBid Platform © 2026</p>"
+                + "</div>";
+        dispatchEmail(email, subject, html);
+    }
+
+    // =====================================================
+    // AUCTION LIVE STARTED EMAIL
+    // =====================================================
+    public void sendAuctionLiveStartedEmail(String email, String name, String craftName, Long auctionId) {
+        String subject = "⚡ LIVE NOW: 1-Minute Auction for " + craftName;
+        String displayName = (name != null && !name.isBlank()) ? name : "Bidder";
+        String html = "<div style='font-family: Arial, sans-serif; max-width: 550px; margin: auto; padding: 24px; background: #faf8f5; border: 1px solid #e8e2d9; border-radius: 12px;'>"
+                + "<h2 style='color: #ea580c; margin: 4px 0; text-align: center;'>⚡ The Auction is LIVE!</h2>"
+                + "<p style='color: #27272a; font-size: 15px;'>Hello <strong>" + displayName + "</strong>,</p>"
+                + "<p style='color: #52525b; font-size: 14px;'>The participation window has ended and the 1-minute live turn bidding for <strong>" + craftName + "</strong> has officially begun!</p>"
+                + "<p style='color: #52525b; font-size: 14px;'>Place your differential bids now. Every new bid resets the countdown to 60 seconds.</p>"
+                + "<div style='text-align: center; margin: 24px 0;'><a href='https://craftbid.co.in/auctions/" + auctionId + "' style='background: #ea580c; color: #fff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;'>Enter Live Auction Room</a></div>"
+                + "</div>";
+        dispatchEmail(email, subject, html);
+    }
+
+    // =====================================================
+    // AUCTION WON NOTIFICATION EMAIL
+    // =====================================================
+    public void sendAuctionWonEmail(String email, String name, String craftName, BigDecimal winningAmount, Long auctionId) {
+        String subject = "🏆 You Won! Complete your order for " + craftName;
+        String displayName = (name != null && !name.isBlank()) ? name : "Winner";
+        String html = "<div style='font-family: Arial, sans-serif; max-width: 550px; margin: auto; padding: 24px; background: #faf8f5; border: 1px solid #e8e2d9; border-radius: 12px;'>"
+                + "<div style='text-align: center; margin-bottom: 20px;'><span style='font-size: 40px;'>🏆</span><h2 style='color: #16a34a; margin: 4px 0;'>Congratulations! You Won!</h2></div>"
+                + "<p style='color: #27272a; font-size: 15px;'>Hello <strong>" + displayName + "</strong>,</p>"
+                + "<p style='color: #52525b; font-size: 14px;'>You are the winning bidder for <strong>" + craftName + "</strong> with a final bid of <strong>₹" + winningAmount + "</strong>.</p>"
+                + "<p style='color: #52525b; font-size: 14px;'>Please submit your full shipping address in your auction dashboard so the artisan can pack and dispatch your handcrafted piece.</p>"
+                + "<div style='text-align: center; margin: 24px 0;'><a href='https://craftbid.co.in/auctions/" + auctionId + "' style='background: #16a34a; color: #fff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;'>Submit Delivery Address</a></div>"
+                + "</div>";
+        dispatchEmail(email, subject, html);
+    }
+
+    // =====================================================
+    // 100% REFUND ISSUED EMAIL
+    // =====================================================
+    public void sendAuctionRefundEmail(String email, String name, String craftName, BigDecimal refundAmount, String txnRef, Long auctionId) {
+        String subject = "💰 100% Refund Processed: ₹" + refundAmount + " for " + craftName;
+        String displayName = (name != null && !name.isBlank()) ? name : "CraftBid Member";
+        String html = "<div style='font-family: Arial, sans-serif; max-width: 550px; margin: auto; padding: 24px; background: #faf8f5; border: 1px solid #e8e2d9; border-radius: 12px;'>"
+                + "<h2 style='color: #2563eb; margin: 4px 0; text-align: center;'>💰 100% Refund Issued</h2>"
+                + "<p style='color: #27272a; font-size: 15px;'>Hello <strong>" + displayName + "</strong>,</p>"
+                + "<p style='color: #52525b; font-size: 14px;'>The auction for <strong>" + craftName + "</strong> has concluded. Since another bidder placed the winning bid, your full deposit commitment has been refunded.</p>"
+                + "<div style='background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin: 16px 0;'>"
+                + "<p style='margin: 4px 0; color: #1e40af;'><strong>Refund Amount:</strong> ₹" + refundAmount + " (100%)</p>"
+                + "<p style='margin: 4px 0; color: #1e40af;'><strong>Transaction Reference:</strong> " + txnRef + "</p>"
+                + "<p style='margin: 4px 0; color: #1e40af;'><strong>Refund Method:</strong> Original Payment Source</p>"
+                + "</div>"
+                + "<p style='color: #71717a; font-size: 12px; text-align: center;'>CraftBid Guarantee: 0 risk, 100% refund for all outbid participants.</p>"
+                + "</div>";
+        dispatchEmail(email, subject, html);
+    }
+
+    // =====================================================
+    // ARTISAN CRAFT SOLD EMAIL
+    // =====================================================
+    public void sendArtisanCraftSoldEmail(String email, String artisanName, String craftName, BigDecimal finalAmount, BigDecimal artisanPayout, Long auctionId) {
+        String subject = "🎉 Your Craft Sold! Payout: ₹" + artisanPayout;
+        String displayName = (artisanName != null && !artisanName.isBlank()) ? artisanName : "Master Artisan";
+        String html = "<div style='font-family: Arial, sans-serif; max-width: 550px; margin: auto; padding: 24px; background: #faf8f5; border: 1px solid #e8e2d9; border-radius: 12px;'>"
+                + "<h2 style='color: #ea580c; margin: 4px 0; text-align: center;'>🎉 Your Craft Has Sold!</h2>"
+                + "<p style='color: #27272a; font-size: 15px;'>Hello <strong>" + displayName + "</strong>,</p>"
+                + "<p style='color: #52525b; font-size: 14px;'>Congratulations! Your craft <strong>" + craftName + "</strong> was successfully sold at live auction.</p>"
+                + "<div style='background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin: 16px 0;'>"
+                + "<p style='margin: 4px 0; color: #9a3412;'><strong>Winning Bid:</strong> ₹" + finalAmount + "</p>"
+                + "<p style='margin: 4px 0; color: #9a3412;'><strong>Artisan Payout (90%):</strong> ₹" + artisanPayout + "</p>"
+                + "<p style='margin: 4px 0; color: #9a3412;'><strong>Platform Fee (10%):</strong> ₹" + finalAmount.subtract(artisanPayout) + "</p>"
+                + "</div>"
+                + "<p style='color: #52525b; font-size: 14px;'>Please check your Artisan Dashboard to view the buyer's delivery address and prepare the shipment.</p>"
+                + "<div style='text-align: center; margin: 24px 0;'><a href='https://craftbid.co.in/artisan-dashboard' style='background: #ea580c; color: #fff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;'>View Orders</a></div>"
+                + "</div>";
+        dispatchEmail(email, subject, html);
+    }
+
+    // =====================================================
+    // ORDER SHIPPED EMAIL
+    // =====================================================
+    public void sendOrderShippedEmail(String email, String customerName, String craftName, String trackingNotes, String carrier, Long orderId) {
+        String subject = "📦 Your Craft is On Its Way! " + craftName;
+        String displayName = (customerName != null && !customerName.isBlank()) ? customerName : "Customer";
+        String html = "<div style='font-family: Arial, sans-serif; max-width: 550px; margin: auto; padding: 24px; background: #faf8f5; border: 1px solid #e8e2d9; border-radius: 12px;'>"
+                + "<h2 style='color: #16a34a; margin: 4px 0; text-align: center;'>📦 Your Order Has Been Shipped!</h2>"
+                + "<p style='color: #27272a; font-size: 15px;'>Hello <strong>" + displayName + "</strong>,</p>"
+                + "<p style='color: #52525b; font-size: 14px;'>The artisan has packed and dispatched your authentic handmade craft <strong>" + craftName + "</strong>.</p>"
+                + "<div style='background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 16px 0;'>"
+                + "<p style='margin: 4px 0; color: #166534;'><strong>Courier / Tracking:</strong> " + (trackingNotes != null && !trackingNotes.isBlank() ? trackingNotes : "Standard Courier") + "</p>"
+                + "<p style='margin: 4px 0; color: #166534;'><strong>Carrier:</strong> " + (carrier != null && !carrier.isBlank() ? carrier : "Partner Logistics") + "</p>"
+                + "</div>"
+                + "<p style='color: #71717a; font-size: 12px; text-align: center;'>Thank you for supporting authentic traditional craftsmanship on CraftBid!</p>"
+                + "</div>";
         dispatchEmail(email, subject, html);
     }
 }

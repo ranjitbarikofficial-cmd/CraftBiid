@@ -1,9 +1,6 @@
 package com.craftbid.controller;
 
-import com.craftbid.dto.CreateAuctionRequest;
-import com.craftbid.dto.JoinAuctionRequest;
-import com.craftbid.dto.PlaceBidRequest;
-import com.craftbid.dto.SubmitAddressRequest;
+import com.craftbid.dto.*;
 import com.craftbid.entity.Auction;
 import com.craftbid.entity.AuctionOrder;
 import com.craftbid.entity.AuctionParticipant;
@@ -93,9 +90,10 @@ public class AuctionController {
         return ResponseEntity.ok(auctionService.placeDifferentialBid(identifier, id, request.getAmount()));
     }
 
+    // Privacy-Safe sanitized participants (Name • City only)
     @GetMapping("/{id}/participants")
-    public ResponseEntity<List<AuctionParticipant>> getParticipants(@PathVariable Long id) {
-        return ResponseEntity.ok(auctionService.getAuctionParticipants(id));
+    public ResponseEntity<List<AuctionParticipantDTO>> getParticipants(@PathVariable Long id) {
+        return ResponseEntity.ok(auctionService.getSanitizedParticipants(id));
     }
 
     @PostMapping(value = {"/{id}/address", "/{id}/submit-address"})
@@ -113,16 +111,26 @@ public class AuctionController {
         return ResponseEntity.of(auctionService.getAuctionOrder(id));
     }
 
-    @GetMapping("/artisan-orders")
+    @GetMapping(value = {"/artisan-orders", "/artisan/orders"})
     public ResponseEntity<List<AuctionOrder>> getArtisanOrders(Authentication authentication) {
         String identifier = authentication.getName();
         return ResponseEntity.ok(auctionService.getArtisanOrders(identifier));
     }
 
-    @GetMapping("/buyer-orders")
+    @GetMapping(value = {"/buyer-orders", "/customer/orders"})
     public ResponseEntity<List<AuctionOrder>> getBuyerOrders(Authentication authentication) {
         String identifier = authentication.getName();
         return ResponseEntity.ok(auctionService.getBuyerOrders(identifier));
+    }
+
+    @PatchMapping("/orders/{orderId}/status")
+    public ResponseEntity<AuctionOrder> updateOrderStatus(
+            Authentication authentication,
+            @PathVariable Long orderId,
+            @Valid @RequestBody UpdateOrderStatusRequest request) {
+
+        String identifier = authentication.getName();
+        return ResponseEntity.ok(auctionService.updateOrderStatus(identifier, orderId, request));
     }
 
     @GetMapping("/{id}/bids")

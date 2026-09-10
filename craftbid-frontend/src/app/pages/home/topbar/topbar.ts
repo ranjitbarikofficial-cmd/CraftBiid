@@ -45,7 +45,7 @@ export class Topbar implements OnInit {
     private notificationService: NotificationService,
     private toastService: ToastService,
     private router: Router,
-    private elRef: ElementRef
+    private elRef: ElementRef,
   ) {}
 
   ngOnInit(): void {
@@ -55,12 +55,25 @@ export class Topbar implements OnInit {
       if (user) {
         this.settingsForm.displayName = user.name || '';
         this.settingsForm.phone = user.phone || '';
+        this.loadNotifications();
       }
     });
+  }
 
-    this.notificationService.notifications$.subscribe((notifs) => {
-      this.notifications = notifs;
-      this.unreadCount = this.notificationService.getUnreadCount();
+  loadNotifications(): void {
+    if (!this.isLoggedIn) return;
+    this.notificationService.getMyNotifications().subscribe({
+      next: (data) => {
+        this.notifications = data;
+      },
+      error: () => {},
+    });
+
+    this.notificationService.getUnreadCount().subscribe({
+      next: (res) => {
+        this.unreadCount = res.unreadCount || 0;
+      },
+      error: () => {},
     });
   }
 
@@ -76,24 +89,50 @@ export class Topbar implements OnInit {
   toggleNotifications(event: Event): void {
     event.stopPropagation();
     this.isNotifOpen = !this.isNotifOpen;
+    if (this.isNotifOpen) {
+      this.loadNotifications();
+    }
   }
 
   markAllRead(): void {
-    this.notificationService.markAllAsRead();
-    this.toastService.success('All notifications marked as read');
+    this.notificationService.markAllAsRead().subscribe({
+      next: () => {
+        this.notifications.forEach((n) => (n.read = true));
+        this.unreadCount = 0;
+        this.toastService.success('All notifications marked as read');
+      },
+      error: () => {},
+    });
   }
 
   clearAllNotifs(): void {
-    this.notificationService.clearAll();
-    this.toastService.success('Notification feed cleared');
+    this.notificationService.markAllAsRead().subscribe({
+      next: () => {
+        this.notifications = [];
+        this.unreadCount = 0;
+        this.toastService.success('Notification feed cleared');
+      },
+      error: () => {},
+    });
   }
 
   openNotification(notif: NotificationItem): void {
-    this.notificationService.markAsRead(notif.id);
+    this.notificationService.markAsRead(notif.id).subscribe({
+      next: () => {
+        notif.read = true;
+        this.unreadCount = Math.max(0, this.unreadCount - 1);
+      },
+      error: () => {},
+    });
     this.isNotifOpen = false;
     if (notif.link) {
       this.router.navigateByUrl(notif.link);
     }
+  }
+
+  formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   openSettings(): void {

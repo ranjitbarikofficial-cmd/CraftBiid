@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, UserAuth } from '../../services/auth';
 import { PaymentService, PaymentTransactionItem } from '../../services/payment.service';
+import { AuctionService, AuctionOrderItem } from '../../services/auction.service';
 import { FollowService, ArtisanProfile } from '../../services/follow.service';
 import { ToastService } from '../../services/toast.service';
 import { Topbar } from '../home/topbar/topbar';
 import { Navbar } from '../home/navbar/navbar';
 import { Footer } from '../home/footer/footer';
+import { resolveMediaUrl } from '../../services/api-config';
 
 @Component({
   selector: 'app-profile',
@@ -17,23 +19,30 @@ import { Footer } from '../home/footer/footer';
   styleUrl: './profile.css',
 })
 export class Profile implements OnInit {
+  resolveMediaUrl = resolveMediaUrl;
   currentUser: UserAuth | null = null;
   transactions: PaymentTransactionItem[] = [];
+  refunds: PaymentTransactionItem[] = [];
+  orders: AuctionOrderItem[] = [];
   followedArtisans: ArtisanProfile[] = [];
+
   loadingTransactions = false;
+  loadingRefunds = false;
+  loadingOrders = false;
   loadingFollows = false;
 
   totalSpent = 0;
   totalRefunded = 0;
 
-  activeTab: 'wallet' | 'following' = 'wallet';
+  activeTab: 'orders' | 'refunds' | 'wallet' | 'following' = 'orders';
 
   constructor(
     private authService: AuthService,
     private paymentService: PaymentService,
+    private auctionService: AuctionService,
     private followService: FollowService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -42,12 +51,40 @@ export class Profile implements OnInit {
       return;
     }
     this.currentUser = this.authService.getCurrentUser();
+    this.loadOrders();
+    this.loadRefunds();
     this.loadTransactions();
     this.loadFollowedArtisans();
   }
 
-  setTab(tab: 'wallet' | 'following'): void {
+  setTab(tab: 'orders' | 'refunds' | 'wallet' | 'following'): void {
     this.activeTab = tab;
+  }
+
+  loadOrders(): void {
+    this.loadingOrders = true;
+    this.auctionService.getBuyerOrders().subscribe({
+      next: (data) => {
+        this.orders = data;
+        this.loadingOrders = false;
+      },
+      error: () => {
+        this.loadingOrders = false;
+      },
+    });
+  }
+
+  loadRefunds(): void {
+    this.loadingRefunds = true;
+    this.paymentService.getMyRefunds().subscribe({
+      next: (data) => {
+        this.refunds = data;
+        this.loadingRefunds = false;
+      },
+      error: () => {
+        this.loadingRefunds = false;
+      },
+    });
   }
 
   loadTransactions(): void {
@@ -65,8 +102,7 @@ export class Profile implements OnInit {
           .filter((t) => t.type === 'AUTO_REFUND' || t.status === 'REFUNDED')
           .reduce((sum, t) => sum + Number(t.amount), 0);
       },
-      error: (err) => {
-        console.error('Failed to load transactions:', err);
+      error: () => {
         this.loadingTransactions = false;
       },
     });
@@ -79,8 +115,7 @@ export class Profile implements OnInit {
         this.followedArtisans = artisans;
         this.loadingFollows = false;
       },
-      error: (err) => {
-        console.error('Failed to load followed artisans:', err);
+      error: () => {
         this.loadingFollows = false;
       },
     });
@@ -93,7 +128,7 @@ export class Profile implements OnInit {
         this.toastService.info(res.message || 'Unfollowed artisan');
         this.loadFollowedArtisans();
       },
-      error: (err) => {
+      error: () => {
         this.toastService.error('Could not unfollow artisan');
       },
     });
@@ -104,9 +139,13 @@ export class Profile implements OnInit {
   }
 
   formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleString([], {
-      dateStyle: 'medium',
-      timeStyle: 'short',
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 

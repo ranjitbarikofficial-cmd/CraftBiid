@@ -39,3 +39,12 @@ export function resolveMediaUrl(url: string | null | undefined): string {
   return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
 }
 
+export function getWsBaseUrl(): string {
+  const httpUrl = getApiBaseUrl();
+  if (httpUrl.startsWith('https://')) {
+    return httpUrl.replace('https://', 'wss://') + '/ws';
+  }
+  return httpUrl.replace('http://', 'ws://') + '/ws';
+}
+
+

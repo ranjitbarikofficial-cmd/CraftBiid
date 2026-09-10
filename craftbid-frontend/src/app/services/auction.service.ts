@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CraftItem } from './craft.service';
-import { UserAuth } from './auth';
 import { getApiBaseUrl } from './api-config';
 
 export interface AuctionItem {
@@ -13,18 +12,21 @@ export interface AuctionItem {
     name: string;
     email: string;
     phone?: string;
+    city?: string;
   };
   startingPrice: number;
   currentHighestBid: number;
   reservePrice?: number;
   minBidIncrement: number;
   startTime: string;
+  participationDeadline?: string;
   endTime: string;
-  status: 'DRAFT' | 'ACTIVE' | 'ENDED' | 'CANCELLED';
+  status: 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'LIVE' | 'DIRECT_PURCHASE' | 'ENDED' | 'CANCELLED';
   winningBidder?: {
     id: number;
     name: string;
     email: string;
+    city?: string;
     phone?: string;
   };
   totalBids: number;
@@ -45,7 +47,8 @@ export interface BidItem {
   bidder: {
     id: number;
     name: string;
-    email: string;
+    city?: string;
+    email?: string;
   };
   amount: number;
   bidTime: string;
@@ -54,12 +57,15 @@ export interface BidItem {
 
 export interface AuctionParticipantItem {
   id: number;
-  auction: AuctionItem;
-  user: {
+  userId?: number;
+  user?: {
     id: number;
     name: string;
-    email: string;
+    city?: string;
+    email?: string;
   };
+  name?: string;
+  city?: string;
   basePricePaid: number;
   totalAmountPaid: number;
   status: 'JOINED' | 'ACTIVE' | 'WON' | 'REFUNDED';
@@ -75,12 +81,14 @@ export interface AuctionOrderItem {
     name: string;
     email: string;
     phone?: string;
+    city?: string;
   };
   artisan: {
     id: number;
     name: string;
     email: string;
     phone?: string;
+    city?: string;
   };
   winningAmount: number;
   platformFee: number;
@@ -91,7 +99,7 @@ export interface AuctionOrderItem {
   state?: string;
   pincode: string;
   phone: string;
-  status: string;
+  status: string; // PENDING_ADDRESS, PAID, PACKED, SHIPPED, DELIVERED
   createdAt: string;
 }
 
@@ -178,6 +186,19 @@ export class AuctionService {
 
   getBuyerOrders(): Observable<AuctionOrderItem[]> {
     return this.http.get<AuctionOrderItem[]>(`${this.apiUrl}/buyer-orders`);
+  }
+
+  updateOrderStatus(
+    orderId: number,
+    status: string,
+    trackingNotes?: string,
+    carrier?: string,
+  ): Observable<AuctionOrderItem> {
+    return this.http.patch<AuctionOrderItem>(`${this.apiUrl}/orders/${orderId}/status`, {
+      status,
+      trackingNotes,
+      carrier,
+    });
   }
 
   getAuctionBids(auctionId: number): Observable<BidItem[]> {

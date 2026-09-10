@@ -38,11 +38,17 @@ public class User {
     @Column(name = "otp_expiry")
     private java.time.LocalDateTime otpExpiry;
 
+    private String city;
+
     public User() {
     }
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -115,5 +121,13 @@ public class User {
 
     public void setOtpExpiry(java.time.LocalDateTime otpExpiry) {
         this.otpExpiry = otpExpiry;
+    }
+
+    public String getCity() {
+        return city != null && !city.isBlank() ? city : "India";
+    }
+
+    public void setCity(String city) {
+        this.city = city;
     }
 }

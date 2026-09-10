@@ -26,7 +26,7 @@
 
         <div class="detail-item">
           <span class="label">Artisan Seller Status</span>
-          <strong>{{ currentUser.sellerEnabled ? '✅ Enabled (Artisan Maker)' : '❌ Not Enabled' }}</strong>
+          <strong>{{ currentUser.sellerEnabled ? '✅ Enabled (Artisan Maker)' : '❌ Buyer Account' }}</strong>
         </div>
 
         <div class="detail-item">
@@ -42,7 +42,7 @@
           <a routerLink="/artisan" class="btn-primary">🎨 Become an Artisan</a>
         }
 
-        <a routerLink="/my-bids" class="btn-secondary">🔨 View My Bids</a>
+        <a routerLink="/auctions" class="btn-secondary">🔨 Live Auctions</a>
 
         @if (currentUser.role === 'ADMIN') {
           <a routerLink="/admin-dashboard" class="btn-admin">⚡ Admin Dashboard</a>
@@ -57,10 +57,26 @@
       <button
         type="button"
         class="profile-tab-btn"
+        [class.active]="activeTab === 'orders'"
+        (click)="setTab('orders')"
+      >
+        📦 My Orders ({{ orders.length }})
+      </button>
+      <button
+        type="button"
+        class="profile-tab-btn"
+        [class.active]="activeTab === 'refunds'"
+        (click)="setTab('refunds')"
+      >
+        💰 100% Refund History ({{ refunds.length }})
+      </button>
+      <button
+        type="button"
+        class="profile-tab-btn"
         [class.active]="activeTab === 'wallet'"
         (click)="setTab('wallet')"
       >
-        💳 Payments & Auto-Refunds
+        💳 Payment Ledger
       </button>
       <button
         type="button"
@@ -72,17 +88,121 @@
       </button>
     </div>
 
-    <!-- 2. PAYMENT & REFUND LEDGER TAB -->
+    <!-- ================= TAB 1: MY ORDERS ================= -->
+    @if (activeTab === 'orders') {
+      <div class="ledger-card">
+        <div class="ledger-header">
+          <div>
+            <h2>📦 My Won Craft Orders</h2>
+            <p>Track your won handcrafted creations from artisan packing to doorstep delivery.</p>
+          </div>
+        </div>
+
+        @if (loadingOrders) {
+          <p class="loading-text">⏳ Loading your orders...</p>
+        } @else if (orders.length > 0) {
+          <div class="table-wrap">
+            <table class="ledger-table">
+              <thead>
+                <tr>
+                  <th>Order Ref</th>
+                  <th>Craft Item</th>
+                  <th>Artisan</th>
+                  <th>Winning Bid</th>
+                  <th>Shipping Address</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (o of orders; track o.id) {
+                  <tr>
+                    <td><span class="ref-code">#CB-ORD-{{ o.id }}</span></td>
+                    <td><strong>{{ o.auction?.craft?.title }}</strong></td>
+                    <td>{{ o.artisan?.name || 'Artisan' }}</td>
+                    <td><strong>{{ formatPrice(o.winningAmount) }}</strong></td>
+                    <td>
+                      <small>{{ o.streetAddress }}, {{ o.city }} ({{ o.pincode }})</small>
+                    </td>
+                    <td>
+                      <span class="status-badge success">{{ o.status }}</span>
+                    </td>
+                    <td><small>{{ formatDate(o.createdAt) }}</small></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="empty-ledger">
+            <p>You haven't won any live auctions yet. Explore active items in <a routerLink="/auctions" style="color: #ea580c; font-weight: bold;">Live Auctions</a>!</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ================= TAB 2: 100% REFUND HISTORY ================= -->
+    @if (activeTab === 'refunds') {
+      <div class="ledger-card">
+        <div class="ledger-header">
+          <div>
+            <h2>💰 100% Automated Refund Ledger</h2>
+            <p>Zero-risk guarantee: If you are outbid in any 1-minute live auction, your entire deposit and differential bid payments are automatically returned 100%.</p>
+          </div>
+          <div class="metric-pill refunded">
+            <span>Total 100% Refunded:</span>
+            <strong>{{ formatPrice(totalRefunded) }}</strong>
+          </div>
+        </div>
+
+        @if (loadingRefunds) {
+          <p class="loading-text">⏳ Loading refund records...</p>
+        } @else if (refunds.length > 0) {
+          <div class="table-wrap">
+            <table class="ledger-table">
+              <thead>
+                <tr>
+                  <th>Refund Ref</th>
+                  <th>Reason / Details</th>
+                  <th>Payment Source</th>
+                  <th>100% Refund Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of refunds; track r.id) {
+                  <tr>
+                    <td><span class="ref-code">{{ r.transactionRef }}</span></td>
+                    <td>{{ r.notes || 'Outbid 100% Automated Refund' }}</td>
+                    <td><strong>{{ r.paymentMethod }}</strong></td>
+                    <td class="amount-cell refund">+{{ formatPrice(r.amount) }}</td>
+                    <td><span class="status-badge refunded">100% REFUNDED</span></td>
+                    <td><small>{{ formatDate(r.createdAt) }}</small></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="empty-ledger">
+            <p>No refunds recorded. Whenever you participate in an auction and are outbid, 100% of your deposits will appear here.</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ================= TAB 3: PAYMENT LEDGER ================= -->
     @if (activeTab === 'wallet') {
       <div class="ledger-card">
         <div class="ledger-header">
           <div>
-            <h2>💳 Payments & Auto-Refunds Ledger</h2>
-            <p>Complete record of deposits, differential turn bids, auto-refunds, and purchases.</p>
+            <h2>💳 All Payment Transactions</h2>
+            <p>Complete ledger of base deposits, differential turn bids, auto-refunds, and direct purchases.</p>
           </div>
           <div class="ledger-metrics">
             <div class="metric-pill spent">
-              <span>Total Paid / Deposited:</span>
+              <span>Total Paid:</span>
               <strong>{{ formatPrice(totalSpent) }}</strong>
             </div>
             <div class="metric-pill refunded">
@@ -101,7 +221,7 @@
                 <tr>
                   <th>Transaction Ref</th>
                   <th>Type</th>
-                  <th>Payment Method</th>
+                  <th>Method</th>
                   <th>Amount</th>
                   <th>Status</th>
                   <th>Date & Time</th>
@@ -138,13 +258,13 @@
           </div>
         } @else {
           <div class="empty-ledger">
-            <p>No payment transactions recorded yet. Deposits and bids will appear here in real-time.</p>
+            <p>No payment transactions recorded yet.</p>
           </div>
         }
       </div>
     }
 
-    <!-- 3. FOLLOWED ARTISANS TAB -->
+    <!-- ================= TAB 4: FOLLOWED ARTISANS ================= -->
     @if (activeTab === 'following') {
       <div class="ledger-card">
         <div class="ledger-header">
@@ -181,7 +301,7 @@
           </div>
         } @else {
           <div class="empty-ledger">
-            <p>You haven't followed any artisans yet. Discover master makers in <a routerLink="/reels" style="color: #ea580c; font-weight: 700;">Craft Reels</a> or the marketplace!</p>
+            <p>You haven't followed any artisans yet. Discover master makers in <a routerLink="/reels" style="color: #ea580c; font-weight: 700;">Craft Reels</a>!</p>
           </div>
         }
       </div>

@@ -208,12 +208,17 @@
                       <span class="craft-tag-pill">🏺 Featured Craft</span>
                       <h4>{{ reel.craft.title }}</h4>
                       <strong class="craft-base-price">Base Price: {{ formatPrice(reel.craft.basePrice) }}</strong>
+                      @if (getAuctionForCraft(reel.craft.id)) {
+                        <small class="craft-participants-count">
+                          👥 {{ getAuctionForCraft(reel.craft.id)?.currentParticipantsCount || 0 }}/{{ getAuctionForCraft(reel.craft.id)?.maxParticipants || 10 }} Participants
+                        </small>
+                      }
                     </div>
 
                     <div class="craft-actions-row">
                       @if (getAuctionIdForCraft(reel.craft.id)) {
                         <a [routerLink]="['/auctions', getAuctionIdForCraft(reel.craft.id)]" class="btn-bid-live-cta">
-                          ⚡ 1-Min Live Bid →
+                          ⚡ Interested & Join Auction →
                         </a>
                       }
                       <a [routerLink]="['/crafts', reel.craft.id]" class="btn-buy-craft">
