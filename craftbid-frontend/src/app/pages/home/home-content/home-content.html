@@ -18,15 +18,15 @@
         </p>
 
         <div class="hero-cta-group">
-          <a routerLink="/auctions" class="btn-hero-primary">
+          <a routerLink="/auctions" class="btn-hero-cta">
             <span class="btn-icon">🔨</span>
             <span>Enter Live Auctions</span>
           </a>
-          <a routerLink="/reels" class="btn-hero-secondary">
-            <span class="btn-icon">🎥</span>
+          <a routerLink="/reels" class="btn-hero-cta">
+            <span class="btn-icon">🎬</span>
             <span>Watch Craft Reels</span>
           </a>
-          <a [routerLink]="isSeller ? '/artisan-dashboard' : '/artisan'" class="btn-hero-artisan">
+          <a [routerLink]="isSeller ? '/artisan-dashboard' : '/artisan'" class="btn-hero-cta">
             <span class="btn-icon">🎨</span>
             <span>{{ isSeller ? 'Artisan Studio' : 'Sell Your Craft' }}</span>
           </a>
