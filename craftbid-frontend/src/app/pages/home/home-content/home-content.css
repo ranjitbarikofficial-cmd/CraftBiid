@@ -17,10 +17,10 @@
   background-size: cover;
   background-position: right center;
   background-repeat: no-repeat;
-  padding: 44px 0 52px;
+  padding: 54px 0 64px;
   overflow: hidden;
   border-bottom: 1px solid #ede8e1;
-  min-height: 480px;
+  min-height: 510px;
   display: flex;
   align-items: center;
 }
@@ -49,7 +49,7 @@
 .hero-left {
   max-width: 650px;
   background: transparent;
-  padding: 0;
+  padding-top: 16px;
   border: none;
   box-shadow: none;
 }
@@ -81,7 +81,8 @@
   font-size: clamp(2.1rem, 3.4vw, 3.1rem);
   line-height: 1.12;
   font-weight: 850;
-  color: #18181b;
+  color: #ffffff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
   margin-bottom: 16px;
   letter-spacing: -0.035em;
   white-space: nowrap;
@@ -102,8 +103,9 @@
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 22px;
+  gap: 12px;
+  margin-top: 6px;
+  margin-bottom: 24px;
 }
 
 .btn-icon {
@@ -150,7 +152,7 @@
   flex-wrap: nowrap;
   align-items: center;
   gap: 18px;
-  padding-top: 16px;
+  padding-top: 20px;
   border-top: 1px solid rgba(0, 0, 0, 0.15);
   white-space: nowrap;
 }
