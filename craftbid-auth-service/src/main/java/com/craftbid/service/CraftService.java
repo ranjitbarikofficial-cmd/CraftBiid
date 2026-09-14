@@ -1,5 +1,7 @@
 package com.craftbid.service;
 
+import com.craftbid.dsa.LRUCache;
+import com.craftbid.dsa.Trie;
 import com.craftbid.entity.Category;
 import com.craftbid.entity.Craft;
 import com.craftbid.entity.Role;
@@ -10,6 +12,7 @@ import com.craftbid.repository.UserRepository;
 import com.craftbid.repository.CategoryRepository;
 import com.craftbid.repository.CraftReelRepository;
 
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -23,7 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class CraftService {
@@ -36,6 +39,12 @@ public class CraftService {
     private final ArtisanProfileRepository artisanProfileRepository;
     private final CraftReelRepository craftReelRepository;
     private final FileStorageService fileStorageService;
+
+    // DSA: In-Memory LRU Cache for O(1) Craft Entity Lookup (5 min TTL)
+    private final LRUCache<Long, Craft> craftLruCache = new LRUCache<>(300, 300_000);
+
+    // DSA: Prefix Tree (Trie) for O(L) Instant Autocomplete & Token Search
+    private final Trie<Long> craftSearchTrie = new Trie<>();
 
     public CraftService(
             CraftRepository craftRepository,
@@ -51,6 +60,45 @@ public class CraftService {
         this.artisanProfileRepository = artisanProfileRepository;
         this.craftReelRepository = craftReelRepository;
         this.fileStorageService = fileStorageService;
+    }
+
+    @PostConstruct
+    public void initSearchTrie() {
+        try {
+            List<Craft> activeCrafts = craftRepository.findByStatusOrderByCreatedAtDesc("ACTIVE");
+            for (Craft c : activeCrafts) {
+                indexCraftInTrie(c);
+            }
+        } catch (Exception e) {
+            logger.warn("Could not pre-index crafts in Trie on startup: {}", e.getMessage());
+        }
+    }
+
+    private void indexCraftInTrie(Craft craft) {
+        if (craft == null || craft.getId() == null) return;
+        Long id = craft.getId();
+
+        if (craft.getTitle() != null) {
+            craftSearchTrie.insert(craft.getTitle(), id);
+            for (String word : craft.getTitle().split("\\s+")) {
+                if (word.length() >= 2) {
+                    craftSearchTrie.insert(word, id);
+                }
+            }
+        }
+
+        if (craft.getCategory() != null && craft.getCategory().getName() != null) {
+            craftSearchTrie.insert(craft.getCategory().getName(), id);
+            for (String word : craft.getCategory().getName().split("\\s+")) {
+                if (word.length() >= 2) {
+                    craftSearchTrie.insert(word, id);
+                }
+            }
+        }
+
+        if (craft.getSeller() != null && craft.getSeller().getName() != null) {
+            craftSearchTrie.insert(craft.getSeller().getName(), id);
+        }
     }
 
     private User getLoggedInUser() {
@@ -96,7 +144,6 @@ public class CraftService {
             throw new IllegalArgumentException("Craft image is required");
         }
 
-        // Validate file sizes (10MB for image, 100MB for video)
         if (image.getSize() > 10 * 1024 * 1024) {
             throw new IllegalArgumentException("Image file size must not exceed 10 MB");
         }
@@ -109,7 +156,6 @@ public class CraftService {
             User seller = getLoggedInUser();
             checkSellerEnabled(seller);
 
-            // Resolve or create Artisan Profile if needed
             ArtisanProfile artisan = artisanProfileRepository.findByUser(seller)
                     .orElseGet(() -> {
                         ArtisanProfile newProfile = new ArtisanProfile();
@@ -120,13 +166,9 @@ public class CraftService {
                         return artisanProfileRepository.save(newProfile);
                     });
 
-            // Resolve Category
             Category category = resolveCategory(categoryIdentifier);
-
-            // Store craft image
             String imageUrl = fileStorageService.saveFile(image, "crafts");
 
-            // Save Craft
             Craft craft = new Craft();
             craft.setTitle(title.trim());
             craft.setDescription(description != null ? description.trim() : "");
@@ -138,7 +180,10 @@ public class CraftService {
 
             Craft savedCraft = craftRepository.save(craft);
 
-            // Create Craft Reel if video is provided
+            // DSA: Cache & Index new craft
+            craftLruCache.put(savedCraft.getId(), savedCraft);
+            indexCraftInTrie(savedCraft);
+
             if (video != null && !video.isEmpty()) {
                 String videoUrl = fileStorageService.saveFile(video, "reels");
                 CraftReel reel = new CraftReel();
@@ -176,7 +221,6 @@ public class CraftService {
 
         String trimmed = categoryIdentifier.trim();
 
-        // Try numeric ID lookup
         try {
             Long catId = Long.parseLong(trimmed);
             return categoryRepository.findById(catId)
@@ -214,9 +258,52 @@ public class CraftService {
         return craftRepository.searchCrafts(cleanKeyword, categoryId, minPrice, maxPrice);
     }
 
+    /**
+     * O(L) Trie-powered instant autocomplete suggestions for search bar
+     */
+    public List<Map<String, Object>> autocomplete(String prefix, int limit) {
+        if (prefix == null || prefix.trim().isBlank()) {
+            return Collections.emptyList();
+        }
+
+        List<Trie.SearchResult<Long>> trieResults = craftSearchTrie.searchPrefix(prefix, limit);
+        if (trieResults.isEmpty()) {
+            // Try fuzzy search with edit distance 1 for typo tolerance
+            trieResults = craftSearchTrie.searchFuzzy(prefix, 1, limit);
+        }
+
+        List<Map<String, Object>> suggestions = new ArrayList<>();
+        Set<String> seenWords = new HashSet<>();
+
+        for (Trie.SearchResult<Long> res : trieResults) {
+            if (seenWords.add(res.getWord())) {
+                Map<String, Object> item = new HashMap<>();
+                item.put("suggestion", res.getWord());
+                item.put("matchCount", res.getValues().size());
+                suggestions.add(item);
+            }
+            if (suggestions.size() >= limit) break;
+        }
+
+        return suggestions;
+    }
+
+    /**
+     * O(1) Craft retrieval via LRUCache
+     */
     public Craft getCraftById(Long id) {
-        return craftRepository.findById(id)
+        if (id == null) {
+            throw new IllegalArgumentException("Craft ID cannot be null");
+        }
+        Craft cached = craftLruCache.get(id);
+        if (cached != null) {
+            return cached;
+        }
+
+        Craft craft = craftRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Craft not found with id: " + id));
+        craftLruCache.put(id, craft);
+        return craft;
     }
 
     public Craft updateCraft(Long id, Craft updatedCraft) {
@@ -252,7 +339,10 @@ public class CraftService {
             existingCraft.setStatus(updatedCraft.getStatus());
         }
 
-        return craftRepository.save(existingCraft);
+        Craft saved = craftRepository.save(existingCraft);
+        craftLruCache.put(id, saved);
+        indexCraftInTrie(saved);
+        return saved;
     }
 
     public Craft toggleLiveStatus(Long id, Boolean isLive) {
@@ -270,7 +360,9 @@ public class CraftService {
             existingCraft.setStatus("ACTIVE".equalsIgnoreCase(existingCraft.getStatus()) ? "OFFLINE" : "ACTIVE");
         }
 
-        return craftRepository.save(existingCraft);
+        Craft saved = craftRepository.save(existingCraft);
+        craftLruCache.put(id, saved);
+        return saved;
     }
 
     public void deleteCraft(Long id) {
@@ -282,6 +374,7 @@ public class CraftService {
             checkOwnership(existingCraft, loggedInUser);
         }
 
+        craftLruCache.remove(id);
         craftRepository.delete(existingCraft);
     }
 

@@ -16,9 +16,10 @@ public interface CraftReelRepository extends JpaRepository<CraftReel, Long> {
 
     List<CraftReel> findByStatus(String status);
 
-    List<CraftReel> findByStatusOrderByCreatedAtDesc(String status);
+    @Query("SELECT r FROM CraftReel r LEFT JOIN FETCH r.artisan a LEFT JOIN FETCH a.user LEFT JOIN FETCH r.craft c LEFT JOIN FETCH c.category LEFT JOIN FETCH c.seller WHERE r.status = :status ORDER BY r.createdAt DESC")
+    List<CraftReel> findByStatusOrderByCreatedAtDesc(@Param("status") String status);
 
-    @Query("SELECT r FROM CraftReel r WHERE r.artisan.user IN :artisanUsers AND r.status = :status ORDER BY r.createdAt DESC")
+    @Query("SELECT r FROM CraftReel r LEFT JOIN FETCH r.artisan a LEFT JOIN FETCH a.user LEFT JOIN FETCH r.craft c LEFT JOIN FETCH c.category LEFT JOIN FETCH c.seller WHERE r.artisan.user IN :artisanUsers AND r.status = :status ORDER BY r.createdAt DESC")
     List<CraftReel> findByArtisanUsersAndStatusOrderByCreatedAtDesc(
             @Param("artisanUsers") List<User> artisanUsers,
             @Param("status") String status

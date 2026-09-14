@@ -17,9 +17,19 @@
     <!-- Filter Sidebar -->
     <aside class="filter-sidebar">
       <h3>Filter Crafts</h3>
-      <div class="filter-group">
+      <div class="filter-group keyword-group" style="position: relative;">
         <label>Keyword</label>
-        <input type="text" [(ngModel)]="keyword" placeholder="Search crafts..." (keyup.enter)="performSearch()" />
+        <input type="text" [(ngModel)]="keyword" (input)="onKeywordInput()" placeholder="Search crafts..." (keyup.enter)="performSearch()" />
+        @if (suggestions.length > 0) {
+          <div class="trie-suggestions" style="position: absolute; z-index: 50; width: 100%; background: #ffffff; border: 1px solid #fed7aa; border-radius: 8px; margin-top: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 4px 0;">
+            @for (item of suggestions; track item.suggestion) {
+              <div class="suggestion-item" (click)="selectSuggestion(item)" style="padding: 6px 12px; cursor: pointer; display: flex; justify-content: space-between; font-size: 0.85rem; color: #1f2937;">
+                <span>🌲 {{ item.suggestion }}</span>
+                <span style="color: #ea580c; font-weight: 600; font-size: 0.75rem;">{{ item.matchCount }} matches</span>
+              </div>
+            }
+          </div>
+        }
       </div>
 
       <div class="filter-group">

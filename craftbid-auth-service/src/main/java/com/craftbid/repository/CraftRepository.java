@@ -17,13 +17,13 @@ public interface CraftRepository extends JpaRepository<Craft, Long> {
 
     List<Craft> findBySellerInAndStatusOrderByCreatedAtDesc(List<User> sellers, String status);
 
-    List<Craft> findByStatus(String status);
-
-    List<Craft> findByStatusOrderByCreatedAtDesc(String status);
+    @Query("SELECT c FROM Craft c LEFT JOIN FETCH c.category LEFT JOIN FETCH c.seller WHERE c.status = :status ORDER BY c.createdAt DESC")
+    List<Craft> findByStatusOrderByCreatedAtDesc(@Param("status") String status);
 
     List<Craft> findByCategoryId(Long categoryId);
 
-    List<Craft> findByCategoryIdAndStatus(Long categoryId, String status);
+    @Query("SELECT c FROM Craft c LEFT JOIN FETCH c.category LEFT JOIN FETCH c.seller WHERE c.category.id = :categoryId AND c.status = :status ORDER BY c.createdAt DESC")
+    List<Craft> findByCategoryIdAndStatus(@Param("categoryId") Long categoryId, @Param("status") String status);
 
     long countBySeller(User seller);
 

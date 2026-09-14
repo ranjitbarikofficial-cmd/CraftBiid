@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CraftService, CraftItem } from '../../services/craft.service';
+import { CraftService, CraftItem, AutocompleteItem } from '../../services/craft.service';
 import { Topbar } from '../home/topbar/topbar';
 import { Navbar } from '../home/navbar/navbar';
 import { Footer } from '../home/footer/footer';
@@ -19,6 +19,7 @@ export class Search implements OnInit {
   resolveMediaUrl = resolveMediaUrl;
   keyword = '';
   crafts: CraftItem[] = [];
+  suggestions: AutocompleteItem[] = [];
   loading = false;
   minPrice: number | null = null;
   maxPrice: number | null = null;
@@ -36,7 +37,30 @@ export class Search implements OnInit {
     });
   }
 
+  onKeywordInput(): void {
+    if (!this.keyword || this.keyword.trim().length < 1) {
+      this.suggestions = [];
+      return;
+    }
+
+    this.craftService.getAutocompleteSuggestions(this.keyword, 6).subscribe({
+      next: (items) => {
+        this.suggestions = items;
+      },
+      error: () => {
+        this.suggestions = [];
+      },
+    });
+  }
+
+  selectSuggestion(item: AutocompleteItem): void {
+    this.keyword = item.suggestion;
+    this.suggestions = [];
+    this.performSearch();
+  }
+
   performSearch(): void {
+    this.suggestions = [];
     this.loading = true;
     this.craftService
       .searchCrafts({
@@ -65,3 +89,4 @@ export class Search implements OnInit {
     img.src = 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=400&q=80';
   }
 }
+

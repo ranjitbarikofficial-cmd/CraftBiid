@@ -96,6 +96,22 @@ public class AuctionController {
         return ResponseEntity.ok(auctionService.getSanitizedParticipants(id));
     }
 
+    // DSA: In-Memory Max-Heap Live Leaderboard (O(K log K))
+    @GetMapping("/{id}/leaderboard")
+    public ResponseEntity<List<com.craftbid.dsa.LiveAuctionHeap.BidNode>> getLiveLeaderboard(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "10") int limit) {
+        return ResponseEntity.ok(auctionService.getLiveLeaderboard(id, limit));
+    }
+
+    // DSA: In-Memory Circular Ring Buffer Live Event Stream (O(1))
+    @GetMapping("/{id}/live-events")
+    public ResponseEntity<List<java.util.Map<String, Object>>> getRecentLiveEvents(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "20") int limit) {
+        return ResponseEntity.ok(auctionService.getRecentLiveEvents(id, limit));
+    }
+
     @PostMapping(value = {"/{id}/address", "/{id}/submit-address"})
     public ResponseEntity<AuctionOrder> submitDeliveryAddress(
             Authentication authentication,

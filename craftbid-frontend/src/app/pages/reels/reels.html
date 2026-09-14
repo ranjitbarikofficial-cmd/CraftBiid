@@ -74,7 +74,7 @@
                 playsinline
                 (ended)="onVideoEnded(i)"
                 (click)="togglePlayPause(videoElement)"
-                preload="metadata"
+                [attr.preload]="i <= 1 ? 'metadata' : 'none'"
               ></video>
 
               <!-- Top Scrim & Badges -->

@@ -172,7 +172,7 @@
           @for (reel of craftReels; track reel.id) {
             <div class="reel-card-item">
               <div class="reel-video-container">
-                <video [src]="resolveMediaUrl(reel.videoUrl)" [poster]="resolveMediaUrl(reel.thumbnailUrl)" preload="metadata" muted playsinline></video>
+                <video [src]="resolveMediaUrl(reel.videoUrl)" [poster]="resolveMediaUrl(reel.thumbnailUrl)" preload="none" muted playsinline></video>
                 <div class="reel-gradient-scrim"></div>
 
                 <div class="reel-top-tags">

@@ -1,5 +1,7 @@
 package com.craftbid.service;
 
+import com.craftbid.dsa.CircularRingBuffer;
+import com.craftbid.dsa.LiveAuctionHeap;
 import com.craftbid.dto.AuctionParticipantDTO;
 import com.craftbid.dto.CreateAuctionRequest;
 import com.craftbid.dto.JoinAuctionRequest;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +34,12 @@ public class AuctionService {
     private final NotificationService notificationService;
     private final AuctionEventPublisher eventPublisher;
     private final RazorpayService razorpayService;
+
+    // DSA: In-Memory Binary Max-Heap per active auction for O(1) top bid query & O(log K) bid updates
+    private final ConcurrentHashMap<Long, LiveAuctionHeap> auctionHeaps = new ConcurrentHashMap<>();
+
+    // DSA: Pre-allocated Circular Ring Buffer per active auction for zero-allocation live event streams (50 events)
+    private final ConcurrentHashMap<Long, CircularRingBuffer<Map<String, Object>>> auctionRingBuffers = new ConcurrentHashMap<>();
 
     public AuctionService(
             AuctionRepository auctionRepository,
@@ -195,6 +204,10 @@ public class AuctionService {
             System.err.println("⚠️ Notification error on join: " + e.getMessage());
         }
 
+        // DSA: Update In-Memory Live Auction Heap for O(1) top bid & O(log K) leaderboard
+        LiveAuctionHeap heap = auctionHeaps.computeIfAbsent(auction.getId(), id -> new LiveAuctionHeap(id));
+        heap.recordBid(buyer.getId(), buyer.getName(), buyer.getCity(), basePrice, LocalDateTime.now());
+
         // Broadcast real-time WebSocket event (sanitized Name • City)
         try {
             Map<String, Object> joinData = new HashMap<>();
@@ -205,6 +218,10 @@ public class AuctionService {
             pInfo.put("name", buyer.getName());
             pInfo.put("city", buyer.getCity());
             joinData.put("participant", pInfo);
+
+            // DSA: Push to Circular Ring Buffer for zero-allocation event history
+            CircularRingBuffer<Map<String, Object>> ring = auctionRingBuffers.computeIfAbsent(auction.getId(), id -> new CircularRingBuffer<>(50));
+            ring.push(joinData);
 
             eventPublisher.publishAuctionEvent(auction.getId(), "auction:joined", joinData);
         } catch (Exception ignored) {}
@@ -301,6 +318,10 @@ public class AuctionService {
         auction.setStatus(AuctionStatus.ACTIVE);
         Auction savedAuction = auctionRepository.save(auction);
 
+        // DSA: Update Live Auction Max-Heap in O(log K)
+        LiveAuctionHeap heap = auctionHeaps.computeIfAbsent(auction.getId(), id -> new LiveAuctionHeap(id));
+        heap.recordBid(bidder.getId(), bidder.getName(), bidder.getCity(), targetBidAmount, LocalDateTime.now());
+
         // Notify previous leader that they were outbid
         if (previousWinningBidder != null && !previousWinningBidder.getId().equals(bidder.getId())) {
             try {
@@ -320,10 +341,36 @@ public class AuctionService {
             bidData.put("turnDeadline", savedAuction.getTurnDeadline().toString());
             bidData.put("secondsRemaining", 60);
 
+            // DSA: Push to Circular Ring Buffer for live room replay
+            CircularRingBuffer<Map<String, Object>> ring = auctionRingBuffers.computeIfAbsent(auction.getId(), id -> new CircularRingBuffer<>(50));
+            ring.push(bidData);
+
             eventPublisher.publishAuctionEvent(auction.getId(), "auction:bid", bidData);
         } catch (Exception ignored) {}
 
         return savedBid;
+    }
+
+    /**
+     * DSA: Retrieve real-time Live Leaderboard from in-memory Max-Heap in O(K log K)
+     */
+    public List<LiveAuctionHeap.BidNode> getLiveLeaderboard(Long auctionId, int limit) {
+        LiveAuctionHeap heap = auctionHeaps.get(auctionId);
+        if (heap != null) {
+            return heap.getTopBidders(limit > 0 ? limit : 10);
+        }
+        return Collections.emptyList();
+    }
+
+    /**
+     * DSA: Retrieve recent live event stream from in-memory Circular Ring Buffer in O(1)
+     */
+    public List<Map<String, Object>> getRecentLiveEvents(Long auctionId, int limit) {
+        CircularRingBuffer<Map<String, Object>> ring = auctionRingBuffers.get(auctionId);
+        if (ring != null) {
+            return ring.getLatest(limit > 0 ? limit : 20);
+        }
+        return Collections.emptyList();
     }
 
     // ==========================================

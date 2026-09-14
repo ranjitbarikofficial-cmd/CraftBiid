@@ -103,6 +103,18 @@ public class CraftController {
     }
 
     // ==========================================
+    // TRIE AUTOCOMPLETE SUGGESTIONS (PUBLIC)
+    // ==========================================
+
+    @GetMapping("/autocomplete")
+    public ResponseEntity<java.util.List<java.util.Map<String, Object>>> autocomplete(
+            @RequestParam @NotBlank(message = "Query prefix is required") @Size(min = 1, max = 50) String q,
+            @RequestParam(required = false, defaultValue = "8") int limit) {
+
+        return ResponseEntity.ok(craftService.autocomplete(q, limit));
+    }
+
+    // ==========================================
     // GET CRAFT BY ID (PUBLIC)
     // ==========================================
 

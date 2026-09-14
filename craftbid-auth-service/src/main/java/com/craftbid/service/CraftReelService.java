@@ -1,5 +1,6 @@
 package com.craftbid.service;
 
+import com.craftbid.dsa.LRUCache;
 import com.craftbid.entity.ArtisanProfile;
 import com.craftbid.entity.Craft;
 import com.craftbid.entity.CraftReel;
@@ -21,6 +22,10 @@ public class CraftReelService {
     private final UserRepository userRepository;
     private final ArtisanProfileRepository artisanProfileRepository;
     private final CraftRepository craftRepository;
+
+    // DSA: In-Memory LRU Cache for Home Reels Feed (60s TTL) and Individual Reels (5m TTL)
+    private final LRUCache<String, List<CraftReel>> feedCache = new LRUCache<>(20, 60_000);
+    private final LRUCache<Long, CraftReel> reelCache = new LRUCache<>(200, 300_000);
 
     public CraftReelService(
             CraftReelRepository craftReelRepository,
@@ -82,7 +87,10 @@ public class CraftReelService {
         reel.setLikes(0L);
         reel.setStatus("ACTIVE");
 
-        return craftReelRepository.save(reel);
+        CraftReel saved = craftReelRepository.save(reel);
+        reelCache.put(saved.getId(), saved);
+        feedCache.clear(); // Invalidate feed cache on new reel
+        return saved;
     }
 
     // ==========================================
@@ -105,13 +113,19 @@ public class CraftReelService {
     }
 
     // ==========================================
-    // HOME REELS (FEED)
+    // HOME REELS (FEED) - O(1) via LRU Cache
     // ==========================================
 
     public List<CraftReel> getHomeReels() {
+        List<CraftReel> cached = feedCache.get("HOME_REELS");
+        if (cached != null) {
+            return cached;
+        }
 
-        return craftReelRepository
+        List<CraftReel> list = craftReelRepository
                 .findByStatusOrderByCreatedAtDesc("ACTIVE");
+        feedCache.put("HOME_REELS", list);
+        return list;
     }
 
     // ==========================================
@@ -135,8 +149,9 @@ public class CraftReelService {
                         new RuntimeException("Reel not found"));
 
         reel.setViews(reel.getViews() + 1);
-
-        return craftReelRepository.save(reel);
+        CraftReel saved = craftReelRepository.save(reel);
+        reelCache.put(saved.getId(), saved);
+        return saved;
     }
 
     // ==========================================
@@ -151,7 +166,8 @@ public class CraftReelService {
                         new RuntimeException("Reel not found"));
 
         reel.setLikes(reel.getLikes() + 1);
-
-        return craftReelRepository.save(reel);
+        CraftReel saved = craftReelRepository.save(reel);
+        reelCache.put(saved.getId(), saved);
+        return saved;
     }
 }

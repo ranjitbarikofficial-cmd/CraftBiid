@@ -133,20 +133,25 @@ export class Reels implements OnInit, AfterViewInit {
   checkFollowStatuses(): void {
     if (!this.authService.isLoggedIn()) return;
 
+    const uniqueArtisanIds = new Set<number>();
     this.reels.forEach((reel) => {
       const artisanUserId = reel.artisan?.user?.id;
       if (artisanUserId) {
-        this.followService.getFollowStatus(artisanUserId).subscribe({
-          next: (res) => {
-            if (res.following) {
-              this.followingArtisans.add(artisanUserId);
-            } else {
-              this.followingArtisans.delete(artisanUserId);
-            }
-            this.artisanFollowerCounts.set(artisanUserId, res.followerCount || 0);
-          },
-        });
+        uniqueArtisanIds.add(artisanUserId);
       }
+    });
+
+    uniqueArtisanIds.forEach((artisanUserId) => {
+      this.followService.getFollowStatus(artisanUserId).subscribe({
+        next: (res) => {
+          if (res.following) {
+            this.followingArtisans.add(artisanUserId);
+          } else {
+            this.followingArtisans.delete(artisanUserId);
+          }
+          this.artisanFollowerCounts.set(artisanUserId, res.followerCount || 0);
+        },
+      });
     });
   }
 

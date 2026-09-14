@@ -16,7 +16,8 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
 
     List<Auction> findByStatusOrderByEndTimeAsc(AuctionStatus status);
 
-    List<Auction> findByStatusInOrderByCreatedAtDesc(List<AuctionStatus> statuses);
+    @Query("SELECT a FROM Auction a LEFT JOIN FETCH a.craft c LEFT JOIN FETCH c.category LEFT JOIN FETCH c.seller LEFT JOIN FETCH a.seller LEFT JOIN FETCH a.winningBidder WHERE a.status IN :statuses ORDER BY a.createdAt DESC")
+    List<Auction> findByStatusInOrderByCreatedAtDesc(@Param("statuses") List<AuctionStatus> statuses);
 
     List<Auction> findBySellerOrderByCreatedAtDesc(User seller);
 

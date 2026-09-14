@@ -183,6 +183,7 @@ public class SecurityConfig {
 
                         // Auction & Bids Public Browsing
                         .requestMatchers(HttpMethod.GET, "/api/auctions").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auctions/active").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auctions/{id:[0-9]+}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auctions/{id:[0-9]+}/bids").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auctions/{id:[0-9]+}/participants").permitAll()

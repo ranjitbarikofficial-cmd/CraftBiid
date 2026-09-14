@@ -1,5 +1,7 @@
 package com.craftbid.service;
 
+import com.craftbid.dsa.LRUCache;
+import com.craftbid.dsa.Trie;
 import com.craftbid.entity.Category;
 import com.craftbid.repository.CategoryRepository;
 import jakarta.annotation.PostConstruct;
@@ -11,6 +13,14 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    
+    // DSA: In-Memory LRU Cache with 5-minute TTL for O(1) lookups
+    private final LRUCache<Long, Category> categoryLruCache = new LRUCache<>(100, 300_000);
+    
+    // DSA: Prefix Trie for O(L) instantaneous category autocompletion
+    private final Trie<Category> categoryTrie = new Trie<>();
+
+    private volatile List<Category> cachedCategoriesList = null;
 
     public CategoryService(CategoryRepository categoryRepository) {
         this.categoryRepository = categoryRepository;
@@ -37,21 +47,65 @@ public class CategoryService {
                 categoryRepository.save(category);
             }
         }
+        rebuildCacheAndTrie();
+    }
+
+    private synchronized void rebuildCacheAndTrie() {
+        List<Category> all = categoryRepository.findAll();
+        cachedCategoriesList = all;
+        categoryLruCache.clear();
+        categoryTrie.clear();
+
+        for (Category c : all) {
+            categoryLruCache.put(c.getId(), c);
+            categoryTrie.insert(c.getName(), c);
+            if (c.getName().contains(" ")) {
+                for (String part : c.getName().split(" ")) {
+                    if (part.length() > 2) {
+                        categoryTrie.insert(part, c);
+                    }
+                }
+            }
+        }
     }
 
     public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+        if (cachedCategoriesList != null) {
+            return cachedCategoriesList;
+        }
+        rebuildCacheAndTrie();
+        return cachedCategoriesList;
     }
 
+    /**
+     * O(1) Category lookup via LRUCache
+     */
     public Category getCategoryById(Long id) {
-        return categoryRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Category not found with id: " + id)
-                );
+        if (id == null) {
+            throw new IllegalArgumentException("Category ID cannot be null");
+        }
+        Category cached = categoryLruCache.get(id);
+        if (cached != null) {
+            return cached;
+        }
+
+        Category fromDb = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
+        categoryLruCache.put(id, fromDb);
+        return fromDb;
+    }
+
+    /**
+     * O(L) Prefix Search across Category names
+     */
+    public List<Trie.SearchResult<Category>> searchCategories(String prefix, int limit) {
+        return categoryTrie.searchPrefix(prefix, limit);
     }
 
     public Category createCategory(Category category) {
-        return categoryRepository.save(category);
+        Category saved = categoryRepository.save(category);
+        rebuildCacheAndTrie();
+        return saved;
     }
 
     public Category updateCategory(Long id, Category category) {
@@ -59,11 +113,14 @@ public class CategoryService {
         existing.setName(category.getName());
         existing.setDescription(category.getDescription());
         existing.setImageUrl(category.getImageUrl());
-        return categoryRepository.save(existing);
+        Category saved = categoryRepository.save(existing);
+        rebuildCacheAndTrie();
+        return saved;
     }
 
     public void deleteCategory(Long id) {
         Category existing = getCategoryById(id);
         categoryRepository.delete(existing);
+        rebuildCacheAndTrie();
     }
 }
