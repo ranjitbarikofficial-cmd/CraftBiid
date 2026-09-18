@@ -6,12 +6,16 @@ import com.craftbid.entity.Craft;
 import com.craftbid.entity.CraftReel;
 import com.craftbid.entity.User;
 
+import com.craftbid.dto.UpdateReelRequest;
+import com.craftbid.entity.Role;
+import com.craftbid.exception.AccessDeniedException;
 import com.craftbid.repository.ArtisanProfileRepository;
 import com.craftbid.repository.CraftReelRepository;
 import com.craftbid.repository.CraftRepository;
 import com.craftbid.repository.UserRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -169,5 +173,70 @@ public class CraftReelService {
         CraftReel saved = craftReelRepository.save(reel);
         reelCache.put(saved.getId(), saved);
         return saved;
+    }
+
+    // ==========================================
+    // UPDATE REEL
+    // ==========================================
+
+    @Transactional
+    public CraftReel updateReel(String identifier, Long reelId, UpdateReelRequest request) {
+        User user = userRepository.findByIdentifier(identifier)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        CraftReel reel = craftReelRepository.findById(reelId)
+                .orElseThrow(() -> new RuntimeException("Reel not found with id: " + reelId));
+
+        if (user.getRole() != Role.ADMIN) {
+            if (reel.getArtisan() == null || reel.getArtisan().getUser() == null ||
+                    !reel.getArtisan().getUser().getId().equals(user.getId())) {
+                throw new AccessDeniedException("You are not allowed to modify this craft reel");
+            }
+        }
+
+        if (request.getTitle() != null && !request.getTitle().isBlank()) {
+            reel.setTitle(request.getTitle().trim());
+        }
+
+        if (request.getDescription() != null) {
+            reel.setDescription(request.getDescription().trim());
+        }
+
+        if (request.getVideoUrl() != null && !request.getVideoUrl().isBlank()) {
+            reel.setVideoUrl(request.getVideoUrl().trim());
+        }
+
+        if (request.getThumbnailUrl() != null && !request.getThumbnailUrl().isBlank()) {
+            reel.setThumbnailUrl(request.getThumbnailUrl().trim());
+        }
+
+        CraftReel saved = craftReelRepository.save(reel);
+        reelCache.put(saved.getId(), saved);
+        feedCache.clear();
+        return saved;
+    }
+
+    // ==========================================
+    // DELETE REEL
+    // ==========================================
+
+    @Transactional
+    public void deleteReel(String identifier, Long reelId) {
+        User user = userRepository.findByIdentifier(identifier)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        CraftReel reel = craftReelRepository.findById(reelId)
+                .orElseThrow(() -> new RuntimeException("Reel not found with id: " + reelId));
+
+        if (user.getRole() != Role.ADMIN) {
+            if (reel.getArtisan() == null || reel.getArtisan().getUser() == null ||
+                    !reel.getArtisan().getUser().getId().equals(user.getId())) {
+                throw new AccessDeniedException("You are not allowed to delete this craft reel");
+            }
+        }
+
+        craftReelRepository.delete(reel);
+        reelCache.remove(reelId);
+        feedCache.clear();
     }
 }

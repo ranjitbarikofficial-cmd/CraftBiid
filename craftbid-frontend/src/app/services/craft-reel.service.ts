@@ -77,4 +77,22 @@ export class CraftReelService {
       },
     });
   }
+
+  updateReel(
+    id: number,
+    data: {
+      title?: string;
+      description?: string;
+      videoUrl?: string;
+      thumbnailUrl?: string;
+    }
+  ): Observable<CraftReelItem> {
+    return this.http.put<CraftReelItem>(`${this.apiUrl}/${id}`, data);
+  }
+
+  deleteReel(id: number): Observable<string> {
+    return this.http.delete(`${this.apiUrl}/${id}`, {
+      responseType: 'text',
+    });
+  }
 }

@@ -216,11 +216,13 @@
                 type="button"
                 class="btn-send-otp-chip"
                 (click)="requestAdminOtp()"
-                [disabled]="adminOtpLoading"
+                [disabled]="adminOtpLoading || cooldownSeconds > 0"
               >
                 @if (adminOtpLoading) {
                   <span class="btn-spinner" style="width: 14px; height: 14px;"></span>
                   <span>Sending...</span>
+                } @else if (cooldownSeconds > 0) {
+                  <span>⏳ Resend in {{ cooldownSeconds }}s</span>
                 } @else {
                   <span>📧 {{ adminOtpSent ? 'Resend OTP Code' : 'Send OTP Code' }}</span>
                 }

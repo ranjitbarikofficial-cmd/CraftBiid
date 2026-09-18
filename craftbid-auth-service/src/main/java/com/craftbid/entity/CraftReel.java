@@ -70,6 +70,10 @@ public class CraftReel {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public ArtisanProfile getArtisan() {
         return artisan;
     }

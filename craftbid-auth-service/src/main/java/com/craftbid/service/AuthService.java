@@ -266,7 +266,8 @@ public class AuthService {
                 user.getName(),
                 user.getEmail() != null ? user.getEmail() : user.getPhone(),
                 user.getRole().name(),
-                user.isSellerEnabled()
+                user.isSellerEnabled(),
+                user.getProfileImageUrl()
         );
     }
 

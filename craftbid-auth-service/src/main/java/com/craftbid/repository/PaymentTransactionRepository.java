@@ -18,4 +18,12 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
     List<PaymentTransaction> findByAuctionIdOrderByCreatedAtDesc(Long auctionId);
 
     Optional<PaymentTransaction> findByTransactionRef(String transactionRef);
+
+    Optional<PaymentTransaction> findByRazorpayOrderId(String razorpayOrderId);
+
+    Optional<PaymentTransaction> findByRazorpayPaymentId(String razorpayPaymentId);
+
+    Optional<PaymentTransaction> findByAuctionIdAndUserAndStatus(Long auctionId, User user, String status);
+
+    long countByStatus(String status);
 }

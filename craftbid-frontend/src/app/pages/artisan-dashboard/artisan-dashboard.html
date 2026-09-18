@@ -9,11 +9,24 @@
       </div>
     </div>
 
-    <!-- Artisan Profile Summary -->
-    <div class="artisan-user-card">
-      <div class="artisan-avatar">👨‍🎨</div>
+    <!-- Artisan Profile Summary Card in Sidebar -->
+    <div class="artisan-user-card" (click)="openEditProfileModal()" title="Click to edit your studio profile">
+      <div class="artisan-avatar-wrap">
+        @if (artisanProfile?.profileImageUrl || currentUser?.profileImageUrl) {
+          <img
+            [src]="resolveMediaUrl(artisanProfile?.profileImageUrl || currentUser?.profileImageUrl)"
+            alt="Artisan Avatar"
+            class="artisan-avatar-img"
+            (error)="onImageError($event)"
+          />
+        } @else {
+          <div class="artisan-avatar-placeholder">👨‍🎨</div>
+        }
+        <span class="avatar-edit-badge" title="Edit Profile">✏️</span>
+      </div>
       <div class="artisan-info">
-        <strong>{{ currentUser?.name || 'Master Artisan' }}</strong>
+        <strong>{{ artisanProfile?.name || currentUser?.name || 'Master Artisan' }}</strong>
+        <span class="studio-subinfo">{{ artisanProfile?.shopName || 'Handmade Studio' }}</span>
         <span class="verified-pill">🛡️ Verified Maker</span>
       </div>
     </div>
@@ -23,6 +36,11 @@
         <span class="nav-icon">📊</span>
         <span>Studio Console</span>
       </a>
+
+      <button type="button" class="nav-item btn-nav-action" (click)="openEditProfileModal()">
+        <span class="nav-icon">👤</span>
+        <span>Edit Studio Profile</span>
+      </button>
 
       <a routerLink="/artisan/upload-craft" class="nav-item">
         <span class="nav-icon">➕</span>
@@ -55,15 +73,24 @@
 
   <!-- ================= 2. MAIN CONSOLE CONTENT ================= -->
   <main class="studio-main-viewport">
-    <!-- TOP BAR -->
+    <!-- TOP BAR WITH ARTISAN STUDIO BANNER -->
     <header class="studio-topbar">
       <div>
         <div class="breadcrumb-chip">Studio Workspace &gt; Overview</div>
-        <h1>Welcome, {{ currentUser?.name || 'Artisan' }} 👋</h1>
-        <p class="subtitle-text">Manage your handcrafted catalog, process reels, and fulfill winner orders.</p>
+        <h1>Welcome, {{ artisanProfile?.name || currentUser?.name || 'Artisan' }} 👋</h1>
+        <p class="subtitle-text">
+          <span class="studio-meta-pill">🏷️ {{ artisanProfile?.shopName || 'Craft Studio' }}</span>
+          <span class="studio-meta-pill">🧵 {{ artisanProfile?.craftType || 'Handmade Crafts' }}</span>
+          @if (artisanProfile?.city) {
+            <span class="studio-meta-pill">📍 {{ artisanProfile?.city }}</span>
+          }
+        </p>
       </div>
 
       <div class="topbar-actions">
+        <button type="button" class="btn-edit-profile" (click)="openEditProfileModal()">
+          <span>👤 Edit Profile & Photo</span>
+        </button>
         <a routerLink="/artisan/upload-craft" class="btn-create-craft">
           <span>+ Upload New Craft</span>
         </a>
@@ -200,11 +227,21 @@
                     </div>
 
                     <div class="btn-group">
+                      <button
+                        type="button"
+                        class="btn-action-edit"
+                        (click)="openEditCraftModal(craft, $event)"
+                        title="Edit Craft Details & Photo"
+                      >
+                        ✏️ Edit
+                      </button>
+
                       @if (craft.status === 'ACTIVE') {
                         <button class="btn-action-auction" (click)="openAuctionModal(craft, $event)" title="Start Live Turn Auction">
-                          🔨 Start Auction
+                          🔨 Auction
                         </button>
                       }
+
                       <button class="btn-action-delete" (click)="deleteCraft(craft.id, $event)" title="Delete Craft">
                         🗑️
                       </button>
@@ -237,9 +274,30 @@
                 </div>
                 <div class="reel-meta-box">
                   <h4>{{ reel.title }}</h4>
+                  @if (reel.description) {
+                    <p class="reel-desc-snippet">{{ reel.description }}</p>
+                  }
                   <div class="reel-stat-row">
                     <span>👁️ {{ reel.views || 0 }} views</span>
                     <span>❤️ {{ reel.likes || 0 }} likes</span>
+                  </div>
+                  <div class="reel-actions-row">
+                    <button
+                      type="button"
+                      class="btn-reel-edit"
+                      (click)="openEditReelModal(reel, $event)"
+                      title="Edit Reel Title & Description"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-reel-delete"
+                      (click)="deleteReel(reel.id, $event)"
+                      title="Delete Reel"
+                    >
+                      🗑️ Delete
+                    </button>
                   </div>
                 </div>
               </div>
@@ -330,7 +388,281 @@
   </main>
 </div>
 
-<!-- ================= LAUNCH LIVE AUCTION MODAL ================= -->
+<!-- ================= MODAL 1: EDIT ARTISAN PROFILE & PHOTO ================= -->
+@if (isProfileModalOpen) {
+  <div class="modal-backdrop-blur" (click)="closeEditProfileModal()">
+    <div class="modal-dialog-glass" (click)="$event.stopPropagation()">
+      <div class="modal-header-strip">
+        <h2>👤 Edit Artisan Studio Profile</h2>
+        <button class="btn-modal-close" (click)="closeEditProfileModal()">✕</button>
+      </div>
+
+      <div class="modal-body-content">
+        <!-- Avatar Upload Section -->
+        <div class="avatar-edit-section">
+          <div class="avatar-preview-container">
+            @if (avatarPreviewUrl) {
+              <img [src]="avatarPreviewUrl" alt="Avatar Preview" class="avatar-big-preview" />
+            } @else {
+              <div class="avatar-big-placeholder">👨‍🎨</div>
+            }
+          </div>
+          <div class="avatar-upload-controls">
+            <label for="avatarFileInput" class="btn-select-avatar">
+              📸 Upload Profile Photo
+            </label>
+            <input
+              id="avatarFileInput"
+              type="file"
+              accept="image/*"
+              (change)="onAvatarFileSelected($event)"
+              style="display: none;"
+            />
+            <span class="upload-tip-text">PNG, JPG or WEBP (Max 10 MB)</span>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>Artisan Full Name *</label>
+          <input
+            type="text"
+            [(ngModel)]="profileForm.name"
+            placeholder="e.g. Ramesh Sharma"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Studio / Shop Name</label>
+          <input
+            type="text"
+            [(ngModel)]="profileForm.shopName"
+            placeholder="e.g. Royal Varanasi Silks"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Craft Specialization / Type</label>
+          <input
+            type="text"
+            [(ngModel)]="profileForm.craftType"
+            placeholder="e.g. Handloom Silk Sarees, Terracotta Pottery"
+          />
+        </div>
+
+        <div class="form-row-2col">
+          <div class="form-field">
+            <label>City / Region</label>
+            <input
+              type="text"
+              [(ngModel)]="profileForm.city"
+              placeholder="e.g. Varanasi"
+            />
+          </div>
+
+          <div class="form-field">
+            <label>Phone Number</label>
+            <input
+              type="tel"
+              [(ngModel)]="profileForm.phone"
+              placeholder="10-digit mobile"
+              maxlength="10"
+            />
+          </div>
+        </div>
+
+        @if (profileError) {
+          <p class="error-msg-pill">⚠️ {{ profileError }}</p>
+        }
+      </div>
+
+      <div class="modal-footer-strip">
+        <button class="btn-modal-cancel" (click)="closeEditProfileModal()">Cancel</button>
+        <button
+          class="btn-modal-launch"
+          (click)="saveProfile()"
+          [disabled]="profileLoading"
+        >
+          {{ profileLoading ? 'Saving Profile...' : '💾 Save Profile' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ================= MODAL 2: EDIT CRAFT & REPLACE PHOTO ================= -->
+@if (isEditCraftModalOpen && editingCraft) {
+  <div class="modal-backdrop-blur" (click)="closeEditCraftModal()">
+    <div class="modal-dialog-glass" (click)="$event.stopPropagation()">
+      <div class="modal-header-strip">
+        <h2>🎨 Edit Craft & Photo</h2>
+        <button class="btn-modal-close" (click)="closeEditCraftModal()">✕</button>
+      </div>
+
+      <div class="modal-body-content">
+        <!-- Craft Photo Replacement Section -->
+        <div class="craft-photo-edit-box">
+          <div class="photo-preview-wrap">
+            <img
+              [src]="craftImagePreviewUrl || resolveMediaUrl(editingCraft.imageUrl)"
+              [alt]="craftForm.title"
+              (error)="onImageError($event)"
+            />
+          </div>
+          <div class="photo-upload-controls">
+            <label for="craftPhotoInput" class="btn-select-avatar">
+              🖼️ Replace Craft Photo
+            </label>
+            <input
+              id="craftPhotoInput"
+              type="file"
+              accept="image/*"
+              (change)="onCraftImageSelected($event)"
+              style="display: none;"
+            />
+            <span class="upload-tip-text">Upload new high-resolution photo (Max 10 MB)</span>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>Craft Title *</label>
+          <input
+            type="text"
+            [(ngModel)]="craftForm.title"
+            placeholder="e.g. Handcrafted Banarasi Silk Stole"
+          />
+        </div>
+
+        <div class="form-row-2col">
+          <div class="form-field">
+            <label>Category</label>
+            <input
+              type="text"
+              [(ngModel)]="craftForm.category"
+              placeholder="e.g. Textiles, Pottery, Jewellery"
+              list="categoryOptions"
+            />
+            <datalist id="categoryOptions">
+              @for (cat of categories; track cat.id) {
+                <option [value]="cat.name"></option>
+              }
+            </datalist>
+          </div>
+
+          <div class="form-field">
+            <label>Base Price (₹) *</label>
+            <input
+              type="number"
+              [(ngModel)]="craftForm.basePrice"
+              min="1"
+              step="1"
+            />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>Craft Description</label>
+          <textarea
+            rows="3"
+            [(ngModel)]="craftForm.description"
+            placeholder="Describe craftsmanship, heritage, materials, and creation technique..."
+          ></textarea>
+        </div>
+
+        <div class="checkbox-field-row">
+          <label class="custom-checkbox-label">
+            <input
+              type="checkbox"
+              [(ngModel)]="craftForm.isLiveForAuction"
+            />
+            <span>🟢 Make available (Live for Auction & Marketplace)</span>
+          </label>
+        </div>
+
+        @if (craftEditError) {
+          <p class="error-msg-pill">⚠️ {{ craftEditError }}</p>
+        }
+      </div>
+
+      <div class="modal-footer-strip">
+        <button class="btn-modal-cancel" (click)="closeEditCraftModal()">Cancel</button>
+        <button
+          class="btn-modal-launch"
+          (click)="saveCraftChanges()"
+          [disabled]="craftEditLoading"
+        >
+          {{ craftEditLoading ? 'Saving Craft...' : '💾 Save Changes' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ================= MODAL 3: EDIT CRAFT REEL ================= -->
+@if (isEditReelModalOpen && editingReel) {
+  <div class="modal-backdrop-blur" (click)="closeEditReelModal()">
+    <div class="modal-dialog-glass" (click)="$event.stopPropagation()">
+      <div class="modal-header-strip">
+        <h2>🎬 Edit Craft Reel</h2>
+        <button class="btn-modal-close" (click)="closeEditReelModal()">✕</button>
+      </div>
+
+      <div class="modal-body-content">
+        <div class="form-field">
+          <label>Reel Title *</label>
+          <input
+            type="text"
+            [(ngModel)]="reelForm.title"
+            placeholder="e.g. Weaving Authentic Pure Silk"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Description / Story</label>
+          <textarea
+            rows="3"
+            [(ngModel)]="reelForm.description"
+            placeholder="Share the story behind this craft reel..."
+          ></textarea>
+        </div>
+
+        <div class="form-field">
+          <label>Video URL</label>
+          <input
+            type="text"
+            [(ngModel)]="reelForm.videoUrl"
+            placeholder="/uploads/reels/... or video URL"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Thumbnail Poster URL</label>
+          <input
+            type="text"
+            [(ngModel)]="reelForm.thumbnailUrl"
+            placeholder="/uploads/crafts/... or thumbnail URL"
+          />
+        </div>
+
+        @if (reelEditError) {
+          <p class="error-msg-pill">⚠️ {{ reelEditError }}</p>
+        }
+      </div>
+
+      <div class="modal-footer-strip">
+        <button class="btn-modal-cancel" (click)="closeEditReelModal()">Cancel</button>
+        <button
+          class="btn-modal-launch"
+          (click)="saveReelChanges()"
+          [disabled]="reelEditLoading"
+        >
+          {{ reelEditLoading ? 'Updating Reel...' : '💾 Update Reel' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ================= MODAL 4: LAUNCH LIVE AUCTION MODAL ================= -->
 @if (isAuctionModalOpen && selectedCraft) {
   <div class="modal-backdrop-blur" (click)="closeAuctionModal()">
     <div class="modal-dialog-glass" (click)="$event.stopPropagation()">

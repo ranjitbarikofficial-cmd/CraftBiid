@@ -38,6 +38,9 @@ public class User {
     @Column(name = "otp_expiry")
     private java.time.LocalDateTime otpExpiry;
 
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
+
     private String city;
 
     public User() {
@@ -129,5 +132,13 @@ public class User {
 
     public void setCity(String city) {
         this.city = city;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }

@@ -8,6 +8,7 @@ public class LoginResponse {
     private String email;
     private String role;
     private boolean sellerEnabled;
+    private String profileImageUrl;
 
     public LoginResponse(
             String token,
@@ -16,6 +17,17 @@ public class LoginResponse {
             String email,
             String role,
             boolean sellerEnabled) {
+        this(token, userId, name, email, role, sellerEnabled, null);
+    }
+
+    public LoginResponse(
+            String token,
+            Long userId,
+            String name,
+            String email,
+            String role,
+            boolean sellerEnabled,
+            String profileImageUrl) {
 
         this.token = token;
         this.userId = userId;
@@ -23,6 +35,7 @@ public class LoginResponse {
         this.email = email;
         this.role = role;
         this.sellerEnabled = sellerEnabled;
+        this.profileImageUrl = profileImageUrl;
     }
 
     public String getToken() {
@@ -47,5 +60,13 @@ public class LoginResponse {
 
     public boolean isSellerEnabled() {
         return sellerEnabled;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }

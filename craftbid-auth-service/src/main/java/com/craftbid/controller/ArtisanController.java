@@ -41,4 +41,42 @@ public class ArtisanController {
 
         return ResponseEntity.ok(message);
     }
+
+    // =====================================================
+    // GET ARTISAN PROFILE
+    // =====================================================
+
+    @GetMapping("/profile")
+    public ResponseEntity<com.craftbid.dto.ArtisanProfileDTO> getProfile(
+            Authentication authentication) {
+
+        String identifier = authentication.getName();
+        return ResponseEntity.ok(artisanService.getArtisanProfile(identifier));
+    }
+
+    // =====================================================
+    // UPDATE ARTISAN PROFILE & NAME
+    // =====================================================
+
+    @PutMapping("/profile")
+    public ResponseEntity<com.craftbid.dto.ArtisanProfileDTO> updateProfile(
+            Authentication authentication,
+            @Valid @RequestBody com.craftbid.dto.UpdateArtisanProfileRequest request) {
+
+        String identifier = authentication.getName();
+        return ResponseEntity.ok(artisanService.updateArtisanProfile(identifier, request));
+    }
+
+    // =====================================================
+    // UPLOAD ARTISAN PROFILE PHOTO
+    // =====================================================
+
+    @PostMapping(value = "/profile-photo", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<com.craftbid.dto.ArtisanProfileDTO> uploadProfilePhoto(
+            Authentication authentication,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+
+        String identifier = authentication.getName();
+        return ResponseEntity.ok(artisanService.uploadProfilePhoto(identifier, file));
+    }
 }

@@ -138,6 +138,36 @@ public class CraftController {
     }
 
     // ==========================================
+    // UPDATE CRAFT (MULTIPART WITH OPTIONAL IMAGE REPLACEMENT)
+    // ==========================================
+
+    @PostMapping(
+            value = "/{id}/update-media",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<Craft> updateCraftWithMedia(
+            @PathVariable @Positive(message = "Craft ID must be positive") Long id,
+            @RequestParam(required = false) @Size(min = 2, max = 150, message = "Title must be between 2 and 150 characters") String title,
+            @RequestParam(required = false) @Size(min = 2, max = 100, message = "Category must be between 2 and 100 characters") String category,
+            @RequestParam(required = false) @Size(max = 2000, message = "Description cannot exceed 2000 characters") String description,
+            @RequestParam(required = false) @DecimalMin(value = "1.00", message = "Base price must be at least 1.00") BigDecimal basePrice,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam(required = false) Boolean isLiveForAuction) {
+
+        Craft updated = craftService.updateCraftWithMedia(
+                id,
+                title,
+                category,
+                description,
+                basePrice,
+                image,
+                isLiveForAuction
+        );
+
+        return ResponseEntity.ok(updated);
+    }
+
+    // ==========================================
     // TOGGLE LIVE / OFFLINE STATUS
     // ==========================================
 

@@ -2,6 +2,8 @@ package com.craftbid.controller;
 
 import com.craftbid.entity.CraftReel;
 import com.craftbid.service.CraftReelService;
+import com.craftbid.dto.UpdateReelRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -49,6 +51,43 @@ public class CraftReelController {
         );
 
         return ResponseEntity.ok(reel);
+    }
+
+    // ==========================================
+    // UPDATE REEL
+    // ==========================================
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CraftReel> updateReel(
+            Authentication authentication,
+            @PathVariable @Positive(message = "Reel ID must be positive") Long id,
+            @Valid @RequestBody UpdateReelRequest request) {
+
+        String identifier = authentication.getName();
+
+        CraftReel updated = craftReelService.updateReel(
+                identifier,
+                id,
+                request
+        );
+
+        return ResponseEntity.ok(updated);
+    }
+
+    // ==========================================
+    // DELETE REEL
+    // ==========================================
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteReel(
+            Authentication authentication,
+            @PathVariable @Positive(message = "Reel ID must be positive") Long id) {
+
+        String identifier = authentication.getName();
+
+        craftReelService.deleteReel(identifier, id);
+
+        return ResponseEntity.ok("Craft reel deleted successfully");
     }
 
     // ==========================================

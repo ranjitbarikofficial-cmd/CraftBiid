@@ -537,24 +537,16 @@ public class AuctionService {
                     p.setRefundAmount(refundAmt);
                     participantRepository.save(p);
 
-                    // Record auto-refund in payment ledger
-                    PaymentTransaction refundTx = paymentService.recordTransaction(
-                            p.getUser(),
-                            auction.getId(),
-                            auction.getCraft().getId(),
-                            refundAmt,
-                            "AUTO_REFUND",
-                            "UPI",
-                            "100% Automated refund of ₹" + refundAmt + " for outbid participation in auction #" + auction.getId()
-                    );
-
-                    // Execute Razorpay refund (if gateway active/simulated)
+                    // Execute 100% gateway and ledger refund
                     try {
-                        razorpayService.processRefund(refundTx.getTransactionRef(), refundAmt, "100% Outbid Refund - Auction #" + auction.getId());
-                    } catch (Exception ignored) {}
+                        PaymentTransaction refundTx = paymentService.refundAuctionParticipant(
+                                p.getUser(),
+                                auction.getId(),
+                                auction.getCraft().getId(),
+                                refundAmt,
+                                "100% Outbid Refund - Auction #" + auction.getId()
+                        );
 
-                    // Notify losing participant with exact refund reference
-                    try {
                         notificationService.notifyRefundProcessed(
                                 p.getUser(),
                                 auction.getCraft().getTitle(),
@@ -562,7 +554,9 @@ public class AuctionService {
                                 refundTx.getTransactionRef(),
                                 auction.getId()
                         );
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        System.err.println("⚠️ Auto-refund error for user " + p.getUser().getEmail() + ": " + e.getMessage());
+                    }
                 }
             }
 
@@ -791,20 +785,19 @@ public class AuctionService {
             p.setRefundAmount(refundAmt);
             participantRepository.save(p);
 
-            PaymentTransaction refundTx = paymentService.recordTransaction(
-                    p.getUser(),
-                    auction.getId(),
-                    auction.getCraft().getId(),
-                    refundAmt,
-                    "AUTO_REFUND",
-                    "UPI",
-                    "100% Refund of ₹" + refundAmt + " due to auction cancellation #" + auction.getId()
-            );
-
             try {
-                razorpayService.processRefund(refundTx.getTransactionRef(), refundAmt, "Auction Cancellation Refund");
+                PaymentTransaction refundTx = paymentService.refundAuctionParticipant(
+                        p.getUser(),
+                        auction.getId(),
+                        auction.getCraft().getId(),
+                        refundAmt,
+                        "100% Refund due to auction cancellation #" + auction.getId()
+                );
+
                 notificationService.notifyRefundProcessed(p.getUser(), auction.getCraft().getTitle(), refundAmt, refundTx.getTransactionRef(), auction.getId());
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                System.err.println("⚠️ Cancellation refund error for user " + p.getUser().getEmail() + ": " + e.getMessage());
+            }
         }
 
         return auctionRepository.save(auction);

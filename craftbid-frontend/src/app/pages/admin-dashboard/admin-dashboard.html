@@ -69,6 +69,32 @@
             <strong>{{ stats.totalBids }}</strong>
           </div>
         </div>
+
+        @if (paymentStats) {
+          <div class="metric-card highlight">
+            <span class="icon">💳</span>
+            <div>
+              <h3>Gateway Volume</h3>
+              <strong>{{ formatPrice(paymentStats.totalVolume) }}</strong>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <span class="icon">🛡️</span>
+            <div>
+              <h3>100% Refunds Volume</h3>
+              <strong>{{ formatPrice(paymentStats.totalRefundedVolume) }}</strong>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <span class="icon">📈</span>
+            <div>
+              <h3>Net Revenue</h3>
+              <strong>{{ formatPrice(paymentStats.netVolume) }}</strong>
+            </div>
+          </div>
+        }
       </section>
     }
 

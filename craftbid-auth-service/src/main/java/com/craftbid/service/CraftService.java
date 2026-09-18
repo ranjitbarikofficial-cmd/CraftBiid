@@ -365,6 +365,65 @@ public class CraftService {
         return saved;
     }
 
+    @org.springframework.transaction.annotation.Transactional
+    public Craft updateCraftWithMedia(
+            Long id,
+            String title,
+            String categoryIdentifier,
+            String description,
+            BigDecimal basePrice,
+            MultipartFile image,
+            Boolean isLiveForAuction) {
+
+        Craft existingCraft = getCraftById(id);
+        User loggedInUser = getLoggedInUser();
+
+        if (loggedInUser.getRole() != Role.ADMIN) {
+            checkSellerEnabled(loggedInUser);
+            checkOwnership(existingCraft, loggedInUser);
+        }
+
+        if (title != null && !title.trim().isBlank()) {
+            existingCraft.setTitle(title.trim());
+        }
+
+        if (description != null) {
+            existingCraft.setDescription(description.trim());
+        }
+
+        if (basePrice != null && basePrice.compareTo(BigDecimal.ZERO) > 0) {
+            existingCraft.setBasePrice(basePrice);
+        }
+
+        if (categoryIdentifier != null && !categoryIdentifier.trim().isBlank()) {
+            Category category = resolveCategory(categoryIdentifier);
+            existingCraft.setCategory(category);
+        }
+
+        if (isLiveForAuction != null) {
+            existingCraft.setStatus(isLiveForAuction ? "ACTIVE" : "OFFLINE");
+        }
+
+        if (image != null && !image.isEmpty()) {
+            if (image.getSize() > 10 * 1024 * 1024) {
+                throw new IllegalArgumentException("Image file size must not exceed 10 MB");
+            }
+            try {
+                String imageUrl = fileStorageService.saveFile(image, "crafts");
+                existingCraft.setImageUrl(imageUrl);
+            } catch (IOException e) {
+                logger.error("Failed to upload craft photo for craft id {}: ", id, e);
+                throw new RuntimeException("Failed to upload craft photo", e);
+            }
+        }
+
+        Craft saved = craftRepository.save(existingCraft);
+        craftLruCache.put(id, saved);
+        indexCraftInTrie(saved);
+        return saved;
+    }
+
+    @org.springframework.transaction.annotation.Transactional
     public void deleteCraft(Long id) {
         Craft existingCraft = getCraftById(id);
         User loggedInUser = getLoggedInUser();
@@ -372,6 +431,11 @@ public class CraftService {
         if (loggedInUser.getRole() != Role.ADMIN) {
             checkSellerEnabled(loggedInUser);
             checkOwnership(existingCraft, loggedInUser);
+        }
+
+        List<CraftReel> associatedReels = craftReelRepository.findByCraftId(id);
+        if (associatedReels != null && !associatedReels.isEmpty()) {
+            craftReelRepository.deleteAll(associatedReels);
         }
 
         craftLruCache.remove(id);

@@ -144,6 +144,12 @@ export class CraftService {
     );
   }
 
+  updateCraftWithMedia(id: number, formData: FormData): Observable<CraftItem> {
+    return this.http.post<CraftItem>(`${this.apiUrl}/${id}/update-media`, formData).pipe(
+      tap(() => this.searchCache.clear())
+    );
+  }
+
   toggleLiveStatus(id: number, isLive?: boolean): Observable<CraftItem> {
     let params = new HttpParams();
     if (isLive !== undefined) {

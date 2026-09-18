@@ -22,7 +22,7 @@ export class Profile implements OnInit {
   resolveMediaUrl = resolveMediaUrl;
   currentUser: UserAuth | null = null;
   transactions: PaymentTransactionItem[] = [];
-  refunds: PaymentTransactionItem[] = [];
+  refunds: any[] = [];
   orders: AuctionOrderItem[] = [];
   followedArtisans: ArtisanProfile[] = [];
 
@@ -95,7 +95,7 @@ export class Profile implements OnInit {
         this.loadingTransactions = false;
 
         this.totalSpent = txs
-          .filter((t) => t.type !== 'AUTO_REFUND' && t.status === 'SUCCESS')
+          .filter((t) => t.type !== 'AUTO_REFUND' && (t.status === 'SUCCESS' || t.status === 'CAPTURED'))
           .reduce((sum, t) => sum + Number(t.amount), 0);
 
         this.totalRefunded = txs

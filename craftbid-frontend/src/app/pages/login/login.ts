@@ -143,10 +143,15 @@ export class Login implements OnInit {
     });
   }
 
+  cooldownSeconds = 0;
+  private cooldownTimer: any = null;
+
   // ==========================================
   // ADMIN OTP LOGIN (FIXED EMAIL)
   // ==========================================
   requestAdminOtp(): void {
+    if (this.cooldownSeconds > 0) return;
+
     this.errorMessage = '';
     this.infoMessage = '';
     this.successMessage = '';
@@ -158,6 +163,7 @@ export class Login implements OnInit {
         this.adminOtpSent = true;
         this.adminOtp = '';
         this.successMessage = response?.message || 'Security code dispatched to admin email. Please check your inbox.';
+        this.startCooldown(60);
       },
       error: (error) => {
         this.adminOtpLoading = false;
@@ -172,9 +178,30 @@ export class Login implements OnInit {
         } else if (error.error && typeof error.error === 'object') {
           msg = error.error.message || error.error.error || msg;
         }
+
+        // If error is about waiting X seconds, start the countdown
+        const waitMatch = msg.match(/wait\s+(\d+)\s+second/i);
+        if (waitMatch && waitMatch[1]) {
+          this.startCooldown(parseInt(waitMatch[1], 10));
+        }
+
         this.errorMessage = msg;
       },
     });
+  }
+
+  private startCooldown(seconds: number): void {
+    this.cooldownSeconds = seconds;
+    if (this.cooldownTimer) {
+      clearInterval(this.cooldownTimer);
+    }
+    this.cooldownTimer = setInterval(() => {
+      this.cooldownSeconds--;
+      if (this.cooldownSeconds <= 0) {
+        clearInterval(this.cooldownTimer);
+        this.cooldownTimer = null;
+      }
+    }, 1000);
   }
 
   verifyAdminOtp(): void {

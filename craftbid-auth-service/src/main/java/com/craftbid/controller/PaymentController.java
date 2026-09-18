@@ -1,19 +1,21 @@
 package com.craftbid.controller;
 
 import com.craftbid.dto.PaymentRequest;
+import com.craftbid.dto.PaymentStatsDTO;
 import com.craftbid.dto.RazorpayOrderRequest;
 import com.craftbid.dto.RazorpayVerifyRequest;
+import com.craftbid.dto.RefundRequest;
 import com.craftbid.entity.PaymentTransaction;
+import com.craftbid.entity.Refund;
 import com.craftbid.service.PaymentService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-
-import jakarta.validation.Valid;
-import org.springframework.validation.annotation.Validated;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -26,6 +28,9 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
+    /**
+     * Create Razorpay Order for Auction Participation or Direct Payment.
+     */
     @PostMapping("/create-order")
     public ResponseEntity<Map<String, Object>> createOrder(
             Authentication authentication,
@@ -42,6 +47,9 @@ public class PaymentController {
         return ResponseEntity.ok(orderData);
     }
 
+    /**
+     * Verify Razorpay Payment Signature, mark transaction CAPTURED, and activate Auction Participant.
+     */
     @PostMapping("/verify")
     public ResponseEntity<PaymentTransaction> verifyPayment(
             Authentication authentication,
@@ -62,6 +70,9 @@ public class PaymentController {
         return ResponseEntity.ok(tx);
     }
 
+    /**
+     * Process Direct / Non-Gateway Payment.
+     */
     @PostMapping("/process")
     public ResponseEntity<PaymentTransaction> processPayment(
             Authentication authentication,
@@ -71,26 +82,76 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.processPayment(identifier, request));
     }
 
-    @GetMapping("/my-history")
+    /**
+     * Process Gateway and Ledger Refund.
+     */
+    @PostMapping("/{id}/refund")
+    public ResponseEntity<Refund> processRefund(
+            Authentication authentication,
+            @PathVariable Long id,
+            @RequestBody(required = false) RefundRequest request) {
+
+        String identifier = authentication.getName();
+        Refund refund = paymentService.processRefund(
+                id,
+                request != null ? request.getAmount() : null,
+                request != null ? request.getReason() : "Admin initiated refund",
+                identifier
+        );
+        return ResponseEntity.ok(refund);
+    }
+
+    /**
+     * Razorpay Server Webhook Endpoint.
+     */
+    @PostMapping("/webhook")
+    public ResponseEntity<Map<String, Object>> handleWebhook(
+            @RequestBody String payload,
+            @RequestHeader(value = "X-Razorpay-Signature", required = false) String signature) {
+
+        Map<String, Object> response = paymentService.processWebhook(payload, signature);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get Current User's Payment Transactions.
+     */
+    @GetMapping({"/my", "/my-history"})
     public ResponseEntity<List<PaymentTransaction>> getMyTransactions(Authentication authentication) {
         String identifier = authentication.getName();
         return ResponseEntity.ok(paymentService.getMyTransactions(identifier));
     }
 
-    @GetMapping(value = {"/my-refunds", "/refunds"})
-    public ResponseEntity<List<PaymentTransaction>> getMyRefunds(Authentication authentication) {
+    /**
+     * Get Current User's Refunds.
+     */
+    @GetMapping({"/my-refunds", "/refunds"})
+    public ResponseEntity<List<Refund>> getMyRefunds(Authentication authentication) {
         String identifier = authentication.getName();
         return ResponseEntity.ok(paymentService.getMyRefunds(identifier));
     }
 
+    /**
+     * Get Transaction by Reference.
+     */
     @GetMapping("/receipt/{ref}")
     public ResponseEntity<PaymentTransaction> getReceipt(@PathVariable String ref) {
         return ResponseEntity.of(paymentService.getByTransactionRef(ref));
     }
 
-    @PostMapping("/webhook")
-    public ResponseEntity<Map<String, String>> handleWebhook(@RequestBody String payload, @RequestHeader(value = "X-Razorpay-Signature", required = false) String signature) {
-        // Webhook handler for external gateway event updates
-        return ResponseEntity.ok(Map.of("status", "received"));
+    /**
+     * Get Transaction by ID.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<PaymentTransaction> getById(@PathVariable Long id) {
+        return ResponseEntity.of(paymentService.getById(id));
+    }
+
+    /**
+     * Get Platform Payment Analytics for Admin Dashboard.
+     */
+    @GetMapping("/admin-stats")
+    public ResponseEntity<PaymentStatsDTO> getAdminPaymentStats() {
+        return ResponseEntity.ok(paymentService.getAdminPaymentStats());
     }
 }

@@ -180,6 +180,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/craft-reels/*/like").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/craft-reels/my").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/craft-reels/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/craft-reels/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/craft-reels/**").authenticated()
 
                         // Auction & Bids Public Browsing
                         .requestMatchers(HttpMethod.GET, "/api/auctions").permitAll()
@@ -199,6 +201,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auctions/**").authenticated()
 
                         // Payment API
+                        .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
                         .requestMatchers("/api/payments/**").authenticated()
 
                         // Support & Customer Service API

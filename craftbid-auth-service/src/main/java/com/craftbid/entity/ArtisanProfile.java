@@ -37,6 +37,9 @@ public class ArtisanProfile {
     @Column(nullable = false)
     private String city;
 
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
+
     // ==========================================
     // CREATED DATE
     // ==========================================
@@ -57,6 +60,10 @@ public class ArtisanProfile {
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public User getUser() {
@@ -89,6 +96,14 @@ public class ArtisanProfile {
 
     public void setCity(String city) {
         this.city = city;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl != null ? profileImageUrl : (user != null ? user.getProfileImageUrl() : null);
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 
     public LocalDateTime getCreatedAt() {

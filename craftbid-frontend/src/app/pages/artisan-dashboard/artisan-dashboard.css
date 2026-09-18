@@ -63,26 +63,88 @@
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 12px;
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.artisan-avatar {
-  font-size: 1.6rem;
+.artisan-user-card:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(251, 146, 60, 0.4);
+  transform: translateY(-1px);
+}
+
+.artisan-avatar-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.artisan-avatar-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fb923c;
+}
+
+.artisan-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #27272a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  border: 2px solid #3f3f46;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #ea580c;
+  border: 1.5px solid #18181b;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.artisan-info {
+  overflow: hidden;
 }
 
 .artisan-info strong {
   display: block;
   font-size: 0.88rem;
   color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.studio-subinfo {
+  display: block;
+  font-size: 0.72rem;
+  color: #fb923c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .verified-pill {
   display: inline-block;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   color: #86efac;
   font-weight: 600;
 }
@@ -105,6 +167,15 @@
   font-size: 0.9rem;
   font-weight: 500;
   transition: all 0.15s ease;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
+.btn-nav-action {
+  font-family: inherit;
 }
 
 .nav-icon {
@@ -163,6 +234,7 @@
   justify-content: space-between;
   align-items: flex-end;
   margin-bottom: 32px;
+  gap: 20px;
 }
 
 .breadcrumb-chip {
@@ -177,12 +249,53 @@
 .studio-topbar h1 {
   font-size: 1.85rem;
   color: #18181b;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .subtitle-text {
   color: #71717a;
   font-size: 0.95rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.studio-meta-pill {
+  background: #ede8e1;
+  color: #44403c;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.btn-edit-profile {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: #334155;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-edit-profile:hover {
+  border-color: #ea580c;
+  color: #ea580c;
+  background: #fff7ed;
 }
 
 .btn-create-craft {
@@ -467,6 +580,10 @@
   border-top: 1px solid #f4efe9;
 }
 
+.price-stack {
+  display: block;
+}
+
 .price-caption {
   display: block;
   font-size: 0.7rem;
@@ -482,16 +599,33 @@
 .btn-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+.btn-action-edit {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-edit:hover {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 .btn-action-auction {
   background: #ea580c;
   color: #ffffff;
   border: none;
-  padding: 7px 12px;
+  padding: 7px 11px;
   border-radius: 8px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s ease;
@@ -504,7 +638,7 @@
 .btn-action-delete {
   background: #fee2e2;
   border: none;
-  padding: 7px 10px;
+  padding: 7px 9px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.85rem;
@@ -518,7 +652,7 @@
 /* Reels Grid */
 .reels-grid-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 20px;
 }
 
@@ -527,6 +661,7 @@
   border: 1px solid #ede8e1;
   border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .reel-media-box {
@@ -542,11 +677,11 @@
 }
 
 .reel-meta-box {
-  padding: 12px 14px;
+  padding: 14px;
 }
 
 .reel-meta-box h4 {
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   color: #18181b;
   margin-bottom: 4px;
   white-space: nowrap;
@@ -554,11 +689,62 @@
   text-overflow: ellipsis;
 }
 
+.reel-desc-snippet {
+  font-size: 0.8rem;
+  color: #71717a;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .reel-stat-row {
   display: flex;
   justify-content: space-between;
   font-size: 0.78rem;
   color: #71717a;
+  margin-bottom: 10px;
+}
+
+.reel-actions-row {
+  display: flex;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #f4efe9;
+}
+
+.btn-reel-edit {
+  flex: 1;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-reel-edit:hover {
+  background: #e2e8f0;
+}
+
+.btn-reel-delete {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-reel-delete:hover {
+  background: #fecaca;
 }
 
 /* Orders Table */
@@ -690,7 +876,7 @@
   margin-bottom: 12px;
 }
 
-/* ================= 6. LAUNCH AUCTION MODAL ================= */
+/* ================= 6. MODALS & FORMS ================= */
 
 .modal-backdrop-blur {
   position: fixed;
@@ -704,15 +890,19 @@
   align-items: center;
   justify-content: center;
   z-index: 10000;
+  padding: 16px;
 }
 
 .modal-dialog-glass {
   background: #ffffff;
   border-radius: 20px;
-  width: 90%;
+  width: 100%;
   max-width: 520px;
+  max-height: 90vh;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header-strip {
@@ -721,6 +911,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  z-index: 2;
 }
 
 .modal-header-strip h2 {
@@ -739,6 +933,106 @@
 
 .modal-body-content {
   padding: 24px;
+  flex: 1;
+}
+
+/* Avatar Upload styling in Profile Modal */
+.avatar-edit-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px;
+  background: #faf8f5;
+  border: 1px solid #ede8e1;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+.avatar-preview-container {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #ea580c;
+  background: #27272a;
+  flex-shrink: 0;
+}
+
+.avatar-big-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-big-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+}
+
+.avatar-upload-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn-select-avatar {
+  background: #ea580c;
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-block;
+  text-align: center;
+  transition: background 0.15s ease;
+}
+
+.btn-select-avatar:hover {
+  background: #c2410c;
+}
+
+.upload-tip-text {
+  font-size: 0.72rem;
+  color: #71717a;
+}
+
+/* Craft Photo Edit */
+.craft-photo-edit-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  background: #faf8f5;
+  border: 1px solid #ede8e1;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+.photo-preview-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid #cbd5e1;
+  background: #f1f5f9;
+  flex-shrink: 0;
+}
+
+.photo-preview-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-upload-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .craft-preview-box {
@@ -763,25 +1057,58 @@
   margin-bottom: 16px;
 }
 
+.form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .form-field label {
   display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
   color: #334155;
   margin-bottom: 6px;
 }
 
-.form-field input, .form-field select {
+.form-field input, .form-field select, .form-field textarea {
   width: 100%;
   padding: 10px 14px;
   border: 1.5px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
 }
 
-.form-field input:focus, .form-field select:focus {
+.form-field textarea {
+  resize: vertical;
+}
+
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus {
   border-color: #ea580c;
+}
+
+.checkbox-field-row {
+  margin-bottom: 16px;
+}
+
+.custom-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.custom-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #ea580c;
+  cursor: pointer;
 }
 
 .turn-rule-info-card {
@@ -819,6 +1146,9 @@
   justify-content: flex-end;
   gap: 12px;
   background: #faf8f5;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
 }
 
 .btn-modal-cancel {
@@ -840,9 +1170,13 @@
   cursor: pointer;
 }
 
+.btn-modal-launch:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ================= RESPONSIVE DESIGN ================= */
 
-/* Tablet Viewport (768px - 1023px) */
 @media (min-width: 768px) and (max-width: 1023px) {
   .studio-app-container {
     flex-direction: column;
@@ -869,7 +1203,6 @@
   }
 }
 
-/* Mobile Viewport (320px - 767px) */
 @media (max-width: 767px) {
   .studio-app-container {
     flex-direction: column;
@@ -925,10 +1258,16 @@
     font-size: 1.4rem;
   }
 
-  .btn-create-craft {
+  .topbar-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-edit-profile, .btn-create-craft {
     width: 100%;
     text-align: center;
     box-sizing: border-box;
+    justify-content: center;
   }
 
   .kpi-grid {
@@ -982,19 +1321,7 @@
     border-radius: 16px;
   }
 
-  .modal-header-strip {
-    padding: 14px 16px;
-  }
-
-  .modal-header-strip h2 {
-    font-size: 1.05rem;
-  }
-
-  .modal-body-content {
-    padding: 16px;
-  }
-
-  .modal-footer-strip {
-    padding: 12px 16px;
+  .form-row-2col {
+    grid-template-columns: 1fr;
   }
 }

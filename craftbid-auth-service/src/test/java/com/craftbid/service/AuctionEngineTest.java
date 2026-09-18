@@ -266,7 +266,7 @@ public class AuctionEngineTest {
 
         PaymentTransaction mockRefundTx = new PaymentTransaction();
         mockRefundTx.setTransactionRef("CB-REF-12345");
-        when(paymentService.recordTransaction(eq(buyer1), eq(10L), eq(100L), eq(BigDecimal.valueOf(600)), eq("AUTO_REFUND"), anyString(), anyString()))
+        when(paymentService.refundAuctionParticipant(eq(buyer1), eq(10L), eq(100L), eq(BigDecimal.valueOf(600)), anyString()))
                 .thenReturn(mockRefundTx);
 
         auctionService.finalizeAuction(auction);
@@ -277,8 +277,8 @@ public class AuctionEngineTest {
         assertEquals(BigDecimal.valueOf(600), p1.getRefundAmount()); // 100% refund
 
         // Verify loser received 100% refund transaction & notification
-        verify(paymentService, times(1)).recordTransaction(
-                eq(buyer1), eq(10L), eq(100L), eq(BigDecimal.valueOf(600)), eq("AUTO_REFUND"), anyString(), anyString()
+        verify(paymentService, times(1)).refundAuctionParticipant(
+                eq(buyer1), eq(10L), eq(100L), eq(BigDecimal.valueOf(600)), anyString()
         );
         verify(notificationService, times(1)).notifyRefundProcessed(
                 eq(buyer1), eq("Handmade Terracotta Vase"), eq(BigDecimal.valueOf(600)), eq("CB-REF-12345"), eq(10L)

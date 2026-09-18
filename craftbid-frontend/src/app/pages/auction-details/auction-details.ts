@@ -325,46 +325,49 @@ export class AuctionDetails implements OnInit, OnDestroy {
     if (!this.auction) return;
     this.joining = true;
 
-    // Call payment order & join API
+    // 1. Request Razorpay Order from backend
     this.paymentService.createRazorpayOrder(
       this.auction.startingPrice,
       this.auction.id,
       this.auction.craft?.id,
-      'BASE_DEPOSIT'
+      'PARTICIPATION'
     ).subscribe({
       next: (orderRes) => {
-        // Authoritative server records join
-        this.auctionService.joinAuctionWithDeposit(this.auction!.id, this.selectedPaymentMethod).subscribe({
-          next: (participant) => {
-            this.joining = false;
-            this.currentParticipant = participant;
-            this.closeJoinModal();
-            this.toastService.success(`🎉 Base deposit of ₹${participant.basePricePaid} paid! You joined the 24h auction room.`);
-            this.refreshData(this.auction!.id);
+        // 2. Open Razorpay Standard Checkout popup modal
+        this.paymentService.openRazorpayCheckout(
+          orderRes,
+          (verifyPayload) => {
+            // 3. Payment captured on gateway -> verify HMAC signature on backend
+            this.paymentService.verifyRazorpayPayment(verifyPayload).subscribe({
+              next: (tx) => {
+                this.joining = false;
+                this.closeJoinModal();
+                this.toastService.success(`🎉 Payment verified! You joined the 24h auction room.`);
+                this.refreshData(this.auction!.id);
+              },
+              error: (err) => {
+                this.joining = false;
+                const msg = err.error?.message || err.error || 'Payment signature verification failed.';
+                this.toastService.error(msg);
+              },
+            });
           },
-          error: (err) => {
+          () => {
+            // Modal dismissed / cancelled
             this.joining = false;
-            const msg = err.error?.message || err.error || 'Failed to join auction.';
-            this.toastService.error(msg);
+            this.toastService.info('Payment window closed.');
           },
-        });
+          (err) => {
+            // Gateway error
+            this.joining = false;
+            this.toastService.error(err?.description || err?.message || 'Payment gateway error.');
+          }
+        );
       },
-      error: () => {
-        // Direct join fallback
-        this.auctionService.joinAuctionWithDeposit(this.auction!.id, this.selectedPaymentMethod).subscribe({
-          next: (participant) => {
-            this.joining = false;
-            this.currentParticipant = participant;
-            this.closeJoinModal();
-            this.toastService.success(`🎉 Base deposit of ₹${participant.basePricePaid} paid! You joined the auction room.`);
-            this.refreshData(this.auction!.id);
-          },
-          error: (err) => {
-            this.joining = false;
-            const msg = err.error?.message || err.error || 'Failed to join auction.';
-            this.toastService.error(msg);
-          },
-        });
+      error: (err) => {
+        this.joining = false;
+        const msg = err.error?.message || err.error || 'Failed to create payment order.';
+        this.toastService.error(msg);
       }
     });
   }

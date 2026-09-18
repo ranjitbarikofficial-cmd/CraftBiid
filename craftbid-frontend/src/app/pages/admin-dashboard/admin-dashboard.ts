@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AdminService, AdminStats, AdminUser } from '../../services/admin.service';
 import { CraftService, CraftItem } from '../../services/craft.service';
 import { AuctionService, AuctionItem } from '../../services/auction.service';
+import { PaymentService, PaymentStats, PaymentTransactionItem } from '../../services/payment.service';
 import { AuthService } from '../../services/auth';
 
 @Component({
@@ -15,6 +16,7 @@ import { AuthService } from '../../services/auth';
 })
 export class AdminDashboard implements OnInit {
   stats: AdminStats | null = null;
+  paymentStats: PaymentStats | null = null;
   users: AdminUser[] = [];
   crafts: CraftItem[] = [];
   auctions: AuctionItem[] = [];
@@ -26,15 +28,24 @@ export class AdminDashboard implements OnInit {
     private adminService: AdminService,
     private craftService: CraftService,
     private auctionService: AuctionService,
+    private paymentService: PaymentService,
     private authService: AuthService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadStats();
+    this.loadPaymentStats();
     this.loadUsers();
     this.loadCrafts();
     this.loadAuctions();
+  }
+
+  loadPaymentStats(): void {
+    this.paymentService.getAdminPaymentStats().subscribe({
+      next: (data) => (this.paymentStats = data),
+      error: (err) => console.error('Failed to load payment stats:', err),
+    });
   }
 
   loadStats(): void {

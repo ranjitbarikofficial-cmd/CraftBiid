@@ -10,6 +10,7 @@ export interface UserAuth {
   phone?: string;
   role: 'CUSTOMER' | 'ADMIN' | string;
   sellerEnabled: boolean;
+  profileImageUrl?: string;
 }
 
 export interface LoginResponse {
@@ -20,6 +21,7 @@ export interface LoginResponse {
   phone?: string;
   role: string;
   sellerEnabled: boolean;
+  profileImageUrl?: string;
 }
 
 @Injectable({
@@ -125,11 +127,22 @@ export class AuthService {
       userId: response.userId,
       name: response.name,
       email: response.email,
+      phone: response.phone,
       role: response.role,
       sellerEnabled: response.sellerEnabled,
+      profileImageUrl: response.profileImageUrl,
     };
     localStorage.setItem('currentUser', JSON.stringify(user));
     this.currentUserSubject.next(user);
+  }
+
+  updateCurrentUser(partial: Partial<UserAuth>): void {
+    const user = this.getCurrentUser();
+    if (user) {
+      const updated: UserAuth = { ...user, ...partial };
+      localStorage.setItem('currentUser', JSON.stringify(updated));
+      this.currentUserSubject.next(updated);
+    }
   }
 
   saveToken(token: string): void {
