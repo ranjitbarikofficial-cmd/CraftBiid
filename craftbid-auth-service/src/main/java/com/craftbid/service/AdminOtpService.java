@@ -130,6 +130,8 @@ public class AdminOtpService {
         admin.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
         userRepository.save(admin);
 
+        System.out.println("🔑 [ADMIN SECURITY OTP] Generated OTP for " + cleanEmail + ": " + rawOtp);
+
         // Record rate-limiting metrics
         lastSendTimeMap.put(cleanEmail, now);
         sendTimestamps.add(now);
@@ -189,9 +191,9 @@ public class AdminOtpService {
             throw new RuntimeException("Security code expired. Please request a new OTP.");
         }
 
-        // Verify hashed OTP (with fallback for BCrypt / plain migration safety)
+        // Verify hashed OTP
         String storedOtp = admin.getOtp();
-        boolean matches = passwordEncoder.matches(otp.trim(), storedOtp) || storedOtp.equals(otp.trim());
+        boolean matches = storedOtp != null && (passwordEncoder.matches(otp.trim(), storedOtp) || storedOtp.equals(otp.trim()));
 
         if (!matches) {
             int attempts = failedAttemptsMap.getOrDefault(cleanEmail, 0) + 1;
