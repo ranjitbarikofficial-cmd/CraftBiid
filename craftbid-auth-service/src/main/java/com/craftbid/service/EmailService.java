@@ -30,7 +30,7 @@ public class EmailService {
     @Value("${spring.mail.username:craftbid.official@gmail.com}")
     private String mailUsername;
 
-    @Value("${spring.mail.password:toyekvrmhrmunicr}")
+    @Value("${spring.mail.password:}")
     private String mailPassword;
 
     @Value("${craftbid.brevo.api-key:${BREVO_API_KEY:}}")
@@ -245,7 +245,7 @@ public class EmailService {
                 Session session = Session.getInstance(prop, new Authenticator() {
                     @Override
                     protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(mailUsername, mailPassword);
+                        return new PasswordAuthentication(mailUsername, getEffectiveMailPassword());
                     }
                 });
 
@@ -264,6 +264,15 @@ public class EmailService {
         }
 
         return log.toString();
+    }
+
+    private String getEffectiveMailPassword() {
+        String pwd = mailPassword;
+        if (pwd == null || pwd.isBlank()) {
+            pwd = System.getenv("SPRING_MAIL_PASSWORD");
+        }
+        if (pwd == null) return "";
+        return pwd.trim().replace(" ", "");
     }
 
     private boolean trySendViaGoogleSmtp(String toEmail, String subject, String htmlContent) {
@@ -300,7 +309,7 @@ public class EmailService {
             Session session = Session.getInstance(prop, new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(mailUsername, mailPassword);
+                    return new PasswordAuthentication(mailUsername, getEffectiveMailPassword());
                 }
             });
 
