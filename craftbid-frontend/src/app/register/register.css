@@ -70,15 +70,22 @@
 .brand-logo-pill {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
   text-decoration: none;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
-  padding: 8px 18px;
+  padding: 6px 14px;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   width: fit-content;
   transition: transform 0.2s ease;
+}
+
+.auth-logo-img {
+  height: 38px;
+  width: auto;
+  max-width: 150px;
+  object-fit: contain;
+  display: block;
 }
 
 .brand-logo-pill:hover {
