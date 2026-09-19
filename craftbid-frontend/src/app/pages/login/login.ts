@@ -21,7 +21,7 @@ export class Login implements OnInit {
   showPassword = false;
 
   // Admin OTP Login Fields
-  adminEmail = 'craftbid.official@gmail.com';
+  adminEmail = '';
   adminOtp = '';
   adminOtpSent = false;
 
@@ -65,25 +65,6 @@ export class Login implements OnInit {
     this.errorMessage = '';
     this.infoMessage = '';
     this.successMessage = '';
-  }
-
-  quickFill(role: 'artisan' | 'buyer' | 'admin' | 'ranjit'): void {
-    if (role === 'artisan') {
-      this.loginMode = 'standard';
-      this.identifier = 'rb650196@gmail.com';
-      this.password = 'buyer123';
-    } else if (role === 'buyer') {
-      this.loginMode = 'standard';
-      this.identifier = 'buyer@craftbid.in';
-      this.password = 'buyer123';
-    } else if (role === 'ranjit') {
-      this.loginMode = 'standard';
-      this.identifier = 'ranjitbarik466@gmail.com';
-      this.password = 'buyer123';
-    } else if (role === 'admin') {
-      this.loginMode = 'admin_otp';
-      this.adminOtp = '';
-    }
   }
 
   // ==========================================

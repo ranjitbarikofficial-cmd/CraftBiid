@@ -57,7 +57,7 @@
             [class.active]="loginMode === 'standard'"
             (click)="setMode('standard')"
           >
-            👤 User Login
+            👤 Buyer & Artisan Login
           </button>
           <button
             type="button"
@@ -65,7 +65,7 @@
             [class.active]="loginMode === 'admin_otp'"
             (click)="setMode('admin_otp')"
           >
-            🛡️ Admin OTP Login
+            🛡️ Admin Security Portal
           </button>
         </div>
 
@@ -75,7 +75,7 @@
         @if (loginMode === 'standard') {
           <div class="form-header">
             <span class="form-subtitle">Welcome back</span>
-            <h1 class="form-title">Log in to your account</h1>
+            <h1 class="form-title">Buyer & Artisan Sign In</h1>
             <p class="form-instruction">Enter your registered email or mobile number and password</p>
           </div>
 

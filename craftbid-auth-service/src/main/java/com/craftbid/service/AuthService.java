@@ -214,13 +214,19 @@ public class AuthService {
                 );
 
         // =================================================
-        // ACCOUNT STATUS
+        // ACCOUNT STATUS & ROLE ENFORCEMENT
         // =================================================
 
         if (!user.isActive()) {
-
             throw new RuntimeException(
                     "Please verify your account before login"
+            );
+        }
+
+        // Production Security: Administrators must authenticate exclusively via Admin Security OTP Portal
+        if (user.getRole() == Role.ADMIN) {
+            throw new RuntimeException(
+                    "Administrator accounts must authenticate exclusively via the Admin Security OTP Portal."
             );
         }
 
