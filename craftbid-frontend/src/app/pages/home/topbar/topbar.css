@@ -25,21 +25,9 @@
 .brand-logo {
   display: flex;
   align-items: center;
+  gap: 12px;
   text-decoration: none;
   flex-shrink: 0;
-}
-
-.brand-logo-img {
-  height: 44px;
-  width: auto;
-  max-width: 170px;
-  object-fit: contain;
-  display: block;
-  transition: transform 0.2s ease;
-}
-
-.brand-logo:hover .brand-logo-img {
-  transform: scale(1.04);
 }
 
 .logo-mark {
