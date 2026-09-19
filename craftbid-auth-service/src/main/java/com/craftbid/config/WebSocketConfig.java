@@ -20,15 +20,26 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         config.setUserDestinationPrefix("/user");
     }
 
+    private static final String[] ALLOWED_ORIGINS = {
+            "http://localhost:[*]",
+            "http://127.0.0.1:[*]",
+            "https://craftbid.co.in",
+            "https://*.craftbid.co.in",
+            "https://*.vercel.app",
+            "https://vercel.app",
+            "https://*.onrender.com",
+            "https://onrender.com"
+    };
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // STOMP endpoint with SockJS fallback
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
+                .setAllowedOriginPatterns(ALLOWED_ORIGINS)
                 .withSockJS();
 
         // Native STOMP endpoint for direct WebSocket clients
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*");
+                .setAllowedOriginPatterns(ALLOWED_ORIGINS);
     }
 }

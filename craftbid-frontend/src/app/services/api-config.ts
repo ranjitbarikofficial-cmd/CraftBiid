@@ -17,12 +17,12 @@ export function getApiBaseUrl(): string {
       return 'https://api.craftbid.co.in';
     }
 
-    // AWS EC2 backend production fallback
-    return 'http://15.252.117.177';
+    // Production API endpoint
+    return 'https://api.craftbid.co.in';
   }
 
   // Production fallback
-  return 'http://15.252.117.177';
+  return 'https://api.craftbid.co.in';
 }
 
 export function resolveMediaUrl(url: string | null | undefined): string {

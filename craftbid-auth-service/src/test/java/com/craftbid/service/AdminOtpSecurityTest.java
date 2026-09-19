@@ -74,7 +74,7 @@ class AdminOtpSecurityTest {
     }
 
     @Test
-    @DisplayName("Send OTP should enforce minimum 60s cooldown between resends")
+    @DisplayName("Send OTP should enforce minimum 60s cooldown between resends (HTTP 429)")
     void testSendOtp_EnforcesCooldown() {
         User adminUser = new User();
         adminUser.setEmail(adminEmail);
@@ -87,9 +87,13 @@ class AdminOtpSecurityTest {
         // First send succeeds
         adminOtpService.sendOtp(adminEmail);
 
-        // Immediate second send fails with cooldown message
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> adminOtpService.sendOtp(adminEmail));
+        // Immediate second send fails with RateLimitExceededException (HTTP 429)
+        com.craftbid.exception.RateLimitExceededException ex = assertThrows(
+                com.craftbid.exception.RateLimitExceededException.class,
+                () -> adminOtpService.sendOtp(adminEmail)
+        );
         assertTrue(ex.getMessage().contains("Please wait") && ex.getMessage().contains("second(s) before requesting another OTP code"));
+        assertTrue(ex.getRetryAfterSeconds() > 0);
     }
 
     @Test
@@ -139,7 +143,7 @@ class AdminOtpSecurityTest {
     }
 
     @Test
-    @DisplayName("Verify OTP after 5 failed attempts should invalidate OTP and lock account")
+    @DisplayName("Verify OTP after 5 failed attempts should invalidate OTP and lock account with HTTP 429")
     void testVerifyOtp_LockoutAfter5Attempts() {
         String rawOtp = "654321";
         User adminUser = new User();
@@ -158,12 +162,18 @@ class AdminOtpSecurityTest {
         }
 
         // 5th attempt invalidates OTP and locks
-        RuntimeException ex5 = assertThrows(RuntimeException.class, () -> adminOtpService.verifyOtp(adminEmail, "999999"));
+        com.craftbid.exception.RateLimitExceededException ex5 = assertThrows(
+                com.craftbid.exception.RateLimitExceededException.class,
+                () -> adminOtpService.verifyOtp(adminEmail, "999999")
+        );
         assertTrue(ex5.getMessage().contains("Maximum invalid attempts reached"));
         assertNull(adminUser.getOtp());
 
         // Subsequent attempt is blocked by lockout
-        RuntimeException lockedEx = assertThrows(RuntimeException.class, () -> adminOtpService.verifyOtp(adminEmail, rawOtp));
+        com.craftbid.exception.RateLimitExceededException lockedEx = assertThrows(
+                com.craftbid.exception.RateLimitExceededException.class,
+                () -> adminOtpService.verifyOtp(adminEmail, rawOtp)
+        );
         assertTrue(lockedEx.getMessage().contains("Security lockout active"));
     }
 

@@ -135,23 +135,30 @@ public class PaymentController {
      * Get Transaction by Reference.
      */
     @GetMapping("/receipt/{ref}")
-    public ResponseEntity<PaymentTransaction> getReceipt(@PathVariable String ref) {
-        return ResponseEntity.of(paymentService.getByTransactionRef(ref));
+    public ResponseEntity<PaymentTransaction> getReceipt(
+            Authentication authentication,
+            @PathVariable String ref) {
+        String identifier = authentication != null ? authentication.getName() : null;
+        return ResponseEntity.of(paymentService.getByTransactionRef(ref, identifier));
     }
 
     /**
      * Get Transaction by ID.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<PaymentTransaction> getById(@PathVariable Long id) {
-        return ResponseEntity.of(paymentService.getById(id));
+    public ResponseEntity<PaymentTransaction> getById(
+            Authentication authentication,
+            @PathVariable Long id) {
+        String identifier = authentication != null ? authentication.getName() : null;
+        return ResponseEntity.of(paymentService.getById(id, identifier));
     }
 
     /**
      * Get Platform Payment Analytics for Admin Dashboard.
      */
     @GetMapping("/admin-stats")
-    public ResponseEntity<PaymentStatsDTO> getAdminPaymentStats() {
-        return ResponseEntity.ok(paymentService.getAdminPaymentStats());
+    public ResponseEntity<PaymentStatsDTO> getAdminPaymentStats(Authentication authentication) {
+        String identifier = authentication != null ? authentication.getName() : null;
+        return ResponseEntity.ok(paymentService.getAdminPaymentStats(identifier));
     }
 }

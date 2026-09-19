@@ -168,6 +168,23 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("Should return 429 Too Many Requests with Retry-After header on RateLimitExceededException")
+    void shouldHandleRateLimitExceeded() {
+        RateLimitExceededException ex = new RateLimitExceededException("Please wait 45 second(s) before requesting another OTP code.", 45);
+
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleRateLimitExceeded(ex);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, response.getStatusCode());
+        assertEquals("45", response.getHeaders().getFirst("Retry-After"));
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertEquals(429, body.get("status"));
+        assertEquals("Please wait 45 second(s) before requesting another OTP code.", body.get("message"));
+        assertEquals(45L, body.get("retryAfterSeconds"));
+    }
+
+    @Test
     @DisplayName("Should return generic error for unhandled top-level Throwable")
     void shouldHandleGenericThrowable() {
         Throwable ex = new OutOfMemoryError("Java heap space");

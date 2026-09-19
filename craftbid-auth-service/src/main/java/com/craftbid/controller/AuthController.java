@@ -192,17 +192,4 @@ public class AuthController {
 
         return ResponseEntity.ok(result);
     }
-
-    // ==========================================
-    // DIAGNOSTIC EMAIL TEST
-    // ==========================================
-
-    @GetMapping("/test-email")
-    public ResponseEntity<String> testEmail(
-            @RequestParam(defaultValue = "ranjitbarik.official@gmail.com") String to) {
-
-        return ResponseEntity.ok(
-                emailService.sendDiagnosticTestEmail(to)
-        );
-    }
 }

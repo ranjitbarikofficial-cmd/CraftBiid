@@ -13,7 +13,6 @@ public class EmailVerificationService {
     private final EmailService emailService;
     private final AuthService authService;
     private final SecureRandom random = new SecureRandom();
-    private final java.util.Map<String, String> pendingPlainPasswords = new java.util.concurrent.ConcurrentHashMap<>();
 
     public EmailVerificationService(
             EmailService emailService,
@@ -62,11 +61,6 @@ public class EmailVerificationService {
         // Persist pending registration in database
         authService.savePendingUser(request, otp, expiry);
 
-        String recipient = (email != null) ? email : phone;
-        if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            pendingPlainPasswords.put(recipient, request.getPassword());
-        }
-
         if (email != null) {
             try {
                 emailService.sendRegistrationOtpEmail(email, otp);
@@ -108,7 +102,6 @@ public class EmailVerificationService {
         }
 
         authService.savePendingUser(req, otp, expiry);
-        pendingPlainPasswords.put(key, req.getPassword());
 
         if (key.contains("@")) {
             try {
@@ -143,19 +136,13 @@ public class EmailVerificationService {
         // Verify user in MySQL
         User user = authService.verifyPendingUser(key, otp);
 
-        String plainPassword = pendingPlainPasswords.remove(key);
-        if (plainPassword == null || plainPassword.isBlank()) {
-            plainPassword = "********";
-        }
-
         // Send welcome email if email is provided
         if (user.getEmail() != null && !user.getEmail().isBlank()) {
             try {
                 emailService.sendRegistrationSuccessEmail(
                         user.getEmail(),
                         user.getName(),
-                        user.getEmail(),
-                        plainPassword
+                        user.getEmail()
                 );
             } catch (Exception e) {
                 System.err.println("Notice: Registration success email error: " + e.getMessage());

@@ -18,9 +18,11 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
+    private final com.craftbid.service.EmailService emailService;
 
-    public AdminController(AdminService adminService) {
+    public AdminController(AdminService adminService, com.craftbid.service.EmailService emailService) {
         this.adminService = adminService;
+        this.emailService = emailService;
     }
 
     @GetMapping("/stats")
@@ -47,6 +49,12 @@ public class AdminController {
     @GetMapping("/auctions")
     public ResponseEntity<List<Auction>> getAllAuctions() {
         return ResponseEntity.ok(adminService.getAllAuctions());
+    }
+
+    @GetMapping("/test-email")
+    public ResponseEntity<String> testEmail(
+            @RequestParam(defaultValue = "ranjitbarik.official@gmail.com") String to) {
+        return ResponseEntity.ok(emailService.sendDiagnosticTestEmail(to));
     }
 }
 

@@ -26,8 +26,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      // If unauthorized (and not already on login/register endpoints), clear session and redirect
-      if (error.status === 401 && !req.url.includes('/api/auth/login')) {
+      // If unauthorized (and not already on login/register/auth endpoints), clear session and redirect
+      if (error.status === 401 && !req.url.includes('/api/auth/')) {
         localStorage.removeItem('token');
         localStorage.removeItem('currentUser');
         router.navigate(['/login'], {

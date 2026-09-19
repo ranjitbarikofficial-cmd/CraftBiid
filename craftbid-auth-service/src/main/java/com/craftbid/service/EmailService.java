@@ -502,22 +502,23 @@ public class EmailService {
     // =====================================================
     // REGISTRATION SUCCESS EMAIL
     // =====================================================
-    public void sendRegistrationSuccessEmail(String email, String name, String loginId, String password) {
+    public void sendRegistrationSuccessEmail(String email, String name, String loginId) {
         String subject = "🎉 Welcome to CraftBid - Account Created Successfully!";
         String displayName = (name != null && !name.isBlank()) ? name.trim() : "CraftBid Member";
-        String pwd = (password != null && !password.isBlank()) ? password : "your chosen password";
 
         String html = "<div style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #111827; max-width: 600px;\">"
                 + "<p>Hello " + displayName + ",</p>"
                 + "<p>Congratulations! Your CraftBid registration has been completed successfully.</p>"
-                + "<p>Your login details are:<br/>"
-                + "Login ID: <a href=\"mailto:" + loginId + "\" style=\"color: #0284c7; text-decoration: underline;\">" + loginId + "</a><br/>"
-                + "Password: " + pwd + "</p>"
-                + "<p>You can now explore handcrafted items, participate in 1-minute live auctions, and follow master artisans.</p>"
+                + "<p>Your registered login identifier is: <strong>" + loginId + "</strong></p>"
+                + "<p>You can now log in securely, explore handcrafted items, participate in live auctions, and follow master artisans.</p>"
                 + "<p>Regards,<br/>CraftBid Team</p>"
                 + "</div>";
 
         dispatchEmail(email, subject, html);
+    }
+
+    public void sendRegistrationSuccessEmail(String email, String name, String loginId, String password) {
+        sendRegistrationSuccessEmail(email, name, loginId);
     }
 
     // =====================================================

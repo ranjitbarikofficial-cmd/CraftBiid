@@ -32,6 +32,7 @@ public class PaymentTransaction {
     @Column(name = "razorpay_payment_id", length = 100)
     private String razorpayPaymentId;
 
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     @Column(name = "razorpay_signature", length = 255)
     private String razorpaySignature;
 

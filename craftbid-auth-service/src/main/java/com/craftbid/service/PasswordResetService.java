@@ -109,9 +109,9 @@ public class PasswordResetService {
             throw new RuntimeException("OTP expired. Please request a new verification code.");
         }
 
-        // Check OTP (accepts BCrypt hashed or plain fallback)
+        // Check OTP (BCrypt hashed)
         String storedOtp = user.getOtp();
-        boolean matches = passwordEncoder.matches(otp.trim(), storedOtp) || storedOtp.equals(otp.trim());
+        boolean matches = storedOtp != null && passwordEncoder.matches(otp.trim(), storedOtp);
         if (!matches) {
             throw new RuntimeException("Invalid OTP code. Please enter the 6-digit code sent to your email.");
         }

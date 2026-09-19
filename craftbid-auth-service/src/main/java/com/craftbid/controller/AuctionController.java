@@ -123,8 +123,11 @@ public class AuctionController {
     }
 
     @GetMapping("/{id}/order")
-    public ResponseEntity<AuctionOrder> getAuctionOrder(@PathVariable Long id) {
-        return ResponseEntity.of(auctionService.getAuctionOrder(id));
+    public ResponseEntity<AuctionOrder> getAuctionOrder(
+            Authentication authentication,
+            @PathVariable Long id) {
+        String identifier = authentication.getName();
+        return ResponseEntity.of(auctionService.getAuctionOrder(identifier, id));
     }
 
     @GetMapping(value = {"/artisan-orders", "/artisan/orders"})

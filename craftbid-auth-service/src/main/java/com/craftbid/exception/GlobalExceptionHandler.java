@@ -259,6 +259,21 @@ public class GlobalExceptionHandler {
     }
 
     // =========================================================================
+    // RATE LIMITING & SECURITY THROTTLING (HTTP 429)
+    // =========================================================================
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleRateLimitExceeded(RateLimitExceededException ex) {
+        logger.warn("Rate limit violation: {}", ex.getMessage());
+        Map<String, Object> body = buildErrorBody(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+        body.put("retryAfterSeconds", ex.getRetryAfterSeconds());
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(body);
+    }
+
+    // =========================================================================
     // BUSINESS LOGIC & GENERAL RUNTIME EXCEPTIONS
     // =========================================================================
 

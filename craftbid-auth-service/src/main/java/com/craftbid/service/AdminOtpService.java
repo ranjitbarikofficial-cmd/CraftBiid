@@ -5,6 +5,9 @@ import com.craftbid.entity.Role;
 import com.craftbid.entity.User;
 import com.craftbid.repository.UserRepository;
 import com.craftbid.security.JwtService;
+import com.craftbid.exception.RateLimitExceededException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +21,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 public class AdminOtpService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AdminOtpService.class);
 
     // Authorized admin emails that can access admin login
     private static final Set<String> AUTHORIZED_ADMIN_EMAILS = Set.of(
@@ -68,7 +73,7 @@ public class AdminOtpService {
     // ==========================================
     public void sendOtp(String email) {
         if (email == null || email.isBlank()) {
-            throw new RuntimeException("Administrator email is required");
+            throw new IllegalArgumentException("Administrator email is required");
         }
 
         String cleanEmail = email.trim().toLowerCase();
@@ -77,22 +82,23 @@ public class AdminOtpService {
         // Check active brute-force lockout
         Long lockoutUntil = lockoutUntilMap.get(cleanEmail);
         if (lockoutUntil != null && lockoutUntil > now) {
+            long remainingSeconds = Math.max(1, (lockoutUntil - now + 999) / 1000);
             long remainingMinutes = Math.max(1, (lockoutUntil - now + 59_999) / 60_000);
-            throw new RuntimeException("Too many failed security attempts. Account temporarily locked for " + remainingMinutes + " minute(s).");
+            throw new RateLimitExceededException("Too many failed security attempts. Account temporarily locked for " + remainingMinutes + " minute(s).", remainingSeconds);
         }
 
         // Check resend cooldown (minimum 60 seconds)
         Long lastSend = lastSendTimeMap.get(cleanEmail);
         if (lastSend != null && (now - lastSend) < RESEND_COOLDOWN_MILLIS) {
             long remainingSec = Math.max(1, (RESEND_COOLDOWN_MILLIS - (now - lastSend) + 999) / 1000);
-            throw new RuntimeException("Please wait " + remainingSec + " second(s) before requesting another OTP code.");
+            throw new RateLimitExceededException("Please wait " + remainingSec + " second(s) before requesting another OTP code.", remainingSec);
         }
 
         // Check maximum send requests in sliding window
         List<Long> sendTimestamps = sendTimestampsMap.computeIfAbsent(cleanEmail, k -> new CopyOnWriteArrayList<>());
         sendTimestamps.removeIf(ts -> (now - ts) > SEND_WINDOW_MILLIS);
         if (sendTimestamps.size() >= MAX_SENDS_PER_WINDOW) {
-            throw new RuntimeException("OTP request limit reached (5 requests per 15 minutes). Please try again later.");
+            throw new RateLimitExceededException("OTP request limit reached (5 requests per 15 minutes). Please try again later.", 900);
         }
 
         // Find or auto-provision authorized administrator
@@ -130,7 +136,7 @@ public class AdminOtpService {
         admin.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
         userRepository.save(admin);
 
-        System.out.println("🔑 [ADMIN SECURITY OTP] Generated OTP for " + cleanEmail + ": " + rawOtp);
+        logger.info("Admin login OTP generated and dispatched for authorized administrator: {}", cleanEmail);
 
         // Record rate-limiting metrics
         lastSendTimeMap.put(cleanEmail, now);
@@ -141,7 +147,7 @@ public class AdminOtpService {
         try {
             emailService.sendAdminOtpEmail(cleanEmail, rawOtp);
         } catch (Exception e) {
-            System.err.println("Notice: Admin OTP email dispatch error: " + e.getMessage());
+            logger.error("Admin OTP email dispatch error: {}", e.getMessage());
         }
     }
 
@@ -163,8 +169,9 @@ public class AdminOtpService {
         // Check active brute-force lockout
         Long lockoutUntil = lockoutUntilMap.get(cleanEmail);
         if (lockoutUntil != null && lockoutUntil > now) {
+            long remainingSeconds = Math.max(1, (lockoutUntil - now + 999) / 1000);
             long remainingMinutes = Math.max(1, (lockoutUntil - now + 59_999) / 60_000);
-            throw new RuntimeException("Security lockout active. Please wait " + remainingMinutes + " minute(s) before retrying.");
+            throw new RateLimitExceededException("Security lockout active. Please wait " + remainingMinutes + " minute(s) before retrying.", remainingSeconds);
         }
 
         // Find admin
@@ -193,7 +200,7 @@ public class AdminOtpService {
 
         // Verify hashed OTP
         String storedOtp = admin.getOtp();
-        boolean matches = storedOtp != null && (passwordEncoder.matches(otp.trim(), storedOtp) || storedOtp.equals(otp.trim()));
+        boolean matches = storedOtp != null && passwordEncoder.matches(otp.trim(), storedOtp);
 
         if (!matches) {
             int attempts = failedAttemptsMap.getOrDefault(cleanEmail, 0) + 1;
@@ -206,7 +213,7 @@ public class AdminOtpService {
                 userRepository.save(admin);
                 failedAttemptsMap.remove(cleanEmail);
                 lockoutUntilMap.put(cleanEmail, now + LOCKOUT_DURATION_MILLIS);
-                throw new RuntimeException("Maximum invalid attempts reached (5/5). Security code invalidated and account locked for 15 minutes.");
+                throw new RateLimitExceededException("Maximum invalid attempts reached (5/5). Security code invalidated and account locked for 15 minutes.", 900);
             }
 
             int remainingAttempts = MAX_FAILED_ATTEMPTS - attempts;

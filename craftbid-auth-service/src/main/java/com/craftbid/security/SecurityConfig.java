@@ -51,7 +51,7 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allowed Origin Patterns (supports credentials and wildcard domains)
+        // Allowed Origin Patterns (supports credentials and explicit secure origins)
         configuration.setAllowedOriginPatterns(
                 List.of(
                         "http://localhost:[*]",
@@ -61,8 +61,7 @@ public class SecurityConfig {
                         "https://*.vercel.app",
                         "https://vercel.app",
                         "https://*.onrender.com",
-                        "https://onrender.com",
-                        "*"
+                        "https://onrender.com"
                 )
         );
 
@@ -78,14 +77,14 @@ public class SecurityConfig {
                 )
         );
 
-        // Allow all headers
+        // Allow all standard headers
         configuration.setAllowedHeaders(
                 List.of("*")
         );
 
         // Expose Authorization header
         configuration.setExposedHeaders(
-                List.of("Authorization")
+                List.of("Authorization", "Retry-After")
         );
 
         // Allow credentials
@@ -148,8 +147,7 @@ public class SecurityConfig {
                                 "/api/auth/admin/send-otp",
                                 "/api/auth/admin/verify-otp",
                                 "/api/auth/forgot-password",
-                                "/api/auth/reset-password",
-                                "/api/auth/test-email"
+                                "/api/auth/reset-password"
                         ).permitAll()
 
                         // Authenticated Seller / Artisan enable
@@ -189,10 +187,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/auctions/{id:[0-9]+}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auctions/{id:[0-9]+}/bids").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auctions/{id:[0-9]+}/participants").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/auctions/{id:[0-9]+}/order").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auctions/craft/**").permitAll()
 
-                        // Auction & Bids Authenticated Operations
+                        // Auction & Bids Authenticated Operations (including order access)
+                        .requestMatchers(HttpMethod.GET, "/api/auctions/{id:[0-9]+}/order").authenticated()
                         .requestMatchers("/api/auctions/my-auctions").authenticated()
                         .requestMatchers("/api/auctions/my-bids").authenticated()
                         .requestMatchers("/api/auctions/artisan-orders").authenticated()
@@ -202,6 +200,8 @@ public class SecurityConfig {
 
                         // Payment API
                         .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
+                        .requestMatchers("/api/payments/admin-stats").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/payments/*/refund").hasRole("ADMIN")
                         .requestMatchers("/api/payments/**").authenticated()
 
                         // Support & Customer Service API

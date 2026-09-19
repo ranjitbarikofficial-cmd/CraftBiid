@@ -1,5 +1,6 @@
 package com.craftbid.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 @Entity
@@ -16,6 +17,7 @@ public class User {
     @Column( unique = true)
     private String email;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(nullable = false)
     private String password;
 
@@ -32,9 +34,11 @@ public class User {
     @Column(nullable = false)
     private boolean active = true;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "otp")
     private String otp;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "otp_expiry")
     private java.time.LocalDateTime otpExpiry;
 

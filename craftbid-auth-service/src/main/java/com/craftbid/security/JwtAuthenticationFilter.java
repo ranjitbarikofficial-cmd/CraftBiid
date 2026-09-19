@@ -22,13 +22,10 @@ import java.util.List;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String SECRET_KEY =
-            "CraftBidSecretKeyForJwtAuthentication2026VerySecure";
+    private final JwtService jwtService;
 
-    private SecretKey getSigningKey() {
-        return io.jsonwebtoken.security.Keys.hmacShaKeyFor(
-                SECRET_KEY.getBytes(StandardCharsets.UTF_8)
-        );
+    public JwtAuthenticationFilter(JwtService jwtService) {
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -55,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (!token.isEmpty() && !"null".equalsIgnoreCase(token) && !"undefined".equalsIgnoreCase(token)) {
                 Claims claims = Jwts.parser()
-                        .verifyWith(getSigningKey())
+                        .verifyWith(jwtService.getSigningKey())
                         .build()
                         .parseSignedClaims(token)
                         .getPayload();

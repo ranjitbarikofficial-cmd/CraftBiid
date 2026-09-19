@@ -241,9 +241,10 @@ public class AuthService {
                 );
 
         if (!passwordMatches) {
-
             throw new RuntimeException(
-                    "Invalid email/mobile or password"
+                    identifier.contains("@")
+                            ? "Invalid email or password"
+                            : "Invalid mobile number or password"
             );
         }
 

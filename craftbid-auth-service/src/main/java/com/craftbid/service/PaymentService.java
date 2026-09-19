@@ -4,6 +4,7 @@ import com.craftbid.dto.PaymentRequest;
 import com.craftbid.dto.PaymentStatsDTO;
 import com.craftbid.dto.RazorpayVerifyRequest;
 import com.craftbid.entity.*;
+import com.craftbid.exception.AccessDeniedException;
 import com.craftbid.repository.AuctionParticipantRepository;
 import com.craftbid.repository.AuctionRepository;
 import com.craftbid.repository.PaymentTransactionRepository;
@@ -377,6 +378,11 @@ public class PaymentService {
      */
     @Transactional
     public Refund processRefund(Long paymentTransactionId, BigDecimal amount, String reason, String identifier) {
+        User caller = getUserByIdentifier(identifier);
+        if (caller.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException("Access denied. Only administrators can initiate manual refunds.");
+        }
+
         PaymentTransaction tx = paymentRepository.findById(paymentTransactionId)
                 .orElseThrow(() -> new RuntimeException("Payment transaction not found: " + paymentTransactionId));
 
@@ -517,8 +523,32 @@ public class PaymentService {
         return refundRepository.findByUserOrderByCreatedAtDesc(user);
     }
 
+    public Optional<PaymentTransaction> getByTransactionRef(String txnRef, String identifier) {
+        User user = getUserByIdentifier(identifier);
+        Optional<PaymentTransaction> txOpt = paymentRepository.findByTransactionRef(txnRef);
+        if (txOpt.isPresent() && user.getRole() != Role.ADMIN) {
+            PaymentTransaction tx = txOpt.get();
+            if (tx.getUser() != null && !tx.getUser().getId().equals(user.getId())) {
+                throw new AccessDeniedException("Access denied. You do not have permission to view this transaction.");
+            }
+        }
+        return txOpt;
+    }
+
     public Optional<PaymentTransaction> getByTransactionRef(String txnRef) {
         return paymentRepository.findByTransactionRef(txnRef);
+    }
+
+    public Optional<PaymentTransaction> getById(Long id, String identifier) {
+        User user = getUserByIdentifier(identifier);
+        Optional<PaymentTransaction> txOpt = paymentRepository.findById(id);
+        if (txOpt.isPresent() && user.getRole() != Role.ADMIN) {
+            PaymentTransaction tx = txOpt.get();
+            if (tx.getUser() != null && !tx.getUser().getId().equals(user.getId())) {
+                throw new AccessDeniedException("Access denied. You do not have permission to view this transaction.");
+            }
+        }
+        return txOpt;
     }
 
     public Optional<PaymentTransaction> getById(Long id) {
@@ -528,6 +558,14 @@ public class PaymentService {
     /**
      * Compute platform-wide payment and refund stats for Admin Dashboard.
      */
+    public PaymentStatsDTO getAdminPaymentStats(String identifier) {
+        User user = getUserByIdentifier(identifier);
+        if (user.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException("Access denied. Admin role required to view payment statistics.");
+        }
+        return getAdminPaymentStats();
+    }
+
     public PaymentStatsDTO getAdminPaymentStats() {
         List<PaymentTransaction> allTx = paymentRepository.findAll();
         List<Refund> allRefunds = refundRepository.findAll();

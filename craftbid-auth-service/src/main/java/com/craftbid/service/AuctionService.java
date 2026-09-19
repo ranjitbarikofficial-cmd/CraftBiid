@@ -728,6 +728,24 @@ public class AuctionService {
         return orderRepository.findByBuyerOrderByCreatedAtDesc(buyer);
     }
 
+    public Optional<AuctionOrder> getAuctionOrder(String identifier, Long auctionId) {
+        User user = getUserByIdentifier(identifier);
+        Auction auction = getAuctionById(auctionId);
+        Optional<AuctionOrder> orderOpt = orderRepository.findByAuction(auction);
+
+        if (orderOpt.isPresent()) {
+            AuctionOrder order = orderOpt.get();
+            if (user.getRole() != Role.ADMIN) {
+                boolean isBuyer = order.getBuyer() != null && order.getBuyer().getId().equals(user.getId());
+                boolean isArtisan = order.getArtisan() != null && order.getArtisan().getId().equals(user.getId());
+                if (!isBuyer && !isArtisan) {
+                    throw new AccessDeniedException("Access denied. You do not have permission to view this order.");
+                }
+            }
+        }
+        return orderOpt;
+    }
+
     public Optional<AuctionOrder> getAuctionOrder(Long auctionId) {
         Auction auction = getAuctionById(auctionId);
         return orderRepository.findByAuction(auction);
