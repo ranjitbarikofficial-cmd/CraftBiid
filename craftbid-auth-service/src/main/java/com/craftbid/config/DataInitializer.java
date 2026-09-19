@@ -69,10 +69,9 @@ public class DataInitializer implements CommandLineRunner {
         String adminEmail = "craftbid.official@gmail.com";
         userRepository.findByEmail(adminEmail).ifPresentOrElse(
                 admin -> {
-                    if (admin.getRole() != Role.ADMIN || !admin.isActive() || admin.getPassword() != null) {
+                    if (admin.getRole() != Role.ADMIN || !admin.isActive()) {
                         admin.setRole(Role.ADMIN);
                         admin.setActive(true);
-                        admin.setPassword(null); // Admin authenticates exclusively via multi-factor Email OTP
                         userRepository.save(admin);
                     }
                 },
@@ -81,7 +80,8 @@ public class DataInitializer implements CommandLineRunner {
                     admin.setName("CraftBid Official Admin");
                     admin.setEmail(adminEmail);
                     admin.setPhone("9040408690");
-                    admin.setPassword(null); // No static password; strictly MFA/OTP authentication
+                    // Admin authenticates strictly via multi-factor Email OTP
+                    admin.setPassword("LOCKED_MFA_ONLY_" + java.util.UUID.randomUUID());
                     admin.setRole(Role.ADMIN);
                     admin.setActive(true);
                     admin.setSellerEnabled(true);
