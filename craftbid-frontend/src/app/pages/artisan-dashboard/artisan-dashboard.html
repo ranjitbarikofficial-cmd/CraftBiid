@@ -17,7 +17,7 @@
             [src]="resolveMediaUrl(artisanProfile?.profileImageUrl || currentUser?.profileImageUrl)"
             alt="Artisan Avatar"
             class="artisan-avatar-img"
-            (error)="onImageError($event)"
+            (error)="onAvatarError($event)"
           />
         } @else {
           <div class="artisan-avatar-placeholder">👨‍🎨</div>

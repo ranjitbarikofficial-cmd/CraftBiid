@@ -579,6 +579,11 @@ export class ArtisanDashboard implements OnInit {
     img.src = 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=400&q=80';
   }
 
+  onAvatarError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23ea580c'/%3E%3Ctext x='50' y='65' font-size='42' text-anchor='middle' fill='%23ffffff'%3E👨‍🎨%3C/text%3E%3C/svg%3E";
+  }
+
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
