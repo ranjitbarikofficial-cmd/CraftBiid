@@ -53,6 +53,8 @@ public class FileStorageService {
         try {
             Files.createDirectories(this.uploadDir.resolve("crafts"));
             Files.createDirectories(this.uploadDir.resolve("reels"));
+            Files.createDirectories(this.uploadDir.resolve("avatars"));
+            Files.createDirectories(this.uploadDir.resolve("profiles"));
         } catch (IOException e) {
             logger.error("Could not initialize upload directories: ", e);
         }
@@ -113,7 +115,7 @@ public class FileStorageService {
         String determinedExtension;
 
         // Validate and determine extension based on target media type
-        if (cleanFolder.contains("craft") || cleanFolder.contains("image")) {
+        if (cleanFolder.contains("craft") || cleanFolder.contains("image") || cleanFolder.contains("avatar") || cleanFolder.contains("profile") || cleanFolder.contains("user")) {
             if (fileSize > MAX_IMAGE_SIZE) {
                 throw new IllegalArgumentException("Image file size exceeds the 10 MB limit");
             }
