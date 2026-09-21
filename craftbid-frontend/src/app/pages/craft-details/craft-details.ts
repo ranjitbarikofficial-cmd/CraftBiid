@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription, finalize } from 'rxjs';
+import { Subscription, finalize, map, filter, distinctUntilChanged } from 'rxjs';
 import { CraftService, CraftItem } from '../../services/craft.service';
 import { CraftReelService, CraftReelItem } from '../../services/craft-reel.service';
 import { AuctionService } from '../../services/auction.service';
@@ -36,6 +36,8 @@ export class CraftDetails implements OnInit, OnDestroy {
   followerCount = 0;
 
   private routeSub: Subscription | null = null;
+  private currentCraftSub: Subscription | null = null;
+  private isRequestInProgress = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -49,44 +51,64 @@ export class CraftDetails implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.routeSub = this.route.paramMap.subscribe((paramMap) => {
-      const idStr = paramMap.get('id');
-      if (idStr) {
+    console.log('[CraftDetails] ngOnInit initialized');
+
+    this.routeSub = this.route.paramMap
+      .pipe(
+        map((params) => params.get('id')),
+        filter((id): id is string => !!id),
+        distinctUntilChanged()
+      )
+      .subscribe((idStr) => {
         const id = Number(idStr);
         if (!isNaN(id) && id > 0) {
-          if (this.craftId !== id || !this.craft) {
-            this.craftId = id;
-            this.loadCraft(id);
-          }
+          this.craftId = id;
+          this.loadCraft(id);
         } else {
           this.loading = false;
           this.errorMessage = 'Invalid craft identifier specified.';
           this.errorType = 'NOT_FOUND';
         }
-      } else {
-        this.loading = false;
-        this.errorMessage = 'No craft ID provided in URL.';
-        this.errorType = 'NOT_FOUND';
-      }
-    });
+      });
   }
 
   ngOnDestroy(): void {
+    console.log('[CraftDetails] ngOnDestroy cleanup');
     if (this.routeSub) {
       this.routeSub.unsubscribe();
+      this.routeSub = null;
+    }
+    if (this.currentCraftSub) {
+      this.currentCraftSub.unsubscribe();
+      this.currentCraftSub = null;
     }
   }
 
   loadCraft(id: number): void {
+    // Guard: Prevent duplicate dispatch if the exact craft is already loaded and no param changed
+    if (this.isRequestInProgress && this.craftId === id && this.craft) {
+      return;
+    }
+
+    // Cancel any previous in-flight request for previous IDs
+    if (this.currentCraftSub) {
+      this.currentCraftSub.unsubscribe();
+      this.currentCraftSub = null;
+    }
+
+    this.isRequestInProgress = true;
     this.loading = true;
     this.errorMessage = '';
-    this.craft = null;
 
-    this.craftService
+    console.log('[CraftDetails] request started for ID', id);
+
+    this.currentCraftSub = this.craftService
       .getCraftById(id)
       .pipe(
         finalize(() => {
           this.loading = false;
+          this.isRequestInProgress = false;
+          console.log('[CraftDetails] request completed for ID', id);
         })
       )
       .subscribe({
@@ -99,8 +121,12 @@ export class CraftDetails implements OnInit, OnDestroy {
           }
 
           this.craft = craft;
+          console.log('[CraftDetails] request success', {
+            craftId: craft.id,
+            title: craft.title,
+          });
 
-          // Secondary non-blocking enrichments
+          // Secondary non-blocking enrichments (isolated, will never affect craft loading state)
           this.loadReels(id);
           this.loadActiveAuction(id);
           this.checkFollowStatus();
@@ -139,23 +165,19 @@ export class CraftDetails implements OnInit, OnDestroy {
       next: (reels) => {
         this.reels = (reels || []).filter((r) => r.videoUrl && r.videoUrl.trim().length > 0);
       },
-      error: (err) => {
-        console.debug('Could not load craft reels:', err);
-      },
+      error: () => {},
     });
   }
 
   loadActiveAuction(craftId: number): void {
-    this.auctionService.getActiveAuctions().subscribe({
+    this.auctionService.getAuctionsByCraft(craftId).subscribe({
       next: (auctions) => {
         const found = (auctions || []).find(
           (a) => a.craft && a.craft.id === craftId && a.status !== 'ENDED' && a.status !== 'CANCELLED'
         );
         this.activeAuction = found || null;
       },
-      error: (err) => {
-        console.debug('Could not query active auction status:', err);
-      },
+      error: () => {},
     });
   }
 
@@ -228,6 +250,7 @@ export class CraftDetails implements OnInit, OnDestroy {
 
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
+    img.onerror = null;
     img.src = 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=600&q=80';
   }
 }
