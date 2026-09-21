@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs';
 import { AuthService } from '../../services/auth';
 
 @Component({
@@ -25,6 +27,7 @@ export class Login implements OnInit {
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -48,11 +51,17 @@ export class Login implements OnInit {
   }
 
   login(): void {
+    if (this.loading) {
+      return;
+    }
+
     this.errorMessage = '';
     this.infoMessage = '';
     this.successMessage = '';
 
-    if (!this.identifier.trim()) {
+    const cleanIdentifier = (this.identifier || '').trim();
+
+    if (!cleanIdentifier) {
       this.errorMessage = 'Please enter your email or mobile number.';
       return;
     }
@@ -65,39 +74,51 @@ export class Login implements OnInit {
     this.loading = true;
 
     const loginData = {
-      identifier: this.identifier.trim(),
+      identifier: cleanIdentifier,
       password: this.password,
     };
 
-    this.authService.login(loginData).subscribe({
-      next: (response) => {
-        this.loading = false;
-        if (response.role === 'ADMIN') {
-          this.router.navigate(['/admin-dashboard']);
-        } else {
-          this.router.navigate(['/home']);
-        }
-      },
-
-      error: (error) => {
-        this.loading = false;
-
-        let msg = 'Invalid email/mobile or password.';
-        if (typeof error.error === 'string') {
-          try {
-            const parsed = JSON.parse(error.error);
-            msg = parsed.message || parsed.error || error.error;
-          } catch {
-            msg = error.error;
+    this.authService
+      .login(loginData)
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response.role === 'ADMIN') {
+            this.router.navigate(['/admin-dashboard']);
+          } else {
+            this.router.navigate(['/home']);
           }
-        } else if (error.error && typeof error.error === 'object') {
-          msg = error.error.message || error.error.error || msg;
-        } else if (error.message) {
-          msg = error.message;
-        }
+        },
 
-        this.errorMessage = msg;
-      },
-    });
+        error: (error: HttpErrorResponse | any) => {
+          // Clear password field for security (keeping identifier populated)
+          this.password = '';
+
+          // Determine safe error message without technical data or credential leakage
+          if (error && (error.status === 400 || error.status === 401 || error.status === 403)) {
+            const rawMsg =
+              typeof error.error === 'string'
+                ? error.error
+                : error.error?.message || error.error?.error || '';
+
+            if (typeof rawMsg === 'string' && rawMsg.toLowerCase().includes('verify')) {
+              this.errorMessage = 'Please verify your account before login.';
+            } else {
+              this.errorMessage = 'Invalid email or password';
+            }
+          } else if (error && error.status === 429) {
+            this.errorMessage = 'Too many sign-in attempts. Please try again in a few moments.';
+          } else {
+            // Status 0 (network failure), 500/502/503/504 (server error), timeout, etc.
+            this.errorMessage = 'Unable to sign in right now. Please try again.';
+          }
+          this.cdr.markForCheck();
+        },
+      });
   }
 }

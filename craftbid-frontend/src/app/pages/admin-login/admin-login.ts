@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../services/auth';
+import { finalize } from 'rxjs';
+import { AuthService, LoginResponse } from '../../services/auth';
 
 @Component({
   selector: 'app-admin-login',
@@ -116,11 +117,14 @@ export class AdminLogin implements OnInit, OnDestroy {
   // 2. VERIFY ADMIN OTP & REDIRECT
   // ==========================================
   verifyAdminOtp(): void {
+    if (this.loading) return;
+
     this.errorMessage = '';
     this.infoMessage = '';
     this.successMessage = '';
 
-    if (!this.adminOtp.trim()) {
+    const cleanOtp = (this.adminOtp || '').trim();
+    if (!cleanOtp) {
       this.errorMessage = 'Please enter the 6-digit OTP security code.';
       return;
     }
@@ -128,26 +132,23 @@ export class AdminLogin implements OnInit, OnDestroy {
     this.loading = true;
 
     this.authService
-      .verifyAdminOtp(this.adminOtp.trim(), this.adminEmail.trim())
+      .verifyAdminOtp(cleanOtp, (this.adminEmail || '').trim())
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+        })
+      )
       .subscribe({
         next: () => {
-          this.loading = false;
           this.router.navigate(['/admin-dashboard']);
         },
         error: (error) => {
-          this.loading = false;
-          let msg = 'Invalid or expired OTP code. Please try again.';
-          if (typeof error.error === 'string') {
-            try {
-              const parsed = JSON.parse(error.error);
-              msg = parsed.message || parsed.error || error.error;
-            } catch {
-              msg = error.error;
-            }
-          } else if (error.error && typeof error.error === 'object') {
-            msg = error.error.message || error.error.error || msg;
+          this.adminOtp = '';
+          if (error && (error.status === 400 || error.status === 401 || error.status === 403)) {
+            this.errorMessage = 'Invalid or expired OTP code. Please try again.';
+          } else {
+            this.errorMessage = 'Unable to verify security code right now. Please try again.';
           }
-          this.errorMessage = msg;
         },
       });
   }
@@ -156,11 +157,14 @@ export class AdminLogin implements OnInit, OnDestroy {
   // 3. ADMIN PASSWORD AUTHENTICATION
   // ==========================================
   loginWithPassword(): void {
+    if (this.loading) return;
+
     this.errorMessage = '';
     this.infoMessage = '';
     this.successMessage = '';
 
-    if (!this.passwordEmail.trim()) {
+    const cleanEmail = (this.passwordEmail || '').trim();
+    if (!cleanEmail) {
       this.errorMessage = 'Please enter your admin email.';
       return;
     }
@@ -174,12 +178,16 @@ export class AdminLogin implements OnInit, OnDestroy {
 
     this.authService
       .login({
-        identifier: this.passwordEmail.trim(),
+        identifier: cleanEmail,
         password: this.adminPassword,
       })
-      .subscribe({
-        next: (response) => {
+      .pipe(
+        finalize(() => {
           this.loading = false;
+        })
+      )
+      .subscribe({
+        next: (response: LoginResponse) => {
           if (response.role === 'ADMIN') {
             this.router.navigate(['/admin-dashboard']);
           } else {
@@ -187,19 +195,14 @@ export class AdminLogin implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          this.loading = false;
-          let msg = 'Invalid admin credentials.';
-          if (typeof error.error === 'string') {
-            try {
-              const parsed = JSON.parse(error.error);
-              msg = parsed.message || parsed.error || error.error;
-            } catch {
-              msg = error.error;
-            }
-          } else if (error.error && typeof error.error === 'object') {
-            msg = error.error.message || error.error.error || msg;
+          this.adminPassword = '';
+          if (error && (error.status === 400 || error.status === 401 || error.status === 403)) {
+            this.errorMessage = 'Invalid email or password';
+          } else if (error && error.status === 429) {
+            this.errorMessage = 'Too many sign-in attempts. Please try again in a few moments.';
+          } else {
+            this.errorMessage = 'Unable to sign in right now. Please try again.';
           }
-          this.errorMessage = msg;
         },
       });
   }

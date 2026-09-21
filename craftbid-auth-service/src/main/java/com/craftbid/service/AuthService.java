@@ -206,11 +206,7 @@ public class AuthService {
         User user = userRepository
                 .findByIdentifier(identifier)
                 .orElseThrow(() ->
-                        new RuntimeException(
-                                identifier.contains("@")
-                                        ? "Invalid email or password"
-                                        : "Invalid mobile number or password"
-                        )
+                        new RuntimeException("Invalid email or password")
                 );
 
         // =================================================
@@ -234,11 +230,7 @@ public class AuthService {
                 );
 
         if (!passwordMatches) {
-            throw new RuntimeException(
-                    identifier.contains("@")
-                            ? "Invalid email or password"
-                            : "Invalid mobile number or password"
-            );
+            throw new RuntimeException("Invalid email or password");
         }
 
         // =================================================
