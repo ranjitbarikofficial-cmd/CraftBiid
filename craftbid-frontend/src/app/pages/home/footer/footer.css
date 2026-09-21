@@ -90,6 +90,20 @@
   color: #fb923c;
 }
 
+.footer-column > a.admin-portal-link {
+  color: #f97316;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.footer-column > a.admin-portal-link:hover {
+  color: #fb923c;
+  text-decoration: underline;
+}
+
 .contact-column p {
   display: flex;
   align-items: center;

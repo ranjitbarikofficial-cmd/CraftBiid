@@ -26,6 +26,16 @@ export const routes: Routes = [
     component: Login,
   },
   {
+    path: 'admin-login',
+    loadComponent: () =>
+      import('./pages/admin-login/admin-login').then((m) => m.AdminLogin),
+  },
+  {
+    path: 'admin/login',
+    redirectTo: 'admin-login',
+    pathMatch: 'full',
+  },
+  {
     path: 'register',
     component: Register,
   },

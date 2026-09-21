@@ -1,0 +1,226 @@
+<div class="admin-auth-page">
+  <div class="admin-auth-card">
+    
+    <!-- BRAND HEADER -->
+    <div class="admin-brand-header">
+      <a routerLink="/" class="admin-logo-link">
+        <img src="/favicon-96x96.png?v=craftbid-v4" alt="CraftBid Gavel Logo" class="admin-logo-img" />
+        <div class="admin-logo-text">
+          <span class="admin-brand-name">Craft<span class="highlight">Bid</span></span>
+          <span class="admin-brand-tag">ADMINISTRATION</span>
+        </div>
+      </a>
+      <div class="admin-security-badge">
+        <span class="badge-icon">🛡️</span>
+        <span>Zero-Trust Admin Security Portal</span>
+      </div>
+    </div>
+
+    <!-- AUTH METHOD SWITCHER -->
+    <div class="method-tabs">
+      <button
+        type="button"
+        class="method-btn"
+        [class.active]="authMethod === 'otp'"
+        (click)="setAuthMethod('otp')"
+      >
+        <span>✉️ Email OTP MFA</span>
+        <span class="method-chip">Recommended</span>
+      </button>
+      <button
+        type="button"
+        class="method-btn"
+        [class.active]="authMethod === 'password'"
+        (click)="setAuthMethod('password')"
+      >
+        <span>🔑 Admin Password</span>
+      </button>
+    </div>
+
+    <!-- ALERTS -->
+    @if (infoMessage) {
+      <div class="admin-alert info">
+        <span class="alert-icon">ℹ️</span>
+        <span>{{ infoMessage }}</span>
+      </div>
+    }
+
+    @if (successMessage) {
+      <div class="admin-alert success">
+        <span class="alert-icon">✅</span>
+        <span>{{ successMessage }}</span>
+      </div>
+    }
+
+    @if (errorMessage) {
+      <div class="admin-alert error">
+        <span class="alert-icon">⚠️</span>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+
+    <!-- =========================================================
+         METHOD 1: EMAIL OTP MFA (RECOMMENDED)
+         ========================================================= -->
+    @if (authMethod === 'otp') {
+      <div class="admin-auth-form">
+        <div class="auth-instructions">
+          <h3>Multi-Factor Email Verification</h3>
+          <p>Request a secure one-time passcode to your authorized administrator email address.</p>
+        </div>
+
+        <form (ngSubmit)="verifyAdminOtp()" #otpForm="ngForm">
+          
+          <!-- ADMIN EMAIL INPUT -->
+          <div class="input-group">
+            <label for="adminEmail">Authorized Admin Email</label>
+            <div class="input-wrapper">
+              <span class="input-glyph">✉️</span>
+              <input
+                id="adminEmail"
+                type="email"
+                [(ngModel)]="adminEmail"
+                name="adminEmail"
+                required
+                placeholder="craftbid.official@gmail.com"
+                autocomplete="email"
+              />
+              <button
+                type="button"
+                class="dispatch-otp-btn"
+                [disabled]="adminOtpLoading || cooldownSeconds > 0"
+                (click)="requestAdminOtp()"
+              >
+                @if (adminOtpLoading) {
+                  <span class="spinner-sm"></span>
+                  <span>Sending...</span>
+                } @else if (cooldownSeconds > 0) {
+                  <span>Resend in {{ cooldownSeconds }}s</span>
+                } @else {
+                  <span>{{ adminOtpSent ? 'Resend OTP' : 'Send Code' }}</span>
+                }
+              </button>
+            </div>
+            <span class="input-hint">Security code is dispatched via encrypted Google SMTP to authorized admin addresses.</span>
+          </div>
+
+          <!-- 6-DIGIT OTP INPUT -->
+          @if (adminOtpSent) {
+            <div class="input-group otp-input-group">
+              <label for="adminOtp">6-Digit Security Code</label>
+              <div class="input-wrapper">
+                <span class="input-glyph">🔢</span>
+                <input
+                  id="adminOtp"
+                  type="text"
+                  [(ngModel)]="adminOtp"
+                  name="adminOtp"
+                  maxlength="6"
+                  required
+                  placeholder="Enter 6-digit code"
+                  class="otp-field"
+                  autocomplete="one-time-code"
+                />
+              </div>
+            </div>
+
+            <!-- SUBMIT BUTTON -->
+            <button
+              type="submit"
+              class="admin-submit-btn"
+              [disabled]="loading || !adminOtp.trim()"
+            >
+              @if (loading) {
+                <span class="spinner-sm"></span>
+                <span>Authenticating Session...</span>
+              } @else {
+                <span>Authorize & Open Admin Dashboard →</span>
+              }
+            </button>
+          }
+        </form>
+      </div>
+    }
+
+    <!-- =========================================================
+         METHOD 2: ADMIN PASSWORD AUTHENTICATION
+         ========================================================= -->
+    @if (authMethod === 'password') {
+      <div class="admin-auth-form">
+        <div class="auth-instructions">
+          <h3>Administrator Sign In</h3>
+          <p>Enter your administrator email and master password to access the platform dashboard.</p>
+        </div>
+
+        <form (ngSubmit)="loginWithPassword()" #passwordForm="ngForm">
+          
+          <div class="input-group">
+            <label for="passwordEmail">Admin Identifier</label>
+            <div class="input-wrapper">
+              <span class="input-glyph">👤</span>
+              <input
+                id="passwordEmail"
+                type="email"
+                [(ngModel)]="passwordEmail"
+                name="passwordEmail"
+                required
+                placeholder="craftbid.official@gmail.com"
+                autocomplete="username"
+              />
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="adminPassword">Admin Master Password</label>
+            <div class="input-wrapper">
+              <span class="input-glyph">🔒</span>
+              <input
+                id="adminPassword"
+                [type]="showPassword ? 'text' : 'password'"
+                [(ngModel)]="adminPassword"
+                name="adminPassword"
+                required
+                placeholder="Enter admin password"
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                class="toggle-pwd-btn"
+                (click)="togglePasswordVisibility()"
+                aria-label="Toggle password visibility"
+              >
+                {{ showPassword ? '🙈' : '👁️' }}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            class="admin-submit-btn"
+            [disabled]="loading || !passwordEmail.trim() || !adminPassword"
+          >
+            @if (loading) {
+              <span class="spinner-sm"></span>
+              <span>Verifying Credentials...</span>
+            } @else {
+              <span>Sign In as Administrator →</span>
+            }
+          </button>
+        </form>
+      </div>
+    }
+
+    <!-- FOOTER LINKS -->
+    <div class="admin-auth-footer">
+      <a routerLink="/login" class="nav-back-link">
+        <span>👤</span>
+        <span>Buyer & Artisan Login</span>
+      </a>
+      <a routerLink="/" class="nav-back-link">
+        <span>🏠</span>
+        <span>Back to Marketplace Home</span>
+      </a>
+    </div>
+
+  </div>
+</div>

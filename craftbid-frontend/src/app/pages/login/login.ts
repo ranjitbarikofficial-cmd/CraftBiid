@@ -12,24 +12,14 @@ import { AuthService } from '../../services/auth';
   styleUrl: './login.css',
 })
 export class Login implements OnInit {
-  // Login Mode: 'standard' or 'admin_otp'
-  loginMode: 'standard' | 'admin_otp' = 'standard';
-
-  // Standard Login Fields
   identifier = '';
   password = '';
   showPassword = false;
-
-  // Admin OTP Login Fields
-  adminEmail = '';
-  adminOtp = '';
-  adminOtpSent = false;
 
   errorMessage = '';
   infoMessage = '';
   successMessage = '';
   loading = false;
-  adminOtpLoading = false;
 
   constructor(
     private authService: AuthService,
@@ -41,9 +31,6 @@ export class Login implements OnInit {
     this.route.queryParams.subscribe((params) => {
       if (params['sessionExpired'] === 'true') {
         this.infoMessage = 'Your session has expired. Please login again.';
-      }
-      if (params['mode'] === 'admin') {
-        this.loginMode = 'admin_otp';
       }
     });
 
@@ -60,16 +47,6 @@ export class Login implements OnInit {
     this.showPassword = !this.showPassword;
   }
 
-  setMode(mode: 'standard' | 'admin_otp'): void {
-    this.loginMode = mode;
-    this.errorMessage = '';
-    this.infoMessage = '';
-    this.successMessage = '';
-  }
-
-  // ==========================================
-  // STANDARD USER LOGIN
-  // ==========================================
   login(): void {
     this.errorMessage = '';
     this.infoMessage = '';
@@ -119,102 +96,6 @@ export class Login implements OnInit {
           msg = error.message;
         }
 
-        this.errorMessage = msg;
-      },
-    });
-  }
-
-  cooldownSeconds = 0;
-  private cooldownTimer: any = null;
-
-  // ==========================================
-  // ADMIN OTP LOGIN (FIXED EMAIL)
-  // ==========================================
-  requestAdminOtp(): void {
-    if (this.cooldownSeconds > 0) return;
-
-    this.errorMessage = '';
-    this.infoMessage = '';
-    this.successMessage = '';
-    this.adminOtpLoading = true;
-
-    this.authService.sendAdminOtp(this.adminEmail).subscribe({
-      next: (response: any) => {
-        this.adminOtpLoading = false;
-        this.adminOtpSent = true;
-        this.adminOtp = '';
-        this.successMessage = response?.message || 'Security code dispatched to admin email. Please check your inbox.';
-        this.startCooldown(60);
-      },
-      error: (error) => {
-        this.adminOtpLoading = false;
-        let msg = 'Failed to send OTP to admin email.';
-        if (typeof error.error === 'string') {
-          try {
-            const parsed = JSON.parse(error.error);
-            msg = parsed.message || parsed.error || error.error;
-          } catch {
-            msg = error.error;
-          }
-        } else if (error.error && typeof error.error === 'object') {
-          msg = error.error.message || error.error.error || msg;
-        }
-
-        // If error is about waiting X seconds, start the countdown
-        const waitMatch = msg.match(/wait\s+(\d+)\s+second/i);
-        if (waitMatch && waitMatch[1]) {
-          this.startCooldown(parseInt(waitMatch[1], 10));
-        }
-
-        this.errorMessage = msg;
-      },
-    });
-  }
-
-  private startCooldown(seconds: number): void {
-    this.cooldownSeconds = seconds;
-    if (this.cooldownTimer) {
-      clearInterval(this.cooldownTimer);
-    }
-    this.cooldownTimer = setInterval(() => {
-      this.cooldownSeconds--;
-      if (this.cooldownSeconds <= 0) {
-        clearInterval(this.cooldownTimer);
-        this.cooldownTimer = null;
-      }
-    }, 1000);
-  }
-
-  verifyAdminOtp(): void {
-    this.errorMessage = '';
-    this.infoMessage = '';
-    this.successMessage = '';
-
-    if (!this.adminOtp.trim()) {
-      this.errorMessage = 'Please enter the 6-digit OTP code.';
-      return;
-    }
-
-    this.loading = true;
-
-    this.authService.verifyAdminOtp(this.adminOtp.trim(), this.adminEmail).subscribe({
-      next: () => {
-        this.loading = false;
-        this.router.navigate(['/admin-dashboard']);
-      },
-      error: (error) => {
-        this.loading = false;
-        let msg = 'Invalid or expired OTP code.';
-        if (typeof error.error === 'string') {
-          try {
-            const parsed = JSON.parse(error.error);
-            msg = parsed.message || parsed.error || error.error;
-          } catch {
-            msg = error.error;
-          }
-        } else if (error.error && typeof error.error === 'object') {
-          msg = error.error.message || error.error.error || msg;
-        }
         this.errorMessage = msg;
       },
     });
