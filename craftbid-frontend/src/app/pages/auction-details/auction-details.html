@@ -158,7 +158,9 @@
             <strong>{{ participants.length }} / {{ auction.maxParticipants || 10 }} Spots Filled</strong>
           </div>
 
-          @if (currentParticipant) {
+          @if (isCurrentUserSeller()) {
+            <span class="badge-seller-owner">👨‍🎨 Your Artisan Creation (Owner)</span>
+          } @else if (currentParticipant) {
             <span class="badge-joined">✅ Joined (Commitment: {{ formatPrice(currentParticipant.totalAmountPaid) }})</span>
           } @else if (auction.status !== 'ENDED' && auction.status !== 'CANCELLED') {
             <button class="btn-join-room" (click)="openJoinModal()">
@@ -197,65 +199,75 @@
           </div>
         </div>
 
-        <!-- 4. DIFFERENTIAL BIDDING FORM -->
+        <!-- 4. DIFFERENTIAL BIDDING FORM / ARTISAN OWNER NOTICE -->
         @if (auction.status !== 'ENDED' && auction.status !== 'CANCELLED') {
-          <div class="differential-bid-form">
-            <label>Select or Enter Your Next Bid Amount</label>
-
-            <!-- QUICK INCREMENT CHIPS -->
-            <div class="quick-bid-chips">
-              <button type="button" class="chip-btn" (click)="addBidIncrement(auction.minBidIncrement || 50)">
-                +{{ formatPrice(auction.minBidIncrement || 50) }}
-              </button>
-              <button type="button" class="chip-btn" (click)="addBidIncrement(100)">
-                +₹100
-              </button>
-              <button type="button" class="chip-btn" (click)="addBidIncrement(200)">
-                +₹200
-              </button>
-              <button type="button" class="chip-btn" (click)="addBidIncrement(500)">
-                +₹500
-              </button>
-            </div>
-
-            <div class="bid-input-wrap">
-              <span class="currency-symbol">₹</span>
-              <input
-                type="number"
-                [(ngModel)]="bidAmount"
-                [min]="minNextBid"
-                [step]="auction.minBidIncrement || 50"
-                (ngModelChange)="onBidAmountChange()"
-                placeholder="Enter custom bid amount"
-              />
-            </div>
-
-            <!-- DIFFERENTIAL PAYMENT BREAKDOWN -->
-            <div class="differential-summary-card">
-              <div class="summary-line">
-                <span>Target Bid Amount:</span>
-                <strong>{{ formatPrice(bidAmount || minNextBid) }}</strong>
-              </div>
-              <div class="summary-line">
-                <span>Your Committed Deposit:</span>
-                <span>- {{ formatPrice(currentParticipant?.totalAmountPaid || 0) }}</span>
-              </div>
-              <div class="summary-line highlight">
-                <span>Differential to Authorize/Pay:</span>
-                <strong class="amount-to-pay">{{ formatPrice(differentialToPay) }}</strong>
+          @if (isCurrentUserSeller()) {
+            <div class="artisan-owner-notice">
+              <span class="owner-icon">👨‍🎨</span>
+              <div class="owner-info">
+                <strong>Artisan Studio Console</strong>
+                <p>This is your craft creation. Artisans cannot place bids on their own listings. You will automatically receive 90% payout when this auction concludes.</p>
               </div>
             </div>
+          } @else {
+            <div class="differential-bid-form">
+              <label>Select or Enter Your Next Bid Amount</label>
 
-            @if (currentParticipant) {
-              <button class="btn-place-bid" (click)="placeBid()" [disabled]="bidding">
-                {{ bidding ? 'Authorizing Differential...' : '⚡ Pay ' + formatPrice(differentialToPay) + ' & Place Bid' }}
-              </button>
-            } @else {
-              <button class="btn-place-bid join-first" (click)="openJoinModal()">
-                🔒 Pay Base Deposit ({{ formatPrice(auction.startingPrice) }}) to Join & Bid
-              </button>
-            }
-          </div>
+              <!-- QUICK INCREMENT CHIPS -->
+              <div class="quick-bid-chips">
+                <button type="button" class="chip-btn" (click)="addBidIncrement(auction.minBidIncrement || 50)">
+                  +{{ formatPrice(auction.minBidIncrement || 50) }}
+                </button>
+                <button type="button" class="chip-btn" (click)="addBidIncrement(100)">
+                  +₹100
+                </button>
+                <button type="button" class="chip-btn" (click)="addBidIncrement(200)">
+                  +₹200
+                </button>
+                <button type="button" class="chip-btn" (click)="addBidIncrement(500)">
+                  +₹500
+                </button>
+              </div>
+
+              <div class="bid-input-wrap">
+                <span class="currency-symbol">₹</span>
+                <input
+                  type="number"
+                  [(ngModel)]="bidAmount"
+                  [min]="minNextBid"
+                  [step]="auction.minBidIncrement || 50"
+                  (ngModelChange)="onBidAmountChange()"
+                  placeholder="Enter custom bid amount"
+                />
+              </div>
+
+              <!-- DIFFERENTIAL PAYMENT BREAKDOWN -->
+              <div class="differential-summary-card">
+                <div class="summary-line">
+                  <span>Target Bid Amount:</span>
+                  <strong>{{ formatPrice(bidAmount || minNextBid) }}</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Your Committed Deposit:</span>
+                  <span>- {{ formatPrice(currentParticipant?.totalAmountPaid || 0) }}</span>
+                </div>
+                <div class="summary-line highlight">
+                  <span>Differential to Authorize/Pay:</span>
+                  <strong class="amount-to-pay">{{ formatPrice(differentialToPay) }}</strong>
+                </div>
+              </div>
+
+              @if (currentParticipant) {
+                <button class="btn-place-bid" (click)="placeBid()" [disabled]="bidding">
+                  {{ bidding ? 'Authorizing Differential...' : '⚡ Pay ' + formatPrice(differentialToPay) + ' & Place Bid' }}
+                </button>
+              } @else {
+                <button class="btn-place-bid join-first" (click)="openJoinModal()">
+                  🔒 Pay Base Deposit ({{ formatPrice(auction.startingPrice) }}) to Join & Bid
+                </button>
+              }
+            </div>
+          }
         }
 
         <!-- 5. FINANCIAL SETTLEMENT SUMMARY (When Ended) -->

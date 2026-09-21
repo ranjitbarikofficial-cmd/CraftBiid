@@ -158,9 +158,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({AccessDeniedException.class, org.springframework.security.access.AccessDeniedException.class})
     public ResponseEntity<Map<String, Object>> handleAccessDenied(Exception ex) {
         logger.warn("Access denied violation: {}", ex.getMessage());
+        String safeMessage = sanitizeMessage(ex, ex.getMessage(), "Access denied. You do not have permission to perform this action.");
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
-                .body(buildErrorBody(HttpStatus.FORBIDDEN, "Access denied. You do not have permission to perform this action."));
+                .body(buildErrorBody(HttpStatus.FORBIDDEN, safeMessage));
     }
 
     @ExceptionHandler({AuthenticationException.class, BadCredentialsException.class})

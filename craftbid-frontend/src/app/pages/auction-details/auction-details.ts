@@ -429,6 +429,11 @@ export class AuctionDetails implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.isCurrentUserSeller()) {
+      this.toastService.info('👨‍🎨 You created this craft. Artisans cannot bid or join their own auctions.');
+      return;
+    }
+
     if (this.currentParticipant) {
       this.toastService.info('You have already joined this auction room.');
       return;
@@ -656,6 +661,12 @@ export class AuctionDetails implements OnInit, OnDestroy {
           this.toastService.error(msg);
         },
       });
+  }
+
+  isCurrentUserSeller(): boolean {
+    if (!this.auction || !this.currentUser) return false;
+    const sellerId = this.auction.seller?.id || this.auction.craft?.seller?.id;
+    return sellerId === this.currentUser.userId;
   }
 
   isCurrentUserWinner(): boolean {
