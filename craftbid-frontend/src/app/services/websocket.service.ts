@@ -51,8 +51,12 @@ export class WebSocketService {
       this.socket.onopen = () => {
         this.zone.run(() => {
           console.debug('[WS] Transport open. Sending STOMP CONNECT frame...');
-          // STOMP 1.2 standard handshake frame with host header
-          const connectFrame = 'CONNECT\naccept-version:1.2,1.1,1.0\nhost:/\nheart-beat:10000,10000\n\n\0';
+          const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+          let connectFrame = 'CONNECT\naccept-version:1.2,1.1,1.0\nhost:/\nheart-beat:10000,10000\n';
+          if (token && token.trim() && token !== 'null' && token !== 'undefined') {
+            connectFrame += `Authorization:Bearer ${token.trim()}\n`;
+          }
+          connectFrame += '\n\0';
           this.socket?.send(connectFrame);
         });
       };
