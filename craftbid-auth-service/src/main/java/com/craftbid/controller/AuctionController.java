@@ -127,7 +127,7 @@ public class AuctionController {
             Authentication authentication,
             @PathVariable Long id) {
         String identifier = authentication.getName();
-        return ResponseEntity.of(auctionService.getAuctionOrder(identifier, id));
+        return ResponseEntity.ok(auctionService.getAuctionOrder(identifier, id).orElse(null));
     }
 
     @GetMapping(value = {"/artisan-orders", "/artisan/orders"})

@@ -102,6 +102,15 @@ public class SecurityConfig {
     }
 
     // =========================================================
+    // WEB SECURITY CUSTOMIZER (Bypass filters for WebSockets)
+    // =========================================================
+
+    @Bean
+    public org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers("/ws", "/ws/**", "/ws-sockjs", "/ws-sockjs/**");
+    }
+
+    // =========================================================
     // SECURITY FILTER CHAIN
     // =========================================================
 
@@ -133,6 +142,9 @@ public class SecurityConfig {
 
                         // Static uploaded files
                         .requestMatchers("/uploads/**").permitAll()
+
+                        // WebSocket STOMP handshake endpoints
+                        .requestMatchers("/ws", "/ws/**", "/ws-sockjs", "/ws-sockjs/**").permitAll()
 
                         // Public Health & Diagnostics
                         .requestMatchers("/api/health", "/api/test/ping").permitAll()

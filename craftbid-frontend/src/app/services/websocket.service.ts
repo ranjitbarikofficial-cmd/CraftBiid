@@ -16,27 +16,43 @@ export interface WebSocketEvent {
 export class WebSocketService {
   private socket: WebSocket | null = null;
   private connected = false;
+  private isConnecting = false;
   private reconnectTimeout: any = null;
+  private reconnectAttempts = 0;
+  private readonly maxReconnectDelay = 10000;
+
+  // Active topic subscriptions (persisted across reconnects)
   private subscriptions: Map<string, Subject<WebSocketEvent>> = new Map();
-  private pendingSubTopics: Set<string> = new Set();
-  private subCounter = 0;
   private topicToSubId: Map<string, string> = new Map();
+  private subCounter = 0;
 
   constructor(private zone: NgZone) {
-    this.initConnection();
+    this.connect();
   }
 
-  private initConnection(): void {
+  public connect(): void {
     if (typeof window === 'undefined') return;
+
+    // Guard: Prevent duplicate sockets if already OPEN or CONNECTING
+    if (
+      this.socket &&
+      (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)
+    ) {
+      return;
+    }
+
+    this.isConnecting = true;
 
     try {
       const wsUrl = getWsBaseUrl();
+      console.debug('[WS] Initializing connection to:', wsUrl);
       this.socket = new WebSocket(wsUrl);
 
       this.socket.onopen = () => {
         this.zone.run(() => {
-          // Send STOMP CONNECT frame
-          const connectFrame = 'CONNECT\naccept-version:1.2,1.1,1.0\nheart-beat:10000,10000\n\n\0';
+          console.debug('[WS] Transport open. Sending STOMP CONNECT frame...');
+          // STOMP 1.2 standard handshake frame with host header
+          const connectFrame = 'CONNECT\naccept-version:1.2,1.1,1.0\nhost:/\nheart-beat:10000,10000\n\n\0';
           this.socket?.send(connectFrame);
         });
       };
@@ -48,60 +64,99 @@ export class WebSocketService {
       };
 
       this.socket.onerror = (err) => {
-        // Silent connection attempt - will fallback or retry
+        console.debug('[WS] Transport error event received');
       };
 
-      this.socket.onclose = () => {
+      this.socket.onclose = (event) => {
         this.zone.run(() => {
+          console.debug('[WS] Closed:', {
+            code: event.code,
+            reason: event.reason,
+            wasClean: event.wasClean,
+          });
           this.connected = false;
+          this.isConnecting = false;
           this.topicToSubId.clear();
           this.scheduleReconnect();
         });
       };
     } catch (e) {
+      console.debug('[WS] Connection exception:', e);
+      this.isConnecting = false;
       this.scheduleReconnect();
     }
   }
 
   private scheduleReconnect(): void {
-    if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+
+    this.reconnectAttempts++;
+    // Exponential backoff with jitter: 1.5s, 2.25s, 3.37s ... capped at 10s
+    const delay = Math.min(1000 * Math.pow(1.5, this.reconnectAttempts - 1), this.maxReconnectDelay);
+    console.debug(`[WS] Scheduling reconnect attempt #${this.reconnectAttempts} in ${Math.round(delay)}ms`);
+
     this.reconnectTimeout = setTimeout(() => {
-      this.initConnection();
-    }, 4000);
+      this.reconnectTimeout = null;
+      this.connect();
+    }, delay);
   }
 
   private handleIncomingMessage(raw: string): void {
     if (!raw) return;
 
-    // Handle CONNECTED frame
-    if (raw.startsWith('CONNECTED')) {
-      this.connected = true;
-      // Resubscribe to all pending topics
-      this.subscriptions.forEach((_, topic) => {
-        this.sendSubscribeFrame(topic);
-      });
+    // Handle heartbeats (single newline)
+    if (raw === '\n' || raw === '\r\n') {
       return;
     }
 
-    // Handle MESSAGE frame
-    if (raw.startsWith('MESSAGE')) {
-      const headerEnd = raw.indexOf('\n\n');
-      if (headerEnd !== -1) {
-        const headerPart = raw.substring(0, headerEnd);
-        const bodyPart = raw.substring(headerEnd + 2).replace(/\0$/, '');
+    // Split on null byte for batched STOMP frames
+    const frames = raw.split('\0');
+    for (const frame of frames) {
+      const trimmed = frame.trim();
+      if (!trimmed) continue;
 
-        // Extract destination topic
-        const destMatch = headerPart.match(/destination:(.+)/i);
-        if (destMatch && destMatch[1]) {
-          const destination = destMatch[1].trim();
-          try {
-            const parsed = JSON.parse(bodyPart) as WebSocketEvent;
-            const sub = this.subscriptions.get(destination);
-            if (sub) {
-              sub.next(parsed);
+      // 1. Handle STOMP CONNECTED frame
+      if (trimmed.startsWith('CONNECTED')) {
+        this.connected = true;
+        this.isConnecting = false;
+        this.reconnectAttempts = 0;
+        console.debug('[WS] STOMP Protocol Handshake SUCCESS: Connected to broker.');
+
+        // Resubscribe to all active topics
+        this.subscriptions.forEach((_, topic) => {
+          this.sendSubscribeFrame(topic);
+        });
+        continue;
+      }
+
+      // 2. Handle STOMP ERROR frame
+      if (trimmed.startsWith('ERROR')) {
+        console.warn('[WS] STOMP Broker ERROR frame received:', trimmed.split('\n')[0]);
+        continue;
+      }
+
+      // 3. Handle STOMP MESSAGE frame
+      if (trimmed.startsWith('MESSAGE')) {
+        const headerEnd = trimmed.indexOf('\n\n');
+        if (headerEnd !== -1) {
+          const headerPart = trimmed.substring(0, headerEnd);
+          const bodyPart = trimmed.substring(headerEnd + 2);
+
+          const destMatch = headerPart.match(/destination:(.+)/i);
+          if (destMatch && destMatch[1]) {
+            const destination = destMatch[1].trim();
+            try {
+              const parsed = JSON.parse(bodyPart) as WebSocketEvent;
+              const sub = this.subscriptions.get(destination);
+              if (sub) {
+                sub.next(parsed);
+              }
+            } catch (e) {
+              // Non-JSON message payload
             }
-          } catch (e) {
-            // Non-json message body
           }
         }
       }
@@ -112,8 +167,13 @@ export class WebSocketService {
     if (!this.connected || !this.socket || this.socket.readyState !== WebSocket.OPEN) {
       return;
     }
+    // Only send subscribe frame if not already subscribed
+    if (this.topicToSubId.has(topic)) {
+      return;
+    }
     const subId = 'sub-' + (++this.subCounter);
     this.topicToSubId.set(topic, subId);
+    console.debug(`[WS] Subscribing to: ${topic} (id: ${subId})`);
     const frame = `SUBSCRIBE\nid:${subId}\ndestination:${topic}\nack:auto\n\n\0`;
     this.socket.send(frame);
   }
@@ -123,8 +183,8 @@ export class WebSocketService {
     if (!this.subscriptions.has(topic)) {
       const subject = new Subject<WebSocketEvent>();
       this.subscriptions.set(topic, subject);
-      this.sendSubscribeFrame(topic);
     }
+    this.sendSubscribeFrame(topic);
     return this.subscriptions.get(topic)!.asObservable();
   }
 
@@ -133,18 +193,23 @@ export class WebSocketService {
     if (!this.subscriptions.has(topic)) {
       const subject = new Subject<WebSocketEvent>();
       this.subscriptions.set(topic, subject);
-      this.sendSubscribeFrame(topic);
     }
+    this.sendSubscribeFrame(topic);
     return this.subscriptions.get(topic)!.asObservable();
   }
 
   public unsubscribe(topic: string): void {
     const subId = this.topicToSubId.get(topic);
     if (subId && this.connected && this.socket?.readyState === WebSocket.OPEN) {
+      console.debug(`[WS] Unsubscribing from: ${topic} (id: ${subId})`);
       const frame = `UNSUBSCRIBE\nid:${subId}\n\n\0`;
       this.socket.send(frame);
     }
-    this.subscriptions.delete(topic);
     this.topicToSubId.delete(topic);
+    this.subscriptions.delete(topic);
+  }
+
+  public isSocketConnected(): boolean {
+    return this.connected && this.socket?.readyState === WebSocket.OPEN;
   }
 }

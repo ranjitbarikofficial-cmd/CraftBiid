@@ -66,6 +66,8 @@ export class AuctionDetails implements OnInit, OnDestroy {
   timerInterval: any;
   pollingInterval: any;
   private wsSubscription: Subscription | null = null;
+  private routeSub: Subscription | null = null;
+  private currentWsTopic: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -79,7 +81,7 @@ export class AuctionDetails implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
-    this.route.params.subscribe((params) => {
+    this.routeSub = this.route.params.subscribe((params) => {
       const id = Number(params['id']);
       if (id) {
         this.loadAuction(id);
@@ -96,11 +98,30 @@ export class AuctionDetails implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.timerInterval) clearInterval(this.timerInterval);
     if (this.pollingInterval) clearInterval(this.pollingInterval);
-    if (this.wsSubscription) this.wsSubscription.unsubscribe();
+    if (this.routeSub) {
+      this.routeSub.unsubscribe();
+      this.routeSub = null;
+    }
+    if (this.wsSubscription) {
+      this.wsSubscription.unsubscribe();
+      this.wsSubscription = null;
+    }
+    if (this.currentWsTopic) {
+      this.wsService.unsubscribe(this.currentWsTopic);
+      this.currentWsTopic = null;
+    }
   }
 
   setupWebSocket(auctionId: number): void {
-    if (this.wsSubscription) this.wsSubscription.unsubscribe();
+    const newTopic = `/topic/auctions/${auctionId}`;
+    if (this.currentWsTopic && this.currentWsTopic !== newTopic) {
+      this.wsService.unsubscribe(this.currentWsTopic);
+    }
+    if (this.wsSubscription) {
+      this.wsSubscription.unsubscribe();
+      this.wsSubscription = null;
+    }
+    this.currentWsTopic = newTopic;
     this.wsSubscription = this.wsService.subscribeToAuction(auctionId).subscribe({
       next: (event: WebSocketEvent) => {
         this.handleWebSocketEvent(event);
@@ -157,7 +178,9 @@ export class AuctionDetails implements OnInit, OnDestroy {
         this.loading = false;
         this.loadBids(id);
         this.loadParticipants(id);
-        this.loadOrder(id);
+        if (this.auction.status === 'ENDED') {
+          this.loadOrder(id);
+        }
 
         if (!this.pollingInterval) {
           this.pollingInterval = setInterval(() => {
@@ -196,10 +219,12 @@ export class AuctionDetails implements OnInit, OnDestroy {
   }
 
   loadOrder(auctionId: number): void {
-    this.auctionService.getAuctionOrder(auctionId).subscribe({
-      next: (order) => (this.auctionOrder = order),
-      error: () => (this.auctionOrder = null),
-    });
+    if (this.currentUser && (this.auction?.status === 'ENDED' || this.isCurrentUserWinner())) {
+      this.auctionService.getAuctionOrder(auctionId).subscribe({
+        next: (order) => (this.auctionOrder = order || null),
+        error: () => (this.auctionOrder = null),
+      });
+    }
   }
 
   refreshData(auctionId: number): void {
