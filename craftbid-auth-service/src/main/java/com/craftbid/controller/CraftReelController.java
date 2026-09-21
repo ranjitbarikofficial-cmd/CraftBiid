@@ -1,8 +1,9 @@
 package com.craftbid.controller;
 
+import com.craftbid.dto.PublicCraftReelResponse;
+import com.craftbid.dto.UpdateReelRequest;
 import com.craftbid.entity.CraftReel;
 import com.craftbid.service.CraftReelService;
-import com.craftbid.dto.UpdateReelRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,6 +15,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Validated
 @RestController
@@ -31,7 +33,7 @@ public class CraftReelController {
     // ==========================================
 
     @PostMapping
-    public ResponseEntity<CraftReel> createReel(
+    public ResponseEntity<PublicCraftReelResponse> createReel(
             Authentication authentication,
             @RequestParam @NotNull(message = "Craft ID is required") @Positive(message = "Craft ID must be positive") Long craftId,
             @RequestParam @NotBlank(message = "Title is required") @Size(min = 2, max = 150, message = "Title must be between 2 and 150 characters") String title,
@@ -50,7 +52,7 @@ public class CraftReelController {
                 thumbnailUrl
         );
 
-        return ResponseEntity.ok(reel);
+        return ResponseEntity.ok(PublicCraftReelResponse.fromEntity(reel));
     }
 
     // ==========================================
@@ -58,7 +60,7 @@ public class CraftReelController {
     // ==========================================
 
     @PutMapping("/{id}")
-    public ResponseEntity<CraftReel> updateReel(
+    public ResponseEntity<PublicCraftReelResponse> updateReel(
             Authentication authentication,
             @PathVariable @Positive(message = "Reel ID must be positive") Long id,
             @Valid @RequestBody UpdateReelRequest request) {
@@ -71,7 +73,7 @@ public class CraftReelController {
                 request
         );
 
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(PublicCraftReelResponse.fromEntity(updated));
     }
 
     // ==========================================
@@ -95,14 +97,16 @@ public class CraftReelController {
     // ==========================================
 
     @GetMapping("/my")
-    public ResponseEntity<List<CraftReel>> getMyReels(
+    public ResponseEntity<List<PublicCraftReelResponse>> getMyReels(
             Authentication authentication) {
 
         String identifier = authentication.getName();
+        List<CraftReel> reels = craftReelService.getMyReels(identifier);
+        List<PublicCraftReelResponse> response = reels.stream()
+                .map(PublicCraftReelResponse::fromEntity)
+                .collect(Collectors.toList());
 
-        return ResponseEntity.ok(
-                craftReelService.getMyReels(identifier)
-        );
+        return ResponseEntity.ok(response);
     }
 
     // ==========================================
@@ -110,11 +114,13 @@ public class CraftReelController {
     // ==========================================
 
     @GetMapping("/home")
-    public ResponseEntity<List<CraftReel>> getHomeReels() {
+    public ResponseEntity<List<PublicCraftReelResponse>> getHomeReels() {
+        List<CraftReel> reels = craftReelService.getHomeReels();
+        List<PublicCraftReelResponse> response = reels.stream()
+                .map(PublicCraftReelResponse::fromEntity)
+                .collect(Collectors.toList());
 
-        return ResponseEntity.ok(
-                craftReelService.getHomeReels()
-        );
+        return ResponseEntity.ok(response);
     }
 
     // ==========================================
@@ -122,12 +128,15 @@ public class CraftReelController {
     // ==========================================
 
     @GetMapping("/craft/{craftId}")
-    public ResponseEntity<List<CraftReel>> getReelsByCraftId(
+    public ResponseEntity<List<PublicCraftReelResponse>> getReelsByCraftId(
             @PathVariable @Positive(message = "Craft ID must be positive") Long craftId) {
 
-        return ResponseEntity.ok(
-                craftReelService.getReelsByCraftId(craftId)
-        );
+        List<CraftReel> reels = craftReelService.getReelsByCraftId(craftId);
+        List<PublicCraftReelResponse> response = reels.stream()
+                .map(PublicCraftReelResponse::fromEntity)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
     }
 
     // ==========================================
@@ -135,12 +144,11 @@ public class CraftReelController {
     // ==========================================
 
     @PostMapping("/{id}/view")
-    public ResponseEntity<CraftReel> incrementViews(
+    public ResponseEntity<PublicCraftReelResponse> incrementViews(
             @PathVariable @Positive(message = "Reel ID must be positive") Long id) {
 
-        return ResponseEntity.ok(
-                craftReelService.incrementViews(id)
-        );
+        CraftReel reel = craftReelService.incrementViews(id);
+        return ResponseEntity.ok(PublicCraftReelResponse.fromEntity(reel));
     }
 
     // ==========================================
@@ -148,11 +156,10 @@ public class CraftReelController {
     // ==========================================
 
     @PostMapping("/{id}/like")
-    public ResponseEntity<CraftReel> likeReel(
+    public ResponseEntity<PublicCraftReelResponse> likeReel(
             @PathVariable @Positive(message = "Reel ID must be positive") Long id) {
 
-        return ResponseEntity.ok(
-                craftReelService.likeReel(id)
-        );
+        CraftReel reel = craftReelService.likeReel(id);
+        return ResponseEntity.ok(PublicCraftReelResponse.fromEntity(reel));
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
@@ -27,33 +28,47 @@ public class AuctionController {
     }
 
     @PostMapping
-    public ResponseEntity<Auction> createAuction(
+    public ResponseEntity<PublicAuctionResponse> createAuction(
             Authentication authentication,
             @Valid @RequestBody CreateAuctionRequest request) {
 
         String identifier = authentication.getName();
-        return ResponseEntity.ok(auctionService.createAuction(identifier, request));
+        Auction auction = auctionService.createAuction(identifier, request);
+        return ResponseEntity.ok(PublicAuctionResponse.fromEntity(auction));
     }
 
     @GetMapping
-    public ResponseEntity<List<Auction>> getActiveAuctions() {
-        return ResponseEntity.ok(auctionService.getActiveAuctions());
+    public ResponseEntity<List<PublicAuctionResponse>> getActiveAuctions() {
+        List<Auction> auctions = auctionService.getActiveAuctions();
+        List<PublicAuctionResponse> response = auctions.stream()
+                .map(PublicAuctionResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Auction> getAuctionById(@PathVariable Long id) {
-        return ResponseEntity.ok(auctionService.getAuctionById(id));
+    public ResponseEntity<PublicAuctionResponse> getAuctionById(@PathVariable Long id) {
+        Auction auction = auctionService.getAuctionById(id);
+        return ResponseEntity.ok(PublicAuctionResponse.fromEntity(auction));
     }
 
     @GetMapping("/my-auctions")
-    public ResponseEntity<List<Auction>> getMyAuctions(Authentication authentication) {
+    public ResponseEntity<List<PublicAuctionResponse>> getMyAuctions(Authentication authentication) {
         String identifier = authentication.getName();
-        return ResponseEntity.ok(auctionService.getMyAuctions(identifier));
+        List<Auction> auctions = auctionService.getMyAuctions(identifier);
+        List<PublicAuctionResponse> response = auctions.stream()
+                .map(PublicAuctionResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/craft/{craftId}")
-    public ResponseEntity<List<Auction>> getAuctionsByCraftId(@PathVariable Long craftId) {
-        return ResponseEntity.ok(auctionService.getAuctionsByCraftId(craftId));
+    public ResponseEntity<List<PublicAuctionResponse>> getAuctionsByCraftId(@PathVariable Long craftId) {
+        List<Auction> auctions = auctionService.getAuctionsByCraftId(craftId);
+        List<PublicAuctionResponse> response = auctions.stream()
+                .map(PublicAuctionResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     // Join room with Base Deposit
@@ -70,24 +85,26 @@ public class AuctionController {
 
     // Place differential bid & reset 1-minute timer
     @PostMapping("/{id}/differential-bid")
-    public ResponseEntity<Bid> placeDifferentialBid(
+    public ResponseEntity<PublicBidResponse> placeDifferentialBid(
             Authentication authentication,
             @PathVariable Long id,
             @Valid @RequestBody PlaceBidRequest request) {
 
         String identifier = authentication.getName();
-        return ResponseEntity.ok(auctionService.placeDifferentialBid(identifier, id, request.getAmount()));
+        Bid bid = auctionService.placeDifferentialBid(identifier, id, request.getAmount());
+        return ResponseEntity.ok(PublicBidResponse.fromEntity(bid));
     }
 
     // Fallback standard bid
     @PostMapping("/{id}/bids")
-    public ResponseEntity<Bid> placeBid(
+    public ResponseEntity<PublicBidResponse> placeBid(
             Authentication authentication,
             @PathVariable Long id,
             @Valid @RequestBody PlaceBidRequest request) {
 
         String identifier = authentication.getName();
-        return ResponseEntity.ok(auctionService.placeDifferentialBid(identifier, id, request.getAmount()));
+        Bid bid = auctionService.placeDifferentialBid(identifier, id, request.getAmount());
+        return ResponseEntity.ok(PublicBidResponse.fromEntity(bid));
     }
 
     // Privacy-Safe sanitized participants (Name • City only)
@@ -153,22 +170,31 @@ public class AuctionController {
     }
 
     @GetMapping("/{id}/bids")
-    public ResponseEntity<List<Bid>> getAuctionBids(@PathVariable Long id) {
-        return ResponseEntity.ok(auctionService.getAuctionBids(id));
+    public ResponseEntity<List<PublicBidResponse>> getAuctionBids(@PathVariable Long id) {
+        List<Bid> bids = auctionService.getAuctionBids(id);
+        List<PublicBidResponse> response = bids.stream()
+                .map(PublicBidResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/my-bids")
-    public ResponseEntity<List<Bid>> getMyBids(Authentication authentication) {
+    public ResponseEntity<List<PublicBidResponse>> getMyBids(Authentication authentication) {
         String identifier = authentication.getName();
-        return ResponseEntity.ok(auctionService.getMyBids(identifier));
+        List<Bid> bids = auctionService.getMyBids(identifier);
+        List<PublicBidResponse> response = bids.stream()
+                .map(PublicBidResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{id}/cancel")
-    public ResponseEntity<Auction> cancelAuction(
+    public ResponseEntity<PublicAuctionResponse> cancelAuction(
             Authentication authentication,
             @PathVariable Long id) {
 
         String identifier = authentication.getName();
-        return ResponseEntity.ok(auctionService.cancelAuction(identifier, id));
+        Auction auction = auctionService.cancelAuction(identifier, id);
+        return ResponseEntity.ok(PublicAuctionResponse.fromEntity(auction));
     }
 }

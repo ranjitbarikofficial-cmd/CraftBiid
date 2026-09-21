@@ -120,7 +120,7 @@
         <div class="artisan-creator-card">
           <span class="artisan-avatar-icon">👨‍🎨</span>
           <div class="artisan-meta-stack">
-            <strong>{{ craft.seller?.name || 'Master Artisan' }}</strong>
+            <strong>{{ craft.seller?.displayName || craft.seller?.name || 'Master Artisan' }}</strong>
             <span>📍 {{ craft.seller?.city || 'India' }} • {{ followerCount }} followers</span>
           </div>
 

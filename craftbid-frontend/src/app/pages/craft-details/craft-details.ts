@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, finalize } from 'rxjs';
 import { CraftService, CraftItem } from '../../services/craft.service';
 import { CraftReelService, CraftReelItem } from '../../services/craft-reel.service';
 import { AuctionService } from '../../services/auction.service';
@@ -49,17 +49,6 @@ export class CraftDetails implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // 1. Read immediate snapshot param (fast synchronous initial load)
-    const initialIdStr = this.route.snapshot.paramMap.get('id');
-    if (initialIdStr) {
-      const initialId = Number(initialIdStr);
-      if (!isNaN(initialId) && initialId > 0) {
-        this.craftId = initialId;
-        this.loadCraft(initialId);
-      }
-    }
-
-    // 2. React to route parameter changes (e.g. clicking related craft links)
     this.routeSub = this.route.paramMap.subscribe((paramMap) => {
       const idStr = paramMap.get('id');
       if (idStr) {
@@ -93,39 +82,50 @@ export class CraftDetails implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.craft = null;
 
-    this.craftService.getCraftById(id).subscribe({
-      next: (craft) => {
-        if (!craft || !craft.id) {
+    this.craftService
+      .getCraftById(id)
+      .pipe(
+        finalize(() => {
           this.loading = false;
-          this.errorMessage = 'Craft item not found or has been removed.';
-          this.errorType = 'NOT_FOUND';
-          return;
-        }
+        })
+      )
+      .subscribe({
+        next: (craft) => {
+          if (!craft || !craft.id) {
+            this.errorMessage = 'Craft item not found or has been removed.';
+            this.errorType = 'NOT_FOUND';
+            this.craft = null;
+            return;
+          }
 
-        this.craft = craft;
-        this.loading = false;
+          this.craft = craft;
 
-        // Load secondary non-blocking data
-        this.loadReels(id);
-        this.loadActiveAuction(id);
-        this.checkFollowStatus();
-      },
-      error: (err) => {
-        console.error('Failed to load craft details for ID ' + id + ':', err);
-        this.loading = false;
+          // Secondary non-blocking enrichments
+          this.loadReels(id);
+          this.loadActiveAuction(id);
+          this.checkFollowStatus();
+        },
+        error: (error) => {
+          console.error('Craft loading failed', {
+            status: error?.status,
+            message: error?.message,
+          });
 
-        if (err.status === 404) {
-          this.errorMessage = 'Craft not found. This craft creation may have been deleted by the artisan.';
-          this.errorType = 'NOT_FOUND';
-        } else if (err.status === 0 || err.status === 504 || err.status === 502) {
-          this.errorMessage = 'Unable to connect to the server. Please check your internet connection.';
-          this.errorType = 'NETWORK';
-        } else {
-          this.errorMessage = err.error?.message || 'Unable to load craft details at this time. Please try again.';
-          this.errorType = 'SERVER';
-        }
-      },
-    });
+          this.craft = null;
+
+          if (error?.status === 404) {
+            this.errorMessage = 'Craft not found. This craft creation may have been deleted by the artisan.';
+            this.errorType = 'NOT_FOUND';
+          } else if (error?.status === 0 || error?.status === 504 || error?.status === 502) {
+            this.errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+            this.errorType = 'NETWORK';
+          } else {
+            this.errorMessage =
+              error?.error?.message || 'Unable to load craft details at this time. Please try again.';
+            this.errorType = 'SERVER';
+          }
+        },
+      });
   }
 
   retry(): void {

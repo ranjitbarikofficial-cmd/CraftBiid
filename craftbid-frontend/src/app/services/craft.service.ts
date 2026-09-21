@@ -5,6 +5,16 @@ import { getApiBaseUrl } from './api-config';
 import { Trie } from '../core/dsa/trie';
 import { LRUCache } from '../core/dsa/lru-cache';
 
+export interface PublicSellerItem {
+  id: number;
+  name: string;
+  displayName?: string;
+  city?: string;
+  profileImageUrl?: string;
+  verified?: boolean;
+  sellerEnabled?: boolean;
+}
+
 export interface CraftItem {
   id: number;
   title: string;
@@ -12,14 +22,7 @@ export interface CraftItem {
   basePrice: number;
   imageUrl: string;
   status: string;
-  seller?: {
-    id: number;
-    name: string;
-    email: string;
-    phone?: string;
-    city?: string;
-    profileImageUrl?: string;
-  };
+  seller?: PublicSellerItem;
   category?: {
     id: number;
     name: string;

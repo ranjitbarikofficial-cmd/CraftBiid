@@ -1,5 +1,6 @@
 package com.craftbid.controller;
 
+import com.craftbid.dto.PublicCraftResponse;
 import com.craftbid.entity.Craft;
 import com.craftbid.service.CraftService;
 import jakarta.validation.Valid;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Validated
 @RestController
@@ -36,7 +38,7 @@ public class CraftController {
             value = "/upload",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ResponseEntity<Craft> uploadCraft(
+    public ResponseEntity<PublicCraftResponse> uploadCraft(
             @RequestParam @NotBlank(message = "Title is required") @Size(min = 2, max = 150, message = "Title must be between 2 and 150 characters") String title,
             @RequestParam @NotBlank(message = "Category is required") @Size(min = 2, max = 100, message = "Category must be between 2 and 100 characters") String category,
             @RequestParam(required = false) @Size(max = 2000, message = "Description cannot exceed 2000 characters") String description,
@@ -55,7 +57,7 @@ public class CraftController {
                 isLiveForAuction
         );
 
-        return ResponseEntity.ok(craft);
+        return ResponseEntity.ok(PublicCraftResponse.fromEntity(craft));
     }
 
     // ==========================================
@@ -63,8 +65,12 @@ public class CraftController {
     // ==========================================
 
     @GetMapping
-    public ResponseEntity<List<Craft>> getAllCrafts() {
-        return ResponseEntity.ok(craftService.getAllCrafts());
+    public ResponseEntity<List<PublicCraftResponse>> getAllCrafts() {
+        List<Craft> crafts = craftService.getAllCrafts();
+        List<PublicCraftResponse> response = crafts.stream()
+                .map(PublicCraftResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     // ==========================================
@@ -72,8 +78,12 @@ public class CraftController {
     // ==========================================
 
     @GetMapping("/my")
-    public ResponseEntity<List<Craft>> getMyCrafts() {
-        return ResponseEntity.ok(craftService.getMyCrafts());
+    public ResponseEntity<List<PublicCraftResponse>> getMyCrafts() {
+        List<Craft> crafts = craftService.getMyCrafts();
+        List<PublicCraftResponse> response = crafts.stream()
+                .map(PublicCraftResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     // ==========================================
@@ -81,9 +91,13 @@ public class CraftController {
     // ==========================================
 
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<Craft>> getCraftsByCategory(
+    public ResponseEntity<List<PublicCraftResponse>> getCraftsByCategory(
             @PathVariable @Positive(message = "Category ID must be positive") Long categoryId) {
-        return ResponseEntity.ok(craftService.getCraftsByCategoryId(categoryId));
+        List<Craft> crafts = craftService.getCraftsByCategoryId(categoryId);
+        List<PublicCraftResponse> response = crafts.stream()
+                .map(PublicCraftResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     // ==========================================
@@ -91,15 +105,17 @@ public class CraftController {
     // ==========================================
 
     @GetMapping("/search")
-    public ResponseEntity<List<Craft>> searchCrafts(
+    public ResponseEntity<List<PublicCraftResponse>> searchCrafts(
             @RequestParam(required = false) @Size(max = 100, message = "Keyword cannot exceed 100 characters") String keyword,
             @RequestParam(required = false) @Positive(message = "Category ID must be positive") Long categoryId,
             @RequestParam(required = false) @DecimalMin(value = "0.00", message = "Min price cannot be negative") BigDecimal minPrice,
             @RequestParam(required = false) @DecimalMin(value = "0.00", message = "Max price cannot be negative") BigDecimal maxPrice) {
 
-        return ResponseEntity.ok(
-                craftService.searchCrafts(keyword, categoryId, minPrice, maxPrice)
-        );
+        List<Craft> crafts = craftService.searchCrafts(keyword, categoryId, minPrice, maxPrice);
+        List<PublicCraftResponse> response = crafts.stream()
+                .map(PublicCraftResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     // ==========================================
@@ -119,10 +135,11 @@ public class CraftController {
     // ==========================================
 
     @GetMapping("/{id}")
-    public ResponseEntity<Craft> getCraftById(
+    public ResponseEntity<PublicCraftResponse> getCraftById(
             @PathVariable @Positive(message = "Craft ID must be positive") Long id) {
 
-        return ResponseEntity.ok(craftService.getCraftById(id));
+        Craft craft = craftService.getCraftById(id);
+        return ResponseEntity.ok(PublicCraftResponse.fromEntity(craft));
     }
 
     // ==========================================
@@ -130,11 +147,12 @@ public class CraftController {
     // ==========================================
 
     @PutMapping("/{id}")
-    public ResponseEntity<Craft> updateCraft(
+    public ResponseEntity<PublicCraftResponse> updateCraft(
             @PathVariable @Positive(message = "Craft ID must be positive") Long id,
             @Valid @RequestBody Craft craft) {
 
-        return ResponseEntity.ok(craftService.updateCraft(id, craft));
+        Craft updated = craftService.updateCraft(id, craft);
+        return ResponseEntity.ok(PublicCraftResponse.fromEntity(updated));
     }
 
     // ==========================================
@@ -145,7 +163,7 @@ public class CraftController {
             value = "/{id}/update-media",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ResponseEntity<Craft> updateCraftWithMedia(
+    public ResponseEntity<PublicCraftResponse> updateCraftWithMedia(
             @PathVariable @Positive(message = "Craft ID must be positive") Long id,
             @RequestParam(required = false) @Size(min = 2, max = 150, message = "Title must be between 2 and 150 characters") String title,
             @RequestParam(required = false) @Size(min = 2, max = 100, message = "Category must be between 2 and 100 characters") String category,
@@ -164,7 +182,7 @@ public class CraftController {
                 isLiveForAuction
         );
 
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(PublicCraftResponse.fromEntity(updated));
     }
 
     // ==========================================
@@ -172,11 +190,12 @@ public class CraftController {
     // ==========================================
 
     @PatchMapping("/{id}/toggle-status")
-    public ResponseEntity<Craft> toggleLiveStatus(
+    public ResponseEntity<PublicCraftResponse> toggleLiveStatus(
             @PathVariable @Positive(message = "Craft ID must be positive") Long id,
             @RequestParam(required = false) Boolean isLive) {
 
-        return ResponseEntity.ok(craftService.toggleLiveStatus(id, isLive));
+        Craft updated = craftService.toggleLiveStatus(id, isLive);
+        return ResponseEntity.ok(PublicCraftResponse.fromEntity(updated));
     }
 
     // ==========================================
