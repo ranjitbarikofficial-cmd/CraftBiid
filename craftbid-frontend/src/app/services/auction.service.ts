@@ -10,9 +10,13 @@ export interface AuctionItem {
   seller: {
     id: number;
     name: string;
-    email: string;
+    displayName?: string;
+    email?: string;
     phone?: string;
     city?: string;
+    profileImageUrl?: string;
+    verified?: boolean;
+    sellerEnabled?: boolean;
   };
   startingPrice: number;
   currentHighestBid: number;
@@ -25,9 +29,12 @@ export interface AuctionItem {
   winningBidder?: {
     id: number;
     name: string;
-    email: string;
+    displayName?: string;
+    email?: string;
     city?: string;
     phone?: string;
+    profileImageUrl?: string;
+    verified?: boolean;
   };
   totalBids: number;
   maxParticipants: number;

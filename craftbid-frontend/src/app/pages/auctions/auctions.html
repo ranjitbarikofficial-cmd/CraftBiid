@@ -1,59 +1,124 @@
 <app-topbar></app-topbar>
 <app-navbar></app-navbar>
 
-<div class="auctions-container">
-  <div class="auctions-header">
-    <h1>🔨 Live Craft Auctions</h1>
-    <p>Place competitive bids on rare, one-of-a-kind handmade crafts directly from verified artisans.</p>
-  </div>
+<main class="auctions-container">
+  <header class="auctions-header">
+    <div class="header-pill">🔥 LIVE BIDDING ARENA</div>
+    <h1>Live Craft Auctions</h1>
+    <p>Place competitive bids on rare, authentic handmade crafts directly from verified Indian artisans with 100% refund protection.</p>
+  </header>
 
+  <!-- 1. LOADING STATE -->
   @if (loading) {
     <div class="loading-state">
-      <p>⏳ Loading active auctions...</p>
+      <div class="loading-spinner"></div>
+      <h3>Loading active auctions...</h3>
+      <p>Fetching real-time live auction rooms and artisan creations</p>
     </div>
   }
 
-  @if (!loading && auctions.length === 0) {
+  <!-- 2. ERROR STATE -->
+  @else if (errorMessage) {
+    <div class="error-state">
+      <div class="error-icon">⚠️</div>
+      <h2>Unable to Load Live Auctions</h2>
+      <p class="error-desc">{{ errorMessage }}</p>
+      <div class="error-actions">
+        <button type="button" class="btn-primary" (click)="loadAuctions(true)">
+          🔄 Try Again
+        </button>
+        <a routerLink="/search" class="btn-secondary">
+          🏺 Explore Marketplace
+        </a>
+      </div>
+    </div>
+  }
+
+  <!-- 3. EMPTY STATE -->
+  @else if (!auctions || auctions.length === 0) {
     <div class="empty-state">
-      <div class="empty-icon">🔨</div>
-      <h2>No live auctions right now</h2>
-      <p>Artisans launch limited-edition auctions regularly. Explore the marketplace in the meantime!</p>
-      <a routerLink="/home" class="btn-primary">Browse Marketplace</a>
+      <div class="empty-icon">🏺</div>
+      <h2>No live auctions available right now</h2>
+      <p>Artisans launch limited-edition turn-based auctions regularly. Explore the marketplace or check back soon!</p>
+      <div class="empty-actions">
+        <a routerLink="/search" class="btn-primary">Explore Marketplace</a>
+        <a routerLink="/reels" class="btn-secondary">Watch Craft Reels</a>
+      </div>
     </div>
   }
 
-  @if (!loading && auctions.length > 0) {
+  <!-- 4. AUCTIONS GRID -->
+  @else {
     <div class="auctions-grid">
       @for (auction of auctions; track auction.id) {
-        <article class="auction-card" [routerLink]="['/auctions', auction.id]">
-          <div class="auction-image-wrap">
+        <article class="auction-card">
+          <div class="auction-image-wrap" [routerLink]="['/auctions', auction.id]">
             <span class="timer-badge">⏳ {{ getTimeRemaining(auction.endTime) }}</span>
-            <img [src]="resolveMediaUrl(auction.craft?.imageUrl)" [alt]="auction.craft?.title" (error)="onImageError($event)" />
-            <span class="bids-pill">{{ auction.totalBids }} bids</span>
+            <img
+              [src]="resolveMediaUrl(auction.craft?.imageUrl)"
+              [alt]="auction.craft?.title || 'Handmade Craft Creation'"
+              (error)="onImageError($event)"
+            />
+            <div class="auction-image-overlay">
+              <span class="bids-pill">👥 {{ auction.totalBids || 0 }} bids placed</span>
+              <span class="room-pill">Room #{{ auction.id }}</span>
+            </div>
           </div>
 
           <div class="auction-details">
-            <span class="category-name">{{ auction.craft?.category?.name || 'Craft' }}</span>
-            <h3>{{ auction.craft?.title }}</h3>
-            <p class="seller-name">👨‍🎨 {{ auction.seller?.name }}</p>
+            <div class="card-meta-row">
+              <span class="category-name">{{ auction.craft?.category?.name || 'Handmade Craft' }}</span>
+              <span class="status-indicator-dot">
+                <span class="live-pulse"></span>
+                <span>Live Room</span>
+              </span>
+            </div>
+
+            <!-- Dynamic Craft Link -->
+            <h3 class="auction-craft-title">
+              @if (auction.craft?.id) {
+                <a [routerLink]="['/crafts', auction.craft.id]" class="craft-title-link" title="View Craft Details">
+                  {{ auction.craft.title }}
+                </a>
+              } @else {
+                <span>{{ auction.craft?.title || 'Artisan Creation' }}</span>
+              }
+            </h3>
+
+            <p class="seller-name">
+              👨‍🎨 {{ auction.seller?.displayName || auction.seller?.name || 'Master Artisan' }}
+              @if (auction.seller?.city) {
+                <span class="seller-city">• {{ auction.seller.city }}</span>
+              }
+            </p>
 
             <div class="bid-status-box">
               <div class="bid-col">
                 <span class="label">Current Highest Bid</span>
-                <span class="value">{{ formatPrice(auction.currentHighestBid) }}</span>
+                <span class="value">{{ formatPrice(auction.currentHighestBid || auction.startingPrice) }}</span>
               </div>
               <div class="bid-col right">
-                <span class="label">Starting</span>
+                <span class="label">Starting Price</span>
                 <span class="sub-value">{{ formatPrice(auction.startingPrice) }}</span>
               </div>
             </div>
 
-            <button class="btn-bid-now">🔨 Bid Now</button>
+            <div class="card-actions-row">
+              <a [routerLink]="['/auctions', auction.id]" class="btn-bid-now">
+                🔨 Enter Live Auction Room
+              </a>
+              @if (auction.craft?.id) {
+                <a [routerLink]="['/crafts', auction.craft.id]" class="btn-craft-details" title="View Full Craft Details">
+                  🏺 Details
+                </a>
+              }
+            </div>
           </div>
         </article>
       }
     </div>
   }
-</div>
+</main>
 
 <app-footer></app-footer>
+

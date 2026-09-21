@@ -77,9 +77,19 @@ export const routes: Routes = [
       import('./pages/auctions/auctions').then((m) => m.Auctions),
   },
   {
+    path: 'live-auctions',
+    redirectTo: 'auctions',
+    pathMatch: 'full',
+  },
+  {
     path: 'auctions/:id',
     loadComponent: () =>
       import('./pages/auction-details/auction-details').then((m) => m.AuctionDetails),
+  },
+  {
+    path: 'live-auctions/:id',
+    redirectTo: 'auctions/:id',
+    pathMatch: 'full',
   },
   {
     path: 'my-bids',
