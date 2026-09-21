@@ -239,14 +239,18 @@
                 <!-- Linked Craft Purchase / Bid Box -->
                 @if (reel.craft) {
                   <div class="linked-craft-card">
-                    <img
-                      [src]="resolveMediaUrl(reel.craft.imageUrl)"
-                      [alt]="reel.craft.title"
-                      (error)="onImageError($event)"
-                    />
+                    <a [routerLink]="['/crafts', reel.craft.id]" class="linked-craft-img-link">
+                      <img
+                        [src]="resolveMediaUrl(reel.craft.imageUrl)"
+                        [alt]="reel.craft.title"
+                        (error)="onImageError($event)"
+                      />
+                    </a>
                     <div class="craft-mini-info">
                       <span class="craft-tag-pill">🏺 Featured Craft</span>
-                      <h4>{{ reel.craft.title }}</h4>
+                      <a [routerLink]="['/crafts', reel.craft.id]" class="linked-craft-title-link">
+                        <h4>{{ reel.craft.title }}</h4>
+                      </a>
                       <strong class="craft-base-price">Base Price: {{ formatPrice(reel.craft.basePrice) }}</strong>
                       @if (getAuctionForCraft(reel.craft.id)) {
                         <small class="craft-participants-count">

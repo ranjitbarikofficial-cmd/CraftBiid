@@ -337,7 +337,13 @@
                   <tr>
                     <td><span class="order-ref-code">#CB-ORD-{{ o.id }}</span></td>
                     <td>
-                      <strong>{{ o.auction?.craft?.title }}</strong>
+                      @if (o.auction?.craft?.id) {
+                        <a [routerLink]="['/crafts', o.auction.craft.id]" style="text-decoration: none; color: inherit;">
+                          <strong>{{ o.auction.craft.title }}</strong>
+                        </a>
+                      } @else {
+                        <strong>{{ o.auction?.craft?.title || 'Craft Item' }}</strong>
+                      }
                     </td>
                     <td>
                       <div class="buyer-profile-cell">

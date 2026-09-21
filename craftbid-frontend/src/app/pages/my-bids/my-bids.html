@@ -39,7 +39,13 @@
             <tr>
               <td>
                 <div class="craft-item-info">
-                  <strong>{{ bid.auction?.craft?.title || 'Craft Item' }}</strong>
+                  @if (bid.auction?.craft?.id) {
+                    <a [routerLink]="['/crafts', bid.auction!.craft!.id]" style="text-decoration: none; color: inherit;">
+                      <strong>{{ bid.auction?.craft?.title || 'Craft Item' }}</strong>
+                    </a>
+                  } @else {
+                    <strong>{{ bid.auction?.craft?.title || 'Craft Item' }}</strong>
+                  }
                   <small>{{ bid.auction?.seller?.name || 'Artisan' }}</small>
                 </div>
               </td>

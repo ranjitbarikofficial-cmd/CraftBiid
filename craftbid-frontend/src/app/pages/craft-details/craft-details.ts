@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, finalize, map, filter, distinctUntilChanged } from 'rxjs';
@@ -47,7 +47,8 @@ export class CraftDetails implements OnInit, OnDestroy {
     private auctionService: AuctionService,
     public authService: AuthService,
     private followService: FollowService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -68,6 +69,7 @@ export class CraftDetails implements OnInit, OnDestroy {
           this.loading = false;
           this.errorMessage = 'Invalid craft identifier specified.';
           this.errorType = 'NOT_FOUND';
+          this.cdr.markForCheck();
         }
       });
   }
@@ -85,7 +87,7 @@ export class CraftDetails implements OnInit, OnDestroy {
   }
 
   loadCraft(id: number): void {
-    // Guard: Prevent duplicate dispatch if the exact craft is already loaded and no param changed
+    // Guard: Prevent duplicate dispatch if the exact craft is already loaded and in progress
     if (this.isRequestInProgress && this.craftId === id && this.craft) {
       return;
     }
@@ -108,6 +110,7 @@ export class CraftDetails implements OnInit, OnDestroy {
         finalize(() => {
           this.loading = false;
           this.isRequestInProgress = false;
+          this.cdr.markForCheck();
           console.log('[CraftDetails] request completed for ID', id);
         })
       )
@@ -117,10 +120,12 @@ export class CraftDetails implements OnInit, OnDestroy {
             this.errorMessage = 'Craft item not found or has been removed.';
             this.errorType = 'NOT_FOUND';
             this.craft = null;
+            this.cdr.markForCheck();
             return;
           }
 
           this.craft = craft;
+          this.cdr.markForCheck();
           console.log('[CraftDetails] request success', {
             craftId: craft.id,
             title: craft.title,
@@ -150,6 +155,7 @@ export class CraftDetails implements OnInit, OnDestroy {
               error?.error?.message || 'Unable to load craft details at this time. Please try again.';
             this.errorType = 'SERVER';
           }
+          this.cdr.markForCheck();
         },
       });
   }

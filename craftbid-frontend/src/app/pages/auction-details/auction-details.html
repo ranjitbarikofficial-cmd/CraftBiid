@@ -82,7 +82,9 @@
       <!-- LEFT: CRAFT SHOWCASE -->
       <section class="craft-showcase-card">
         <div class="image-wrapper">
-          <img [src]="resolveMediaUrl(auction.craft.imageUrl)" [alt]="auction.craft.title" (error)="onImageError($event)" />
+          <a [routerLink]="['/crafts', auction.craft.id]">
+            <img [src]="resolveMediaUrl(auction.craft.imageUrl)" [alt]="auction.craft.title" (error)="onImageError($event)" />
+          </a>
           @if (auction.liveTurnActive) {
             <span class="live-badge-overlay">⚡ LIVE 1-MIN BIDDING</span>
           }
@@ -93,8 +95,13 @@
               {{ auction.liveTurnActive ? 'LIVE' : auction.status }}
             </span>
             <span class="category-pill">{{ auction.craft.category?.name || 'Handmade' }}</span>
+            <a [routerLink]="['/crafts', auction.craft.id]" class="view-craft-pill-link" style="margin-left: auto; font-size: 0.8rem; color: #ea580c; text-decoration: none; font-weight: 600;">
+              🏺 View Craft Details →
+            </a>
           </div>
-          <h1>{{ auction.craft.title }}</h1>
+          <a [routerLink]="['/crafts', auction.craft.id]" style="text-decoration: none; color: inherit;">
+            <h1>{{ auction.craft.title }}</h1>
+          </a>
           <p class="description">{{ auction.craft.description }}</p>
 
           <div class="artisan-chip">
