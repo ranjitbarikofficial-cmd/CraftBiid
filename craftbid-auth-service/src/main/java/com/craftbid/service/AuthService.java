@@ -223,13 +223,6 @@ public class AuthService {
             );
         }
 
-        // Production Security: Administrators must authenticate exclusively via Admin Security OTP Portal
-        if (user.getRole() == Role.ADMIN) {
-            throw new RuntimeException(
-                    "Administrator accounts must authenticate exclusively via the Admin Security OTP Portal."
-            );
-        }
-
         // =================================================
         // PASSWORD
         // =================================================
