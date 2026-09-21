@@ -1,6 +1,7 @@
-import { Component, OnInit, ElementRef, ViewChildren, QueryList, AfterViewInit, OnDestroy, HostListener, NgZone } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChildren, QueryList, AfterViewInit, OnDestroy, HostListener, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { CraftReelService, CraftReelItem } from '../../services/craft-reel.service';
 import { FollowService } from '../../services/follow.service';
 import { AuctionService } from '../../services/auction.service';
@@ -60,7 +61,8 @@ export class Reels implements OnInit, AfterViewInit, OnDestroy {
     public authService: AuthService,
     private toastService: ToastService,
     private router: Router,
-    private zone: NgZone
+    private zone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -116,32 +118,50 @@ export class Reels implements OnInit, AfterViewInit, OnDestroy {
 
   loadReels(): void {
     this.loading = true;
+    this.cdr.markForCheck();
+
     if (this.feedType === 'following') {
-      this.followService.getFollowingReels().subscribe({
-        next: (data) => {
-          this.reels = this.filterValidVideos(data);
-          this.loading = false;
-          this.checkFollowStatuses();
-          setTimeout(() => this.playVideoAtIndex(0), 200);
-        },
-        error: (err) => {
-          console.error('Failed to load following reels:', err);
-          this.loading = false;
-        },
-      });
+      this.followService
+        .getFollowingReels()
+        .pipe(
+          finalize(() => {
+            this.loading = false;
+            this.cdr.markForCheck();
+          })
+        )
+        .subscribe({
+          next: (data) => {
+            this.reels = this.filterValidVideos(data);
+            this.checkFollowStatuses();
+            setTimeout(() => this.playVideoAtIndex(0), 200);
+            this.cdr.markForCheck();
+          },
+          error: (err) => {
+            console.error('Failed to load following reels:', err);
+            this.cdr.markForCheck();
+          },
+        });
     } else {
-      this.craftReelService.getHomeReels().subscribe({
-        next: (data) => {
-          this.reels = this.filterValidVideos(data);
-          this.loading = false;
-          this.checkFollowStatuses();
-          setTimeout(() => this.playVideoAtIndex(0), 200);
-        },
-        error: (err) => {
-          console.error('Failed to load reels:', err);
-          this.loading = false;
-        },
-      });
+      this.craftReelService
+        .getHomeReels()
+        .pipe(
+          finalize(() => {
+            this.loading = false;
+            this.cdr.markForCheck();
+          })
+        )
+        .subscribe({
+          next: (data) => {
+            this.reels = this.filterValidVideos(data);
+            this.checkFollowStatuses();
+            setTimeout(() => this.playVideoAtIndex(0), 200);
+            this.cdr.markForCheck();
+          },
+          error: (err) => {
+            console.error('Failed to load reels:', err);
+            this.cdr.markForCheck();
+          },
+        });
     }
   }
 

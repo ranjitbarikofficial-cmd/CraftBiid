@@ -180,16 +180,21 @@
       </button>
     </div>
 
-    @if (loading) {
-      <div class="studio-loading-state">
-        <p>⏳ Syncing your studio catalog...</p>
-      </div>
-    }
-
     <!-- ================= TAB 1: CRAFTS CATALOG ================= -->
-    @if (!loading && activeTab === 'crafts') {
+    @if (activeTab === 'crafts') {
       <section class="tab-content-area">
-        @if (crafts.length > 0) {
+        @if (catalogLoading) {
+          <div class="studio-loading-state">
+            <p>⏳ Syncing your studio catalog...</p>
+          </div>
+        } @else if (errorMessage) {
+          <div class="studio-empty-state">
+            <div class="empty-glyph">⚠️</div>
+            <h3>Unable to load catalog</h3>
+            <p>{{ errorMessage }}</p>
+            <button type="button" class="btn-create-craft" (click)="loadCrafts()" style="margin-top: 1rem;">🔄 Retry</button>
+          </div>
+        } @else if (crafts.length > 0) {
           <div class="catalog-grid">
             @for (craft of crafts; track craft.id) {
               <div class="catalog-card" [class.offline-craft]="craft.status === 'OFFLINE'">
@@ -263,9 +268,13 @@
     }
 
     <!-- ================= TAB 2: REELS ================= -->
-    @if (!loading && activeTab === 'reels') {
+    @if (activeTab === 'reels') {
       <section class="tab-content-area">
-        @if (reels.length > 0) {
+        @if (reelsLoading) {
+          <div class="studio-loading-state">
+            <p>⏳ Loading your craft reels...</p>
+          </div>
+        } @else if (reels.length > 0) {
           <div class="reels-grid-layout">
             @for (reel of reels; track reel.id) {
               <div class="studio-reel-card">
@@ -315,9 +324,13 @@
     }
 
     <!-- ================= TAB 3: ORDERS & DISPATCH ================= -->
-    @if (!loading && activeTab === 'orders') {
+    @if (activeTab === 'orders') {
       <section class="tab-content-area">
-        @if (orders.length > 0) {
+        @if (ordersLoading) {
+          <div class="studio-loading-state">
+            <p>⏳ Loading order dispatch queue...</p>
+          </div>
+        } @else if (orders.length > 0) {
           <div class="orders-card-table-wrap">
             <table class="studio-table">
               <thead>

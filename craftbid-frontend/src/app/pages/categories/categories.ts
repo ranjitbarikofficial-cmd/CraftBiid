@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { CategoryService, CategoryItem } from '../../services/category.service';
 import { CraftService, CraftItem } from '../../services/craft.service';
 import { Topbar } from '../home/topbar/topbar';
@@ -35,49 +36,69 @@ export class Categories implements OnInit {
     private categoryService: CategoryService,
     private craftService: CraftService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.categoryService.getAllCategories().subscribe({
-      next: (cats) => {
-        this.categories = cats;
-        this.route.queryParams.subscribe((params) => {
-          const catId = params['id'];
-          if (catId) {
-            const found = this.categories.find((c) => c.id === Number(catId));
-            if (found) {
-              this.selectCategory(found);
-              return;
+    this.categoryService
+      .getAllCategories()
+      .pipe(
+        finalize(() => {
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (cats) => {
+          this.categories = cats || [];
+          this.route.queryParams.subscribe((params) => {
+            const catId = params['id'];
+            if (catId) {
+              const found = this.categories.find((c) => c.id === Number(catId));
+              if (found) {
+                this.selectCategory(found);
+                return;
+              }
             }
-          }
-          if (this.categories.length > 0) {
-            this.selectCategory(this.categories[0]);
-          } else {
-            this.loading = false;
-          }
-        });
-      },
-      error: (err) => {
-        console.error('Failed to load categories:', err);
-        this.loading = false;
-      },
-    });
+            if (this.categories.length > 0) {
+              this.selectCategory(this.categories[0]);
+            } else {
+              this.loading = false;
+              this.cdr.markForCheck();
+            }
+          });
+        },
+        error: (err) => {
+          console.error('Failed to load categories:', err);
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   selectCategory(category: CategoryItem): void {
     this.selectedCategory = category;
     this.loading = true;
-    this.craftService.getCraftsByCategory(category.id).subscribe({
-      next: (data) => {
-        this.crafts = data;
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Failed to load category crafts:', err);
-        this.loading = false;
-      },
-    });
+    this.cdr.markForCheck();
+
+    this.craftService
+      .getCraftsByCategory(category.id)
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.crafts = data || [];
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Failed to load category crafts:', err);
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   getCategoryIcon(name: string): string {

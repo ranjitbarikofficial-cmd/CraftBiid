@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { CategoryService, CategoryItem } from '../../../services/category.service';
 import { CraftService, CraftItem } from '../../../services/craft.service';
 import { CraftReelService, CraftReelItem } from '../../../services/craft-reel.service';
@@ -41,7 +42,8 @@ export class HomeContent implements OnInit {
     private craftService: CraftService,
     private craftReelService: CraftReelService,
     private auctionService: AuctionService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -53,11 +55,13 @@ export class HomeContent implements OnInit {
 
   loadHomeData(): void {
     this.loading = true;
+    this.cdr.markForCheck();
 
     this.auctionService.getActiveAuctions().subscribe({
       next: (auctions) => {
         if (auctions && auctions.length > 0) {
           this.featuredAuction = auctions[0];
+          this.cdr.markForCheck();
         }
       },
       error: (err) => console.error('Failed to load active auctions:', err),
@@ -65,21 +69,30 @@ export class HomeContent implements OnInit {
 
     this.categoryService.getAllCategories().subscribe({
       next: (cats) => {
-        this.categories = cats;
+        this.categories = cats || [];
+        this.cdr.markForCheck();
       },
       error: (err) => console.error('Failed to load categories:', err),
     });
 
-    this.craftService.getAllCrafts().subscribe({
-      next: (crafts) => {
-        this.crafts = crafts;
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Failed to load crafts:', err);
-        this.loading = false;
-      },
-    });
+    this.craftService
+      .getAllCrafts()
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (crafts) => {
+          this.crafts = crafts || [];
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Failed to load crafts:', err);
+          this.cdr.markForCheck();
+        },
+      });
 
     this.craftReelService.getHomeReels().subscribe({
       next: (reels) => {
@@ -96,6 +109,7 @@ export class HomeContent implements OnInit {
             !url.match(/\.(jpeg|jpg|png|webp|gif|svg)$/i)
           );
         });
+        this.cdr.markForCheck();
       },
       error: (err) => console.error('Failed to load reels:', err),
     });

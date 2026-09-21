@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { CraftService, CraftItem } from '../../services/craft.service';
 import { CraftReelService, CraftReelItem } from '../../services/craft-reel.service';
 import { AuctionService, AuctionOrderItem } from '../../services/auction.service';
@@ -37,6 +38,11 @@ export class ArtisanDashboard implements OnInit {
   totalFollowers = 0;
 
   activeTab: 'crafts' | 'reels' | 'orders' = 'crafts';
+
+  // Independent, section-specific loading states
+  catalogLoading = true;
+  reelsLoading = true;
+  ordersLoading = true;
   loading = false;
   errorMessage = '';
 
@@ -100,14 +106,18 @@ export class ArtisanDashboard implements OnInit {
     private artisanService: ArtisanService,
     private categoryService: CategoryService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
     this.loadProfile();
     this.loadCategories();
-    this.loadDashboardData();
+    this.loadCrafts();
+    this.loadReelsData();
+    this.loadOrdersData();
+    this.loadFollowerCount();
   }
 
   loadProfile(): void {
@@ -118,6 +128,7 @@ export class ArtisanDashboard implements OnInit {
           this.currentUser.name = profile.name;
           this.currentUser.profileImageUrl = profile.profileImageUrl;
         }
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.warn('Could not load artisan profile info:', err);
@@ -129,6 +140,7 @@ export class ArtisanDashboard implements OnInit {
     this.categoryService.getAllCategories().subscribe({
       next: (cats) => {
         this.categories = cats;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.warn('Could not load categories:', err);
@@ -136,59 +148,95 @@ export class ArtisanDashboard implements OnInit {
     });
   }
 
-  loadDashboardData(): void {
-    this.loading = true;
-    this.errorMessage = '';
-
+  loadFollowerCount(): void {
     if (this.currentUser?.userId) {
       this.followService.getFollowerCount(this.currentUser.userId).subscribe({
         next: (res) => {
           this.totalFollowers = res.followerCount || 0;
+          this.cdr.markForCheck();
         },
+        error: () => {},
       });
     }
+  }
 
-    this.craftService.getMyCrafts().subscribe({
-      next: (crafts) => {
-        this.crafts = crafts;
-        this.totalCrafts = crafts.length;
-        this.loadReelsData();
-        this.loadOrdersData();
-      },
-      error: (err) => {
-        console.error('Failed to load artisan crafts:', err);
-        this.loading = false;
-        this.errorMessage = 'Unable to load your studio creations.';
-      },
-    });
+  loadCrafts(): void {
+    this.catalogLoading = true;
+    this.errorMessage = '';
+    this.cdr.markForCheck();
+
+    this.craftService
+      .getMyCrafts()
+      .pipe(
+        finalize(() => {
+          this.catalogLoading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (crafts) => {
+          this.crafts = crafts || [];
+          this.totalCrafts = this.crafts.length;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Failed to load artisan crafts:', err);
+          this.errorMessage = 'Unable to load your studio creations.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   loadReelsData(): void {
-    this.craftReelService.getMyReels().subscribe({
-      next: (reels) => {
-        this.reels = reels;
-        this.totalReels = reels.length;
-        this.totalViews = reels.reduce((sum, r) => sum + (r.views || 0), 0);
-        this.totalLikes = reels.reduce((sum, r) => sum + (r.likes || 0), 0);
-      },
-      error: (err) => {
-        console.error('Failed to load artisan reels:', err);
-      },
-    });
+    this.reelsLoading = true;
+    this.cdr.markForCheck();
+
+    this.craftReelService
+      .getMyReels()
+      .pipe(
+        finalize(() => {
+          this.reelsLoading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (reels) => {
+          this.reels = reels || [];
+          this.totalReels = this.reels.length;
+          this.totalViews = this.reels.reduce((sum, r) => sum + (r.views || 0), 0);
+          this.totalLikes = this.reels.reduce((sum, r) => sum + (r.likes || 0), 0);
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Failed to load artisan reels:', err);
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   loadOrdersData(): void {
-    this.auctionService.getArtisanOrders().subscribe({
-      next: (orders) => {
-        this.orders = orders;
-        this.totalRevenue = orders.reduce((sum, o) => sum + Number(o.artisanPayout || 0), 0);
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Failed to load artisan orders:', err);
-        this.loading = false;
-      },
-    });
+    this.ordersLoading = true;
+    this.cdr.markForCheck();
+
+    this.auctionService
+      .getArtisanOrders()
+      .pipe(
+        finalize(() => {
+          this.ordersLoading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (orders) => {
+          this.orders = orders || [];
+          this.totalRevenue = this.orders.reduce((sum, o) => sum + Number(o.artisanPayout || 0), 0);
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Failed to load artisan orders:', err);
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   // ==========================================

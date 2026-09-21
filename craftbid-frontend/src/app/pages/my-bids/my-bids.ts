@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { AuctionService, BidItem } from '../../services/auction.service';
 import { AuthService } from '../../services/auth';
 import { Topbar } from '../home/topbar/topbar';
@@ -21,7 +22,8 @@ export class MyBids implements OnInit {
   constructor(
     private auctionService: AuctionService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -34,16 +36,26 @@ export class MyBids implements OnInit {
 
   loadMyBids(): void {
     this.loading = true;
-    this.auctionService.getMyBids().subscribe({
-      next: (data) => {
-        this.bids = data;
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Failed to load bids:', err);
-        this.loading = false;
-      },
-    });
+    this.cdr.markForCheck();
+
+    this.auctionService
+      .getMyBids()
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.bids = data || [];
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Failed to load bids:', err);
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   formatPrice(price: number): string {

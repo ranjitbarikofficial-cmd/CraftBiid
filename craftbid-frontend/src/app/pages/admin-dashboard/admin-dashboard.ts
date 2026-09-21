@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { AdminService, AdminStats, AdminUser } from '../../services/admin.service';
 import { CraftService, CraftItem } from '../../services/craft.service';
 import { AuctionService, AuctionItem } from '../../services/auction.service';
@@ -22,7 +23,12 @@ export class AdminDashboard implements OnInit {
   auctions: AuctionItem[] = [];
 
   activeTab: 'overview' | 'users' | 'crafts' | 'auctions' = 'overview';
-  loading = true;
+  
+  overviewLoading = true;
+  usersLoading = true;
+  craftsLoading = true;
+  auctionsLoading = true;
+  loading = false;
 
   constructor(
     private adminService: AdminService,
@@ -30,7 +36,8 @@ export class AdminDashboard implements OnInit {
     private auctionService: AuctionService,
     private paymentService: PaymentService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -43,43 +50,108 @@ export class AdminDashboard implements OnInit {
 
   loadPaymentStats(): void {
     this.paymentService.getAdminPaymentStats().subscribe({
-      next: (data) => (this.paymentStats = data),
+      next: (data) => {
+        this.paymentStats = data;
+        this.cdr.markForCheck();
+      },
       error: (err) => console.error('Failed to load payment stats:', err),
     });
   }
 
   loadStats(): void {
-    this.adminService.getStats().subscribe({
-      next: (data) => {
-        this.stats = data;
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Failed to load admin stats:', err);
-        this.loading = false;
-      },
-    });
+    this.overviewLoading = true;
+    this.cdr.markForCheck();
+
+    this.adminService
+      .getStats()
+      .pipe(
+        finalize(() => {
+          this.overviewLoading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.stats = data;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Failed to load admin stats:', err);
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   loadUsers(): void {
-    this.adminService.getAllUsers().subscribe({
-      next: (data) => (this.users = data),
-      error: (err) => console.error('Failed to load users:', err),
-    });
+    this.usersLoading = true;
+    this.cdr.markForCheck();
+
+    this.adminService
+      .getAllUsers()
+      .pipe(
+        finalize(() => {
+          this.usersLoading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.users = data || [];
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Failed to load users:', err);
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   loadCrafts(): void {
-    this.adminService.getAllCrafts().subscribe({
-      next: (data) => (this.crafts = data),
-      error: (err) => console.error('Failed to load crafts:', err),
-    });
+    this.craftsLoading = true;
+    this.cdr.markForCheck();
+
+    this.adminService
+      .getAllCrafts()
+      .pipe(
+        finalize(() => {
+          this.craftsLoading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.crafts = data || [];
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Failed to load crafts:', err);
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   loadAuctions(): void {
-    this.adminService.getAllAuctions().subscribe({
-      next: (data) => (this.auctions = data),
-      error: (err) => console.error('Failed to load auctions:', err),
-    });
+    this.auctionsLoading = true;
+    this.cdr.markForCheck();
+
+    this.adminService
+      .getAllAuctions()
+      .pipe(
+        finalize(() => {
+          this.auctionsLoading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.auctions = data || [];
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Failed to load auctions:', err);
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   toggleUser(user: AdminUser): void {
