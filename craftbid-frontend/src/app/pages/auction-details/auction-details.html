@@ -18,25 +18,47 @@
 
     <!-- ================= 24-HOUR PARTICIPATION COUNTDOWN BANNER ================= -->
     @if (!auction.liveTurnActive && auction.status !== 'ENDED' && auction.status !== 'CANCELLED') {
-      <div class="participation-banner">
-        <div class="p-banner-left">
-          <span class="icon">⏳</span>
-          <div>
-            <h3>24-Hour Participation Window Open</h3>
-            <p>Join with base price deposit of <strong>{{ formatPrice(auction.startingPrice) }}</strong> before the live auction begins.</p>
+      @if (isWaitingForFirstDeposit()) {
+        <div class="participation-banner waiting-start">
+          <div class="p-banner-left">
+            <span class="icon">⏳</span>
+            <div>
+              <h3>Awaiting First Participant to Start 24h Window</h3>
+              <p>Be the first collector to join! The 24-hour participation window will officially begin as soon as the first deposit of <strong>{{ formatPrice(auction.startingPrice) }}</strong> is paid.</p>
+            </div>
+          </div>
+          <div class="p-banner-right">
+            <div class="p-timer-box waiting">
+              <span class="p-timer-label">Participation Timer:</span>
+              <span class="p-timer-val">Starts on 1st Deposit</span>
+            </div>
+            <div class="p-spots-box">
+              <span class="spots-count">0 / {{ auction.maxParticipants || 10 }}</span>
+              <span class="spots-label">Participants</span>
+            </div>
           </div>
         </div>
-        <div class="p-banner-right">
-          <div class="p-timer-box">
-            <span class="p-timer-label">Time Remaining:</span>
-            <span class="p-timer-val">{{ participationTimeLeft || '24h remaining' }}</span>
+      } @else if (isParticipationWindowActive()) {
+        <div class="participation-banner active-window">
+          <div class="p-banner-left">
+            <span class="icon">⏳</span>
+            <div>
+              <h3>24-Hour Participation Window Active</h3>
+              <p>First deposit confirmed! Join with base price deposit of <strong>{{ formatPrice(auction.startingPrice) }}</strong> before the 1-minute live room begins.</p>
+            </div>
           </div>
-          <div class="p-spots-box">
-            <span class="spots-count">{{ participants.length }} / {{ auction.maxParticipants || 10 }}</span>
-            <span class="spots-label">Participants</span>
+          <div class="p-banner-right">
+            <div class="p-timer-box">
+              <span class="p-timer-label">Time Remaining:</span>
+              <span class="p-timer-val">{{ participationTimeLeft || '24h remaining' }}</span>
+            </div>
+            <div class="p-spots-box">
+              <span class="spots-count">{{ participants.length }} / {{ auction.maxParticipants || 10 }}</span>
+              <span class="spots-label">Participants</span>
+            </div>
           </div>
         </div>
-      </div>
+      }
     }
 
     <!-- ================= WINNER CELEBRATION BANNER ================= -->
@@ -46,7 +68,11 @@
         <div class="winner-info">
           <h2>🎉 CONGRATULATIONS! You Won This Craft!</h2>
           <p>
-            Final Winning Price: <strong>{{ formatPrice(auction.currentHighestBid) }}</strong>.
+            @if (participants.length === 1 || auction.totalBids === 0) {
+              <span>Claimed at Base Price of <strong>{{ formatPrice(auction.currentHighestBid || auction.startingPrice) }}</strong> as the sole participant!</span>
+            } @else {
+              <span>Final Winning Price: <strong>{{ formatPrice(auction.currentHighestBid) }}</strong>.</span>
+            }
             @if (auctionOrder && auctionOrder.status !== 'PENDING_ADDRESS') {
               <span> Delivery address confirmed. Status: <strong>{{ auctionOrder.status }}</strong>.</span>
             } @else {
@@ -92,7 +118,15 @@
         <div class="craft-content">
           <div class="badge-row">
             <span class="status-badge" [class.active]="auction.liveTurnActive || auction.status === 'ACTIVE'">
-              {{ auction.liveTurnActive ? 'LIVE' : auction.status }}
+              @if (auction.liveTurnActive) {
+                LIVE
+              } @else if (isParticipationWindowActive()) {
+                24H OPEN
+              } @else if (isWaitingForFirstDeposit()) {
+                AWAITING 1ST BIDDER
+              } @else {
+                {{ auction.status }}
+              }
             </span>
             <span class="category-pill">{{ auction.craft.category?.name || 'Handmade' }}</span>
             <a [routerLink]="['/crafts', auction.craft.id]" class="view-craft-pill-link" style="margin-left: auto; font-size: 0.8rem; color: #ea580c; text-decoration: none; font-weight: 600;">

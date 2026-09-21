@@ -23,6 +23,7 @@ export interface AuctionItem {
   reservePrice?: number;
   minBidIncrement: number;
   startTime: string;
+  firstDepositPaidAt?: string;
   participationDeadline?: string;
   endTime: string;
   status: 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'LIVE' | 'DIRECT_PURCHASE' | 'ENDED' | 'CANCELLED';
@@ -218,5 +219,9 @@ export class AuctionService {
 
   cancelAuction(id: number): Observable<AuctionItem> {
     return this.http.post<AuctionItem>(`${this.apiUrl}/${id}/cancel`, {});
+  }
+
+  registerInterest(auctionId: number): Observable<AuctionItem> {
+    return this.http.post<AuctionItem>(`${this.apiUrl}/${auctionId}/interest`, {});
   }
 }

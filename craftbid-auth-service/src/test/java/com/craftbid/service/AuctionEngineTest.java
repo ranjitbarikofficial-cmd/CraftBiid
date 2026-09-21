@@ -102,8 +102,9 @@ public class AuctionEngineTest {
         auction.setStartingPrice(BigDecimal.valueOf(500));
         auction.setCurrentHighestBid(BigDecimal.valueOf(500));
         auction.setMinBidIncrement(BigDecimal.valueOf(50));
-        auction.setParticipationDeadline(LocalDateTime.now().plusHours(24));
-        auction.setEndTime(LocalDateTime.now().plusHours(25));
+        auction.setFirstDepositPaidAt(null);
+        auction.setParticipationDeadline(null);
+        auction.setEndTime(LocalDateTime.now().plusDays(30));
         auction.setStatus(AuctionStatus.ACTIVE);
         auction.setMaxParticipants(10);
         auction.setCurrentParticipantsCount(0);
@@ -111,7 +112,7 @@ public class AuctionEngineTest {
     }
 
     @Test
-    @DisplayName("1. Artisan creates auction with 24h participation window & 10 max participants")
+    @DisplayName("1. Artisan creates auction: Participation deadline is null until first buyer pays deposit")
     void testCreateAuction() {
         CreateAuctionRequest req = new CreateAuctionRequest();
         req.setCraftId(100L);
@@ -128,11 +129,12 @@ public class AuctionEngineTest {
         assertNotNull(created);
         assertEquals(BigDecimal.valueOf(500), created.getStartingPrice());
         assertEquals(10, created.getMaxParticipants());
-        assertNotNull(created.getParticipationDeadline());
+        assertNull(created.getFirstDepositPaidAt());
+        assertNull(created.getParticipationDeadline());
     }
 
     @Test
-    @DisplayName("2. Buyer joins auction room with base price deposit")
+    @DisplayName("2. First buyer pays base deposit: Atomically starts 24-hour participation window")
     void testJoinAuctionWithDeposit() {
         when(userRepository.findByIdentifier("alice@example.com")).thenReturn(Optional.of(buyer1));
         when(auctionRepository.findById(10L)).thenReturn(Optional.of(auction));
@@ -149,11 +151,14 @@ public class AuctionEngineTest {
         assertEquals(BigDecimal.valueOf(500), p.getBasePricePaid());
         assertEquals(BigDecimal.valueOf(500), p.getTotalAmountPaid());
         assertEquals(1, auction.getCurrentParticipantsCount());
+        assertNotNull(auction.getFirstDepositPaidAt());
+        assertNotNull(auction.getParticipationDeadline());
 
         verify(paymentService, times(1)).recordTransaction(
                 eq(buyer1), eq(10L), eq(100L), eq(BigDecimal.valueOf(500)), eq("BASE_DEPOSIT"), eq("UPI"), anyString()
         );
         verify(notificationService, times(1)).notifyAuctionJoined(eq(buyer1), eq("Handmade Terracotta Vase"), eq(BigDecimal.valueOf(500)), eq(10L));
+        verify(notificationService, times(1)).notifyAuctionParticipationStarted(eq("Handmade Terracotta Vase"), eq(BigDecimal.valueOf(500)), eq(10L));
     }
 
     @Test

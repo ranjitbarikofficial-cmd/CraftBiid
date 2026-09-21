@@ -93,6 +93,18 @@ export class Auctions implements OnInit, OnDestroy {
     return [];
   }
 
+  isAuctionLive(auction: AuctionItem): boolean {
+    return !!auction.liveTurnActive;
+  }
+
+  isParticipationOpen(auction: AuctionItem): boolean {
+    return !auction.liveTurnActive && !!auction.participationDeadline && (auction.currentParticipantsCount || 0) > 0;
+  }
+
+  isWaitingForFirstParticipant(auction: AuctionItem): boolean {
+    return !auction.liveTurnActive && (!auction.participationDeadline || (auction.currentParticipantsCount || 0) === 0);
+  }
+
   getTimeRemaining(endTimeStr?: string | null): string {
     if (!endTimeStr) return 'Live Now';
     const end = new Date(endTimeStr).getTime();
@@ -102,7 +114,7 @@ export class Auctions implements OnInit, OnDestroy {
     const diff = end - now;
 
     if (diff <= 0) {
-      return 'Auction Ended';
+      return 'Window Closed';
     }
 
     const hours = Math.floor(diff / (1000 * 60 * 60));

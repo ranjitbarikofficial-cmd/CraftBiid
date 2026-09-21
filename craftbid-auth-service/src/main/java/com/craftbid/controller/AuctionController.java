@@ -83,6 +83,17 @@ public class AuctionController {
         return ResponseEntity.ok(auctionService.joinAuctionWithDeposit(identifier, id, request));
     }
 
+    // Register Interest (Does NOT start timer; registers for notifications)
+    @PostMapping("/{id}/interest")
+    public ResponseEntity<PublicAuctionResponse> registerInterest(
+            Authentication authentication,
+            @PathVariable Long id) {
+
+        String identifier = authentication.getName();
+        Auction auction = auctionService.registerInterest(identifier, id);
+        return ResponseEntity.ok(PublicAuctionResponse.fromEntity(auction));
+    }
+
     // Place differential bid & reset 1-minute timer
     @PostMapping("/{id}/differential-bid")
     public ResponseEntity<PublicBidResponse> placeDifferentialBid(

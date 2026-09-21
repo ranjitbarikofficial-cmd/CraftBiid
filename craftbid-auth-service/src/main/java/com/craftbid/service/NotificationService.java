@@ -82,6 +82,21 @@ public class NotificationService {
     // HIGH-LEVEL NOTIFICATION + EMAIL DISPATCH HELPERS
     // =========================================================================
 
+    public void notifyAuctionParticipationStarted(String craftName, BigDecimal basePrice, Long auctionId) {
+        String title = "🏺 Auction Officially Started!";
+        String message = "First deposit paid for \"" + craftName + "\". The 24-hour participation window is now LIVE! Join before the 10 spots fill.";
+        String link = "/auctions/" + auctionId;
+
+        try {
+            List<User> users = userRepository.findAll();
+            for (User u : users) {
+                try {
+                    createNotification(u, title, message, "AUCTION_PARTICIPATION_STARTED", link);
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception ignored) {}
+    }
+
     public void notifyAuctionJoined(User user, String craftName, BigDecimal basePrice, Long auctionId) {
         String title = "Auction Room Joined";
         String message = "You have successfully joined the 24-hour participation window for \"" + craftName + "\" by paying ₹" + basePrice + " base deposit.";

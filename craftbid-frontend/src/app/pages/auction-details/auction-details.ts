@@ -145,8 +145,25 @@ export class AuctionDetails implements OnInit, OnDestroy {
       if (event.data?.currentParticipants !== undefined && this.auction) {
         this.auction.currentParticipantsCount = event.data.currentParticipants;
       }
+      if (event.data?.firstDepositPaidAt && this.auction) {
+        this.auction.firstDepositPaidAt = event.data.firstDepositPaidAt;
+      }
+      if (event.data?.participationDeadline && this.auction) {
+        this.auction.participationDeadline = event.data.participationDeadline;
+      }
       if (this.auction) {
         this.loadParticipants(this.auction.id);
+      }
+    } else if (event.eventType === 'auction:participation_started') {
+      if (this.auction) {
+        if (event.data?.participationDeadline) {
+          this.auction.participationDeadline = event.data.participationDeadline;
+        }
+        if (event.data?.firstDepositPaidAt) {
+          this.auction.firstDepositPaidAt = event.data.firstDepositPaidAt;
+        }
+        this.toastService.info('🏺 The 24-hour participation window has officially started!');
+        this.refreshData(this.auction.id);
       }
     } else if (event.eventType === 'auction:started') {
       if (this.auction) {
@@ -316,8 +333,31 @@ export class AuctionDetails implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  isWaitingForFirstDeposit(): boolean {
+    return (
+      !this.auction?.liveTurnActive &&
+      this.auction?.status !== 'ENDED' &&
+      this.auction?.status !== 'CANCELLED' &&
+      (!this.auction?.participationDeadline || (this.auction?.currentParticipantsCount || 0) === 0)
+    );
+  }
+
+  isParticipationWindowActive(): boolean {
+    return (
+      !this.auction?.liveTurnActive &&
+      this.auction?.status !== 'ENDED' &&
+      this.auction?.status !== 'CANCELLED' &&
+      !!this.auction?.participationDeadline &&
+      (this.auction?.currentParticipantsCount || 0) > 0
+    );
+  }
+
   updateParticipationCountdown(): void {
-    if (!this.auction || !this.auction.participationDeadline) {
+    if (
+      !this.auction ||
+      !this.auction.participationDeadline ||
+      (this.auction.currentParticipantsCount || 0) === 0
+    ) {
       this.participationTimeLeft = '';
       this.cdr.markForCheck();
       return;

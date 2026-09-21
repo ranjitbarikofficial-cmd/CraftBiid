@@ -24,6 +24,7 @@ public class PublicAuctionResponse {
     private int currentParticipantsCount;
     private int interestedCount;
     private LocalDateTime lastBidTime;
+    private LocalDateTime firstDepositPaidAt;
     private LocalDateTime participationDeadline;
     private LocalDateTime turnDeadline;
     private boolean liveTurnActive;
@@ -53,6 +54,7 @@ public class PublicAuctionResponse {
         res.setCurrentParticipantsCount(auction.getCurrentParticipantsCount());
         res.setInterestedCount(auction.getInterestedCount());
         res.setLastBidTime(auction.getLastBidTime());
+        res.setFirstDepositPaidAt(auction.getFirstDepositPaidAt());
         res.setParticipationDeadline(auction.getParticipationDeadline());
         res.setTurnDeadline(auction.getTurnDeadline());
         res.setLiveTurnActive(auction.isLiveTurnActive());
@@ -186,6 +188,14 @@ public class PublicAuctionResponse {
 
     public void setLastBidTime(LocalDateTime lastBidTime) {
         this.lastBidTime = lastBidTime;
+    }
+
+    public LocalDateTime getFirstDepositPaidAt() {
+        return firstDepositPaidAt;
+    }
+
+    public void setFirstDepositPaidAt(LocalDateTime firstDepositPaidAt) {
+        this.firstDepositPaidAt = firstDepositPaidAt;
     }
 
     public LocalDateTime getParticipationDeadline() {

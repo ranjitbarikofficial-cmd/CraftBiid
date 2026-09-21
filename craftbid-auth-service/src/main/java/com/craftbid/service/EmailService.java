@@ -571,6 +571,23 @@ public class EmailService {
     }
 
     // =====================================================
+    // AUCTION PARTICIPATION WINDOW STARTED (FIRST DEPOSIT PAID)
+    // =====================================================
+    public void sendAuctionParticipationStartedEmail(String email, String name, String craftName, BigDecimal basePrice, Long auctionId) {
+        String subject = "🏺 24H Auction Started: " + craftName;
+        String displayName = (name != null && !name.isBlank()) ? name : "Craft Enthusiast";
+        String html = "<div style='font-family: Arial, sans-serif; max-width: 550px; margin: auto; padding: 24px; background: #faf8f5; border: 1px solid #e8e2d9; border-radius: 12px;'>"
+                + "<div style='text-align: center; margin-bottom: 20px;'><span style='font-size: 36px;'>🏺</span><h2 style='color: #ea580c; margin: 4px 0;'>Auction Officially Started!</h2></div>"
+                + "<p style='color: #27272a; font-size: 15px;'>Hello <strong>" + displayName + "</strong>,</p>"
+                + "<p style='color: #52525b; font-size: 14px;'>The first customer has just placed the base deposit of <strong>₹" + basePrice + "</strong> for <strong>" + craftName + "</strong>.</p>"
+                + "<p style='color: #52525b; font-size: 14px;'>The <strong>24-hour participation window</strong> is now live! Up to 10 collectors can join with a base deposit before the live turn auction begins.</p>"
+                + "<div style='text-align: center; margin: 24px 0;'><a href='https://craftbid.co.in/auctions/" + auctionId + "' style='background: #ea580c; color: #fff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;'>Join Auction Room</a></div>"
+                + "<p style='color: #71717a; font-size: 12px; text-align: center;'>CraftBid Platform © 2026</p>"
+                + "</div>";
+        dispatchEmail(email, subject, html);
+    }
+
+    // =====================================================
     // AUCTION JOINED CONFIRMATION EMAIL
     // =====================================================
     public void sendAuctionJoinedEmail(String email, String name, String craftName, BigDecimal basePrice, Long auctionId) {

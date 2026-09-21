@@ -53,14 +53,20 @@
       @for (auction of auctions; track auction.id) {
         <article class="auction-card">
           <div class="auction-image-wrap" [routerLink]="['/auctions', auction.id]">
-            <span class="timer-badge">⏳ {{ getTimeRemaining(auction.endTime) }}</span>
+            @if (isAuctionLive(auction)) {
+              <span class="timer-badge live">⚡ LIVE TURN BIDDING</span>
+            } @else if (isParticipationOpen(auction)) {
+              <span class="timer-badge active">⏳ Closes in: {{ getTimeRemaining(auction.participationDeadline) }}</span>
+            } @else {
+              <span class="timer-badge waiting">⏳ Waiting for 1st participant</span>
+            }
             <img
               [src]="resolveMediaUrl(auction.craft?.imageUrl)"
               [alt]="auction.craft?.title || 'Handmade Craft Creation'"
               (error)="onImageError($event)"
             />
             <div class="auction-image-overlay">
-              <span class="bids-pill">👥 {{ auction.totalBids || 0 }} bids placed</span>
+              <span class="bids-pill">👥 {{ auction.currentParticipantsCount || 0 }}/{{ auction.maxParticipants || 10 }} joined</span>
               <span class="room-pill">Room #{{ auction.id }}</span>
             </div>
           </div>
@@ -68,10 +74,22 @@
           <div class="auction-details">
             <div class="card-meta-row">
               <span class="category-name">{{ auction.craft?.category?.name || 'Handmade Craft' }}</span>
-              <span class="status-indicator-dot">
-                <span class="live-pulse"></span>
-                <span>Live Room</span>
-              </span>
+              @if (isAuctionLive(auction)) {
+                <span class="status-indicator-dot live">
+                  <span class="live-pulse"></span>
+                  <span>Live Turn Bidding</span>
+                </span>
+              } @else if (isParticipationOpen(auction)) {
+                <span class="status-indicator-dot participation">
+                  <span class="participation-dot"></span>
+                  <span>24h Window Open</span>
+                </span>
+              } @else {
+                <span class="status-indicator-dot waiting">
+                  <span class="waiting-dot"></span>
+                  <span>Awaiting 1st Bidder</span>
+                </span>
+              }
             </div>
 
             <!-- Dynamic Craft Link -->
@@ -94,18 +112,24 @@
 
             <div class="bid-status-box">
               <div class="bid-col">
-                <span class="label">Current Highest Bid</span>
+                <span class="label">{{ isAuctionLive(auction) ? 'Current Highest Bid' : 'Base Deposit / Price' }}</span>
                 <span class="value">{{ formatPrice(auction.currentHighestBid || auction.startingPrice) }}</span>
               </div>
               <div class="bid-col right">
-                <span class="label">Starting Price</span>
-                <span class="sub-value">{{ formatPrice(auction.startingPrice) }}</span>
+                <span class="label">Room Capacity</span>
+                <span class="sub-value">{{ auction.currentParticipantsCount || 0 }} / {{ auction.maxParticipants || 10 }}</span>
               </div>
             </div>
 
             <div class="card-actions-row">
               <a [routerLink]="['/auctions', auction.id]" class="btn-bid-now">
-                🔨 Enter Live Auction Room
+                @if (isAuctionLive(auction)) {
+                  ⚡ Enter Live Room
+                } @else if (isParticipationOpen(auction)) {
+                  💳 Join 24h Window
+                } @else {
+                  ✨ Be 1st to Start Auction
+                }
               </a>
               @if (auction.craft?.id) {
                 <a [routerLink]="['/crafts', auction.craft.id]" class="btn-craft-details" title="View Full Craft Details">

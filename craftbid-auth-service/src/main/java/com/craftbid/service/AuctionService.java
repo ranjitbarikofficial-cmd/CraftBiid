@@ -110,13 +110,6 @@ public class AuctionService {
                 ? request.getStartTime()
                 : LocalDateTime.now();
 
-        int hours = (request.getDurationHours() != null && request.getDurationHours() > 0)
-                ? request.getDurationHours()
-                : 24;
-
-        LocalDateTime participationDeadline = startTime.plusHours(hours);
-        LocalDateTime endTime = participationDeadline.plusMinutes(10); // buffer
-
         Auction auction = new Auction();
         auction.setCraft(craft);
         auction.setSeller(seller);
@@ -125,8 +118,9 @@ public class AuctionService {
         auction.setReservePrice(request.getReservePrice());
         auction.setMinBidIncrement(minIncrement);
         auction.setStartTime(startTime);
-        auction.setParticipationDeadline(participationDeadline);
-        auction.setEndTime(endTime);
+        auction.setFirstDepositPaidAt(null); // Explicitly NULL until 1st participant pays base deposit
+        auction.setParticipationDeadline(null); // Explicitly NULL until 1st participant pays base deposit
+        auction.setEndTime(startTime.plusDays(30)); // Far buffer until participation starts
         auction.setStatus(AuctionStatus.ACTIVE);
         auction.setTotalBids(0);
         auction.setMaxParticipants(10);
@@ -140,8 +134,7 @@ public class AuctionService {
             eventPublisher.publishAuctionEvent(savedAuction.getId(), "auction:created", Map.of(
                     "auctionId", savedAuction.getId(),
                     "craftName", craft.getTitle(),
-                    "basePrice", startingPrice,
-                    "participationDeadline", participationDeadline.toString()
+                    "basePrice", startingPrice
             ));
         } catch (Exception ignored) {}
 
@@ -180,6 +173,23 @@ public class AuctionService {
         AuctionParticipant participant = new AuctionParticipant(auction, buyer, basePrice);
         AuctionParticipant saved = participantRepository.save(participant);
 
+        // CRITICAL BUSINESS LOGIC: 24-Hour countdown STARTS ONLY ON FIRST CUSTOMER'S BASE DEPOSIT
+        boolean isFirstParticipant = (auction.getFirstDepositPaidAt() == null || auction.getCurrentParticipantsCount() == 0);
+        if (isFirstParticipant) {
+            LocalDateTime now = LocalDateTime.now();
+            auction.setFirstDepositPaidAt(now);
+            LocalDateTime deadline = now.plusHours(24);
+            auction.setParticipationDeadline(deadline);
+            auction.setEndTime(deadline.plusMinutes(10));
+
+            // Notify all interested users and community that the 24-hour participation window has started!
+            try {
+                notificationService.notifyAuctionParticipationStarted(auction.getCraft().getTitle(), basePrice, auction.getId());
+            } catch (Exception e) {
+                System.err.println("⚠️ Notification error on first deposit start: " + e.getMessage());
+            }
+        }
+
         auction.setCurrentParticipantsCount(auction.getCurrentParticipantsCount() + 1);
 
         // Record payment ledger transaction
@@ -214,6 +224,8 @@ public class AuctionService {
             joinData.put("auctionId", auction.getId());
             joinData.put("currentParticipants", updatedAuction.getCurrentParticipantsCount());
             joinData.put("maxParticipants", updatedAuction.getMaxParticipants());
+            joinData.put("firstDepositPaidAt", updatedAuction.getFirstDepositPaidAt() != null ? updatedAuction.getFirstDepositPaidAt().toString() : null);
+            joinData.put("participationDeadline", updatedAuction.getParticipationDeadline() != null ? updatedAuction.getParticipationDeadline().toString() : null);
             Map<String, String> pInfo = new HashMap<>();
             pInfo.put("name", buyer.getName());
             pInfo.put("city", buyer.getCity());
@@ -224,6 +236,14 @@ public class AuctionService {
             ring.push(joinData);
 
             eventPublisher.publishAuctionEvent(auction.getId(), "auction:joined", joinData);
+
+            if (isFirstParticipant && updatedAuction.getParticipationDeadline() != null) {
+                eventPublisher.publishAuctionEvent(auction.getId(), "auction:participation_started", Map.of(
+                        "auctionId", auction.getId(),
+                        "firstDepositPaidAt", updatedAuction.getFirstDepositPaidAt().toString(),
+                        "participationDeadline", updatedAuction.getParticipationDeadline().toString()
+                ));
+            }
         } catch (Exception ignored) {}
 
         return saved;
@@ -828,5 +848,25 @@ public class AuctionService {
     public List<Bid> getMyBids(String identifier) {
         User bidder = getUserByIdentifier(identifier);
         return bidRepository.findByBidderOrderByBidTimeDesc(bidder);
+    }
+
+    @Transactional
+    public Auction registerInterest(String identifier, Long auctionId) {
+        User user = getUserByIdentifier(identifier);
+        Auction auction = getAuctionById(auctionId);
+        auction.setInterestedCount(auction.getInterestedCount() + 1);
+        Auction saved = auctionRepository.save(auction);
+
+        try {
+            notificationService.createNotification(
+                    user,
+                    "😍 Interest Registered",
+                    "You registered interest for \"" + auction.getCraft().getTitle() + "\". We will notify you immediately when the first customer pays the base deposit and the 24h window starts!",
+                    "INTEREST_REGISTERED",
+                    "/auctions/" + auction.getId()
+            );
+        } catch (Exception ignored) {}
+
+        return saved;
     }
 }

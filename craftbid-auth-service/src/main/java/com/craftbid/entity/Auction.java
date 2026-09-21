@@ -58,7 +58,9 @@ public class Auction {
 
     private LocalDateTime lastBidTime;
 
-    private LocalDateTime participationDeadline; // 24-hour participation window deadline
+    private LocalDateTime firstDepositPaidAt; // Timestamp when first participant paid base deposit
+
+    private LocalDateTime participationDeadline; // 24-hour participation window deadline (starts on first deposit)
 
     private LocalDateTime turnDeadline; // 60-second countdown timestamp
 
@@ -202,6 +204,14 @@ public class Auction {
 
     public void setLastBidTime(LocalDateTime lastBidTime) {
         this.lastBidTime = lastBidTime;
+    }
+
+    public LocalDateTime getFirstDepositPaidAt() {
+        return firstDepositPaidAt;
+    }
+
+    public void setFirstDepositPaidAt(LocalDateTime firstDepositPaidAt) {
+        this.firstDepositPaidAt = firstDepositPaidAt;
     }
 
     public LocalDateTime getParticipationDeadline() {

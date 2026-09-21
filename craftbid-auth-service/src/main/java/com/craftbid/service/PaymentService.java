@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -241,6 +242,21 @@ public class PaymentService {
                         participant.setStatus("ACTIVE");
                         participantRepository.save(participant);
 
+                        boolean isFirst = (auction.getFirstDepositPaidAt() == null || auction.getCurrentParticipantsCount() == 0);
+                        if (isFirst) {
+                            LocalDateTime now = LocalDateTime.now();
+                            auction.setFirstDepositPaidAt(now);
+                            LocalDateTime deadline = now.plusHours(24);
+                            auction.setParticipationDeadline(deadline);
+                            auction.setEndTime(deadline.plusMinutes(10));
+
+                            try {
+                                notificationService.notifyAuctionParticipationStarted(auction.getCraft().getTitle(), savedTx.getAmount(), auction.getId());
+                            } catch (Exception e) {
+                                logger.warn("Notification error on first deposit: {}", e.getMessage());
+                            }
+                        }
+
                         auction.setCurrentParticipantsCount(auction.getCurrentParticipantsCount() + 1);
                         auctionRepository.save(auction);
 
@@ -257,12 +273,22 @@ public class PaymentService {
                             joinData.put("auctionId", auction.getId());
                             joinData.put("currentParticipants", auction.getCurrentParticipantsCount());
                             joinData.put("maxParticipants", auction.getMaxParticipants());
+                            joinData.put("firstDepositPaidAt", auction.getFirstDepositPaidAt() != null ? auction.getFirstDepositPaidAt().toString() : null);
+                            joinData.put("participationDeadline", auction.getParticipationDeadline() != null ? auction.getParticipationDeadline().toString() : null);
                             Map<String, String> pInfo = new HashMap<>();
                             pInfo.put("name", user.getName());
                             pInfo.put("city", user.getCity());
                             joinData.put("participant", pInfo);
 
                             eventPublisher.publishAuctionEvent(auction.getId(), "auction:joined", joinData);
+
+                            if (isFirst && auction.getParticipationDeadline() != null) {
+                                eventPublisher.publishAuctionEvent(auction.getId(), "auction:participation_started", Map.of(
+                                        "auctionId", auction.getId(),
+                                        "firstDepositPaidAt", auction.getFirstDepositPaidAt().toString(),
+                                        "participationDeadline", auction.getParticipationDeadline().toString()
+                                ));
+                            }
                         } catch (Exception e) {
                             logger.warn("WebSocket publish failed on join: {}", e.getMessage());
                         }
