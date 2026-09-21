@@ -83,7 +83,19 @@ export class HomeContent implements OnInit {
 
     this.craftReelService.getHomeReels().subscribe({
       next: (reels) => {
-        this.craftReels = reels;
+        this.craftReels = (reels || []).filter((reel) => {
+          if (!reel.videoUrl || !reel.videoUrl.trim()) return false;
+          const url = reel.videoUrl.trim().toLowerCase();
+          return (
+            url.endsWith('.mp4') ||
+            url.endsWith('.webm') ||
+            url.endsWith('.mov') ||
+            url.endsWith('.m4v') ||
+            url.includes('video') ||
+            url.includes('mixkit') ||
+            !url.match(/\.(jpeg|jpg|png|webp|gif|svg)$/i)
+          );
+        });
       },
       error: (err) => console.error('Failed to load reels:', err),
     });

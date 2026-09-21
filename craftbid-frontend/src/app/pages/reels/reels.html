@@ -72,10 +72,43 @@
                 [src]="resolveMediaUrl(reel.videoUrl)"
                 [poster]="resolveMediaUrl(reel.thumbnailUrl)"
                 playsinline
+                webkit-playsinline
+                loop
+                [muted]="isMuted"
+                autoplay
+                [attr.preload]="i <= 1 ? 'auto' : 'metadata'"
                 (ended)="onVideoEnded(i)"
-                (click)="togglePlayPause(videoElement)"
-                [attr.preload]="i <= 1 ? 'metadata' : 'none'"
+                (timeupdate)="onTimeUpdate(videoElement, reel.id)"
+                (waiting)="onWaiting(reel.id)"
+                (playing)="onPlaying(reel.id)"
+                (pause)="onPause(reel.id)"
+                (click)="togglePlayPause(videoElement, reel)"
               ></video>
+
+              <!-- Central Play/Pause Animated Ripple Indicator -->
+              @if (rippleState.visible && rippleState.reelId === reel.id) {
+                <div class="center-ripple-indicator">
+                  <div class="ripple-circle">
+                    <span class="ripple-icon">{{ rippleState.type === 'play' ? '▶' : '❚❚' }}</span>
+                  </div>
+                </div>
+              }
+
+              <!-- Paused Central Watermark Indicator -->
+              @if (pausedMap.get(reel.id)) {
+                <div class="video-paused-watermark" (click)="togglePlayPause(videoElement, reel)">
+                  <div class="paused-circle">
+                    <span class="paused-icon">▶</span>
+                  </div>
+                </div>
+              }
+
+              <!-- Buffering Spinner -->
+              @if (bufferingMap.get(reel.id)) {
+                <div class="video-buffering-overlay">
+                  <div class="video-buffer-spinner"></div>
+                </div>
+              }
 
               <!-- Top Scrim & Badges -->
               <div class="short-top-bar">
@@ -83,8 +116,15 @@
                 @if (getAuctionIdForCraft(reel.craft?.id)) {
                   <span class="live-auction-pulse-tag">⚡ LIVE AUCTION NOW</span>
                 } @else {
-                  <span class="auto-scroll-badge">⚡ Auto-Scroll</span>
+                  <button type="button" class="sound-floating-pill" (click)="toggleMute($event)">
+                    <span>{{ isMuted ? '🔇 Tap for Sound' : '🔊 Sound On' }}</span>
+                  </button>
                 }
+              </div>
+
+              <!-- Bottom Video Progress Scrubber -->
+              <div class="video-progress-tracker">
+                <div class="video-progress-fill" [style.width.%]="progressMap.get(reel.id) || 0"></div>
               </div>
 
               <!-- Right Vertical Action Sidebar (Shorts / TikTok Style) -->
@@ -135,7 +175,7 @@
                 <button
                   type="button"
                   class="btn-action-bubble"
-                  (click)="toggleMute()"
+                  (click)="toggleMute($event)"
                   title="Toggle Audio"
                 >
                   <span class="action-glyph">{{ isMuted ? '🔇' : '🔊' }}</span>

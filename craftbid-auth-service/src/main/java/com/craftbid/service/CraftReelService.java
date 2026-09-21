@@ -101,6 +101,14 @@ public class CraftReelService {
     // GET MY REELS
     // ==========================================
 
+    private boolean isVideoUrl(String url) {
+        if (url == null || url.trim().isBlank()) return false;
+        String lower = url.trim().toLowerCase();
+        return !lower.endsWith(".jpg") && !lower.endsWith(".jpeg") &&
+               !lower.endsWith(".png") && !lower.endsWith(".webp") &&
+               !lower.endsWith(".gif") && !lower.endsWith(".svg");
+    }
+
     public List<CraftReel> getMyReels(String identifier) {
 
         User user = userRepository.findByIdentifier(identifier)
@@ -113,7 +121,10 @@ public class CraftReelService {
                                 new RuntimeException("Artisan profile not found"));
 
         return craftReelRepository
-                .findByArtisanId(artisan.getId());
+                .findByArtisanId(artisan.getId())
+                .stream()
+                .filter(r -> isVideoUrl(r.getVideoUrl()))
+                .toList();
     }
 
     // ==========================================
@@ -127,7 +138,10 @@ public class CraftReelService {
         }
 
         List<CraftReel> list = craftReelRepository
-                .findByStatusOrderByCreatedAtDesc("ACTIVE");
+                .findByStatusOrderByCreatedAtDesc("ACTIVE")
+                .stream()
+                .filter(r -> isVideoUrl(r.getVideoUrl()))
+                .toList();
         feedCache.put("HOME_REELS", list);
         return list;
     }
@@ -138,7 +152,10 @@ public class CraftReelService {
 
     public List<CraftReel> getReelsByCraftId(Long craftId) {
 
-        return craftReelRepository.findByCraftId(craftId);
+        return craftReelRepository.findByCraftId(craftId)
+                .stream()
+                .filter(r -> isVideoUrl(r.getVideoUrl()))
+                .toList();
     }
 
     // ==========================================

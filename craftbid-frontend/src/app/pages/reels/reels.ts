@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, ViewChildren, QueryList, AfterViewInit, HostListener } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChildren, QueryList, AfterViewInit, OnDestroy, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { CraftReelService, CraftReelItem } from '../../services/craft-reel.service';
@@ -18,7 +18,7 @@ import { Footer } from '../home/footer/footer';
   templateUrl: './reels.html',
   styleUrl: './reels.css',
 })
-export class Reels implements OnInit, AfterViewInit {
+export class Reels implements OnInit, AfterViewInit, OnDestroy {
   resolveMediaUrl = resolveMediaUrl;
   @ViewChildren('videoElement') videoElements!: QueryList<ElementRef<HTMLVideoElement>>;
   @ViewChildren('reelCard') reelCards!: QueryList<ElementRef<HTMLDivElement>>;
@@ -29,7 +29,19 @@ export class Reels implements OnInit, AfterViewInit {
   reels: CraftReelItem[] = [];
   loading = true;
   activeIndex = 0;
-  isMuted = false;
+  isMuted = true; // Muted by default for 100% compliant autoplay across all browsers
+
+  // Playback & Interaction Maps
+  pausedMap: Map<number, boolean> = new Map();
+  bufferingMap: Map<number, boolean> = new Map();
+  progressMap: Map<number, number> = new Map();
+  rippleState: { reelId: number; type: 'play' | 'pause'; visible: boolean } = {
+    reelId: -1,
+    type: 'play',
+    visible: false,
+  };
+  private rippleTimeout: any = null;
+  private observer: IntersectionObserver | null = null;
 
   // Social states
   likedReels: Set<number> = new Set();
@@ -47,7 +59,8 @@ export class Reels implements OnInit, AfterViewInit {
     private auctionService: AuctionService,
     public authService: AuthService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
+    private zone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -56,7 +69,35 @@ export class Reels implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Video viewport observer handled reactively
+    this.setupIntersectionObserver();
+    this.reelCards.changes.subscribe(() => {
+      this.setupIntersectionObserver();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
+    if (this.rippleTimeout) {
+      clearTimeout(this.rippleTimeout);
+    }
+  }
+
+  private filterValidVideos(items: CraftReelItem[]): CraftReelItem[] {
+    return (items || []).filter((reel) => {
+      if (!reel.videoUrl || !reel.videoUrl.trim()) return false;
+      const url = reel.videoUrl.trim().toLowerCase();
+      const isImage =
+        url.endsWith('.jpg') ||
+        url.endsWith('.jpeg') ||
+        url.endsWith('.png') ||
+        url.endsWith('.webp') ||
+        url.endsWith('.gif') ||
+        url.endsWith('.svg');
+      return !isImage;
+    });
   }
 
   switchFeed(feed: 'for-you' | 'following'): void {
@@ -78,10 +119,10 @@ export class Reels implements OnInit, AfterViewInit {
     if (this.feedType === 'following') {
       this.followService.getFollowingReels().subscribe({
         next: (data) => {
-          this.reels = data;
+          this.reels = this.filterValidVideos(data);
           this.loading = false;
           this.checkFollowStatuses();
-          setTimeout(() => this.playVideoAtIndex(0), 300);
+          setTimeout(() => this.playVideoAtIndex(0), 200);
         },
         error: (err) => {
           console.error('Failed to load following reels:', err);
@@ -91,15 +132,50 @@ export class Reels implements OnInit, AfterViewInit {
     } else {
       this.craftReelService.getHomeReels().subscribe({
         next: (data) => {
-          this.reels = data;
+          this.reels = this.filterValidVideos(data);
           this.loading = false;
           this.checkFollowStatuses();
-          setTimeout(() => this.playVideoAtIndex(0), 300);
+          setTimeout(() => this.playVideoAtIndex(0), 200);
         },
         error: (err) => {
           console.error('Failed to load reels:', err);
           this.loading = false;
         },
+      });
+    }
+  }
+
+  private setupIntersectionObserver(): void {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+            const index = Number(entry.target.getAttribute('data-index'));
+            if (!isNaN(index) && index !== this.activeIndex) {
+              this.zone.run(() => {
+                this.activeIndex = index;
+                this.playVideoAtIndex(index);
+              });
+            }
+          }
+        });
+      },
+      {
+        threshold: [0.6],
+      }
+    );
+
+    const cards = this.reelCards?.toArray();
+    if (cards) {
+      cards.forEach((card, index) => {
+        card.nativeElement.setAttribute('data-index', index.toString());
+        this.observer?.observe(card.nativeElement);
       });
     }
   }
@@ -282,7 +358,6 @@ export class Reels implements OnInit, AfterViewInit {
 
   // Auto-advance / Auto-scroll when video completes playback
   onVideoEnded(index: number): void {
-    this.toastService.info('🎬 Next craft reel starting automatically...');
     if (index < this.reels.length - 1) {
       this.scrollToIndex(index + 1);
     } else {
@@ -323,31 +398,97 @@ export class Reels implements OnInit, AfterViewInit {
 
     videos.forEach((v, i) => {
       const vid = v.nativeElement;
+      const reel = this.reels[i];
       if (i === index) {
         vid.currentTime = 0;
         vid.muted = this.isMuted;
-        vid.play().catch((err) => console.log('Autoplay handled:', err));
-        this.trackView(this.reels[index]);
+        const playPromise = vid.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              if (reel) {
+                this.pausedMap.set(reel.id, false);
+                this.trackView(reel);
+              }
+            })
+            .catch((err) => {
+              console.log('Autoplay handled, falling back to muted playback:', err);
+              vid.muted = true;
+              this.isMuted = true;
+              vid.play().catch(() => {});
+            });
+        }
       } else {
         vid.pause();
+        if (reel) {
+          this.pausedMap.set(reel.id, true);
+        }
       }
     });
   }
 
-  togglePlayPause(video: HTMLVideoElement): void {
+  togglePlayPause(video: HTMLVideoElement, reel: CraftReelItem): void {
     if (video.paused) {
-      video.play();
+      video.muted = this.isMuted;
+      video.play().then(() => {
+        this.pausedMap.set(reel.id, false);
+        this.triggerRipple(reel.id, 'play');
+      }).catch(() => {
+        video.muted = true;
+        this.isMuted = true;
+        video.play();
+        this.pausedMap.set(reel.id, false);
+        this.triggerRipple(reel.id, 'play');
+      });
     } else {
       video.pause();
+      this.pausedMap.set(reel.id, true);
+      this.triggerRipple(reel.id, 'pause');
     }
   }
 
-  toggleMute(): void {
+  private triggerRipple(reelId: number, type: 'play' | 'pause'): void {
+    if (this.rippleTimeout) {
+      clearTimeout(this.rippleTimeout);
+    }
+    this.rippleState = { reelId, type, visible: true };
+    this.rippleTimeout = setTimeout(() => {
+      this.rippleState.visible = false;
+    }, 600);
+  }
+
+  toggleMute(event?: Event): void {
+    if (event) event.stopPropagation();
     this.isMuted = !this.isMuted;
     const videos = this.videoElements?.toArray();
     if (videos) {
       videos.forEach((v) => (v.nativeElement.muted = this.isMuted));
     }
+    if (!this.isMuted) {
+      this.toastService.info('🔊 Sound unmuted');
+    } else {
+      this.toastService.info('🔇 Sound muted');
+    }
+  }
+
+  onTimeUpdate(video: HTMLVideoElement, reelId: number): void {
+    if (video.duration) {
+      const pct = (video.currentTime / video.duration) * 100;
+      this.progressMap.set(reelId, pct);
+    }
+  }
+
+  onWaiting(reelId: number): void {
+    this.bufferingMap.set(reelId, true);
+  }
+
+  onPlaying(reelId: number): void {
+    this.bufferingMap.set(reelId, false);
+    this.pausedMap.set(reelId, false);
+  }
+
+  onPause(reelId: number): void {
+    this.pausedMap.set(reelId, true);
   }
 
   trackView(reel: CraftReelItem): void {
