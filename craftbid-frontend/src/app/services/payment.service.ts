@@ -161,51 +161,75 @@ export class PaymentService {
     onDismiss?: () => void,
     onError?: (err: any) => void,
   ): void {
+    // If order is simulated/test or Razorpay client is unconfigured on backend
+    if (
+      order.simulated ||
+      !order.orderId ||
+      order.orderId.startsWith('order_test_') ||
+      order.orderId.startsWith('order_sim_')
+    ) {
+      const payload: RazorpayVerifyPayload = {
+        razorpayOrderId: order.orderId || `order_test_${Date.now()}`,
+        razorpayPaymentId: `pay_test_${Date.now()}`,
+        razorpaySignature: `sig_test_${Date.now()}`,
+        auctionId: order.auctionId,
+        amount: order.amountInInr || (order.amount / 100),
+        type: 'PARTICIPATION',
+        paymentMethod: 'RAZORPAY',
+      };
+      onSuccess(payload);
+      return;
+    }
+
     if (typeof Razorpay === 'undefined') {
       const err = new Error('Razorpay SDK failed to load. Please check your internet connection.');
       if (onError) onError(err);
       return;
     }
 
-    const options: RazorpayCheckoutOptions = {
-      key: order.keyId,
-      amount: order.amount,
-      currency: order.currency || 'INR',
-      name: 'CraftBid Official',
-      description: order.craftTitle ? `Join Auction: ${order.craftTitle}` : 'CraftBid Payment',
-      order_id: order.orderId,
-      prefill: {
-        name: order.userName || '',
-        email: order.userEmail || '',
-        contact: order.userPhone || '',
-      },
-      theme: {
-        color: '#ea580c', // CraftBid brand amber/orange
-      },
-      modal: {
-        ondismiss: () => {
-          if (onDismiss) onDismiss();
+    try {
+      const options: RazorpayCheckoutOptions = {
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        name: 'CraftBid Official',
+        description: order.craftTitle ? `Join Auction: ${order.craftTitle}` : 'CraftBid Payment',
+        order_id: order.orderId,
+        prefill: {
+          name: order.userName || '',
+          email: order.userEmail || '',
+          contact: order.userPhone || '',
         },
-      },
-      handler: (response: any) => {
-        const payload: RazorpayVerifyPayload = {
-          razorpayOrderId: response.razorpay_order_id || order.orderId,
-          razorpayPaymentId: response.razorpay_payment_id,
-          razorpaySignature: response.razorpay_signature,
-          auctionId: order.auctionId,
-          amount: order.amountInInr || (order.amount / 100),
-          type: 'PARTICIPATION',
-          paymentMethod: 'RAZORPAY',
-        };
-        onSuccess(payload);
-      },
-    };
+        theme: {
+          color: '#ea580c', // CraftBid brand amber/orange
+        },
+        modal: {
+          ondismiss: () => {
+            if (onDismiss) onDismiss();
+          },
+        },
+        handler: (response: any) => {
+          const payload: RazorpayVerifyPayload = {
+            razorpayOrderId: response.razorpay_order_id || order.orderId,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+            auctionId: order.auctionId,
+            amount: order.amountInInr || (order.amount / 100),
+            type: 'PARTICIPATION',
+            paymentMethod: 'RAZORPAY',
+          };
+          onSuccess(payload);
+        },
+      };
 
-    const rzp = new Razorpay(options);
-    rzp.on('payment.failed', (response: any) => {
-      if (onError) onError(response.error);
-    });
-    rzp.open();
+      const rzp = new Razorpay(options);
+      rzp.on('payment.failed', (response: any) => {
+        if (onError) onError(response.error);
+      });
+      rzp.open();
+    } catch (e) {
+      if (onError) onError(e);
+    }
   }
 
   processPayment(payload: ProcessPaymentPayload): Observable<PaymentTransactionItem> {
