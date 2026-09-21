@@ -552,7 +552,7 @@ export class ArtisanDashboard implements OnInit {
 
   deleteCraft(id: number, event: Event): void {
     event.stopPropagation();
-    if (!confirm('Are you sure you want to delete this craft? Associated craft reels will also be removed.')) {
+    if (!confirm('Are you sure you want to delete this craft? Associated auctions and craft reels will also be removed.')) {
       return;
     }
 
@@ -565,7 +565,8 @@ export class ArtisanDashboard implements OnInit {
       },
       error: (err) => {
         console.error('Failed to delete craft:', err);
-        this.toastService.error('Failed to delete craft.');
+        const msg = err.error?.message || (typeof err.error === 'string' && err.error ? err.error : 'Failed to delete craft.');
+        this.toastService.error(msg);
       },
     });
   }

@@ -7,14 +7,9 @@ import com.craftbid.entity.ArtisanProfile;
 import com.craftbid.entity.Category;
 import com.craftbid.entity.Craft;
 import com.craftbid.entity.CraftReel;
-import com.craftbid.entity.Role;
-import com.craftbid.entity.User;
+import com.craftbid.entity.*;
 import com.craftbid.exception.AccessDeniedException;
-import com.craftbid.repository.ArtisanProfileRepository;
-import com.craftbid.repository.CategoryRepository;
-import com.craftbid.repository.CraftReelRepository;
-import com.craftbid.repository.CraftRepository;
-import com.craftbid.repository.UserRepository;
+import com.craftbid.repository.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +35,11 @@ class ArtisanStudioManagementTest {
     private CraftRepository craftRepository;
     private CategoryRepository categoryRepository;
     private CraftReelRepository craftReelRepository;
+    private AuctionRepository auctionRepository;
+    private BidRepository bidRepository;
+    private AuctionParticipantRepository auctionParticipantRepository;
+    private AuctionOrderRepository auctionOrderRepository;
+    private PaymentService paymentService;
     private FileStorageService fileStorageService;
     private EmailService emailService;
 
@@ -57,6 +57,11 @@ class ArtisanStudioManagementTest {
         craftRepository = mock(CraftRepository.class);
         categoryRepository = mock(CategoryRepository.class);
         craftReelRepository = mock(CraftReelRepository.class);
+        auctionRepository = mock(AuctionRepository.class);
+        bidRepository = mock(BidRepository.class);
+        auctionParticipantRepository = mock(AuctionParticipantRepository.class);
+        auctionOrderRepository = mock(AuctionOrderRepository.class);
+        paymentService = mock(PaymentService.class);
         fileStorageService = mock(FileStorageService.class);
         emailService = mock(EmailService.class);
 
@@ -73,6 +78,11 @@ class ArtisanStudioManagementTest {
                 categoryRepository,
                 artisanProfileRepository,
                 craftReelRepository,
+                auctionRepository,
+                bidRepository,
+                auctionParticipantRepository,
+                auctionOrderRepository,
+                paymentService,
                 fileStorageService
         );
 
@@ -246,6 +256,48 @@ class ArtisanStudioManagementTest {
         craftService.deleteCraft(200L);
 
         verify(craftReelRepository, times(1)).deleteAll(List.of(associatedReel));
+        verify(craftRepository, times(1)).delete(craft);
+    }
+
+    @Test
+    @DisplayName("Delete Craft cascades auctions, bids, participants, and orders to avoid database constraint violations")
+    void testDeleteCraft_CascadesAssociatedAuctionsAndBids() {
+        Craft craft = new Craft();
+        craft.setId(200L);
+        craft.setSeller(artisanUser);
+
+        Auction auction = new Auction();
+        auction.setId(500L);
+        auction.setCraft(craft);
+        auction.setSeller(artisanUser);
+
+        Bid bid = new Bid();
+        bid.setId(600L);
+        bid.setAuction(auction);
+
+        AuctionParticipant participant = new AuctionParticipant(auction, artisanUser, new BigDecimal("199.00"));
+        participant.setId(700L);
+        participant.setStatus("JOINED");
+
+        AuctionOrder order = new AuctionOrder();
+        order.setId(800L);
+        order.setAuction(auction);
+
+        when(craftRepository.findById(200L)).thenReturn(Optional.of(craft));
+        when(userRepository.findByIdentifier(artisanUser.getEmail())).thenReturn(Optional.of(artisanUser));
+        when(craftReelRepository.findByCraftId(200L)).thenReturn(Collections.emptyList());
+        when(auctionRepository.findByCraftId(200L)).thenReturn(List.of(auction));
+        when(auctionParticipantRepository.findByAuctionId(500L)).thenReturn(List.of(participant));
+        when(bidRepository.findByAuctionIdOrderByBidTimeDesc(500L)).thenReturn(List.of(bid));
+        when(auctionOrderRepository.findByAuction(auction)).thenReturn(Optional.of(order));
+
+        craftService.deleteCraft(200L);
+
+        verify(paymentService, times(1)).refundAuctionParticipant(eq(artisanUser), eq(500L), eq(200L), eq(new BigDecimal("199.00")), anyString());
+        verify(auctionParticipantRepository, times(1)).deleteAll(List.of(participant));
+        verify(bidRepository, times(1)).deleteAll(List.of(bid));
+        verify(auctionOrderRepository, times(1)).delete(order);
+        verify(auctionRepository, times(1)).delete(auction);
         verify(craftRepository, times(1)).delete(craft);
     }
 

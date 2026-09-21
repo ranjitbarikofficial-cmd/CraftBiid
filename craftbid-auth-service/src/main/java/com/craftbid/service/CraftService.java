@@ -12,6 +12,14 @@ import com.craftbid.repository.UserRepository;
 import com.craftbid.repository.CategoryRepository;
 import com.craftbid.repository.CraftReelRepository;
 
+import com.craftbid.entity.Auction;
+import com.craftbid.entity.Bid;
+import com.craftbid.entity.AuctionParticipant;
+import com.craftbid.repository.AuctionRepository;
+import com.craftbid.repository.BidRepository;
+import com.craftbid.repository.AuctionParticipantRepository;
+import com.craftbid.repository.AuctionOrderRepository;
+
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +46,11 @@ public class CraftService {
     private final CategoryRepository categoryRepository;
     private final ArtisanProfileRepository artisanProfileRepository;
     private final CraftReelRepository craftReelRepository;
+    private final AuctionRepository auctionRepository;
+    private final BidRepository bidRepository;
+    private final AuctionParticipantRepository auctionParticipantRepository;
+    private final AuctionOrderRepository auctionOrderRepository;
+    private final PaymentService paymentService;
     private final FileStorageService fileStorageService;
 
     // DSA: In-Memory LRU Cache for O(1) Craft Entity Lookup (5 min TTL)
@@ -52,6 +65,11 @@ public class CraftService {
             CategoryRepository categoryRepository,
             ArtisanProfileRepository artisanProfileRepository,
             CraftReelRepository craftReelRepository,
+            AuctionRepository auctionRepository,
+            BidRepository bidRepository,
+            AuctionParticipantRepository auctionParticipantRepository,
+            AuctionOrderRepository auctionOrderRepository,
+            PaymentService paymentService,
             FileStorageService fileStorageService) {
 
         this.craftRepository = craftRepository;
@@ -59,6 +77,11 @@ public class CraftService {
         this.categoryRepository = categoryRepository;
         this.artisanProfileRepository = artisanProfileRepository;
         this.craftReelRepository = craftReelRepository;
+        this.auctionRepository = auctionRepository;
+        this.bidRepository = bidRepository;
+        this.auctionParticipantRepository = auctionParticipantRepository;
+        this.auctionOrderRepository = auctionOrderRepository;
+        this.paymentService = paymentService;
         this.fileStorageService = fileStorageService;
     }
 
@@ -433,13 +456,56 @@ public class CraftService {
             checkOwnership(existingCraft, loggedInUser);
         }
 
+        // 1. Cascade delete associated craft reels
         List<CraftReel> associatedReels = craftReelRepository.findByCraftId(id);
         if (associatedReels != null && !associatedReels.isEmpty()) {
             craftReelRepository.deleteAll(associatedReels);
         }
 
+        // 2. Cascade delete all associated auctions and their dependencies
+        List<Auction> associatedAuctions = auctionRepository.findByCraftId(id);
+        if (associatedAuctions != null && !associatedAuctions.isEmpty()) {
+            for (Auction auction : associatedAuctions) {
+                // Refund and remove participants if any active
+                List<AuctionParticipant> participants = auctionParticipantRepository.findByAuctionId(auction.getId());
+                if (participants != null && !participants.isEmpty()) {
+                    for (AuctionParticipant p : participants) {
+                        if (!"REFUNDED".equalsIgnoreCase(p.getStatus()) && !"WON".equalsIgnoreCase(p.getStatus())) {
+                            try {
+                                if (p.getTotalAmountPaid() != null && p.getTotalAmountPaid().compareTo(BigDecimal.ZERO) > 0) {
+                                    paymentService.refundAuctionParticipant(
+                                            p.getUser(),
+                                            auction.getId(),
+                                            id,
+                                            p.getTotalAmountPaid(),
+                                            "Auction cancelled due to craft deletion - Auction #" + auction.getId()
+                                    );
+                                }
+                            } catch (Exception e) {
+                                logger.warn("Failed to refund participant {} on craft deletion: {}", p.getUser().getEmail(), e.getMessage());
+                            }
+                        }
+                    }
+                    auctionParticipantRepository.deleteAll(participants);
+                }
+
+                // Delete all bids for this auction
+                List<Bid> bids = bidRepository.findByAuctionIdOrderByBidTimeDesc(auction.getId());
+                if (bids != null && !bids.isEmpty()) {
+                    bidRepository.deleteAll(bids);
+                }
+
+                // Delete associated order if exists
+                auctionOrderRepository.findByAuction(auction).ifPresent(auctionOrderRepository::delete);
+
+                // Delete auction
+                auctionRepository.delete(auction);
+            }
+        }
+
         craftLruCache.remove(id);
         craftRepository.delete(existingCraft);
+        logger.info("Successfully deleted craft ID: {} and all associated reels & auctions.", id);
     }
 
     private void checkOwnership(Craft craft, User loggedInUser) {
