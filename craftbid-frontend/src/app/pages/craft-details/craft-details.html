@@ -1,85 +1,188 @@
 <app-topbar></app-topbar>
 <app-navbar></app-navbar>
 
-<div class="craft-details-container">
+<main class="craft-details-container">
+  <!-- 1. LOADING STATE -->
   @if (loading) {
-    <div class="loading-state">
-      <p>⏳ Loading craft details...</p>
+    <div class="craft-loading-box">
+      <div class="craft-loading-spinner"></div>
+      <h3>Loading craft details...</h3>
+      <p>Fetching handmade artisan creation and verification details</p>
     </div>
   }
 
+  <!-- 2. ERROR / NOT FOUND STATE -->
   @if (!loading && errorMessage) {
-    <div class="error-container">
-      <div class="error-icon">🏺</div>
-      <h2>{{ errorMessage }}</h2>
-      <a routerLink="/home" class="btn-back">← Back to Marketplace</a>
+    <div class="craft-error-box">
+      <div class="error-glyph">
+        @if (errorType === 'NOT_FOUND') {
+          🏺
+        } @else if (errorType === 'NETWORK') {
+          🌐
+        } @else {
+          ⚠️
+        }
+      </div>
+      <h2>{{ errorType === 'NOT_FOUND' ? 'Craft Creation Not Found' : 'Unable to Load Craft' }}</h2>
+      <p class="error-desc">{{ errorMessage }}</p>
+
+      <div class="error-actions-group">
+        <button type="button" class="btn-retry-craft" (click)="retry()">
+          🔄 Try Again
+        </button>
+        <a routerLink="/search" class="btn-browse-marketplace">
+          🏺 Explore Marketplace
+        </a>
+      </div>
     </div>
   }
 
-  @if (!loading && craft) {
-    <div class="breadcrumb">
-      <a routerLink="/home">Home</a> &gt;
-      <span>{{ craft.category?.name || 'Craft' }}</span> &gt;
-      <span>{{ craft.title }}</span>
-    </div>
+  <!-- 3. CRAFT DETAILS LOADED -->
+  @if (!loading && !errorMessage && craft) {
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb-bar" aria-label="Breadcrumb">
+      <a routerLink="/home">Home</a>
+      <span class="sep">›</span>
+      <a routerLink="/categories">{{ craft.category?.name || 'Handmade Crafts' }}</a>
+      <span class="sep">›</span>
+      <span class="current">{{ craft.title }}</span>
+    </nav>
 
     <div class="craft-main-layout">
-      <!-- LEFT: Image & Reels -->
-      <div class="craft-media-section">
+      <!-- LEFT COLUMN: Media Gallery & Making Process Reels -->
+      <section class="craft-media-section">
         <div class="main-image-wrap">
-          <img [src]="resolveMediaUrl(craft.imageUrl)" [alt]="craft.title" (error)="onImageError($event)" />
-          <span class="status-badge">{{ craft.status }}</span>
+          <img
+            [src]="resolveMediaUrl(craft.imageUrl)"
+            [alt]="craft.title"
+            (error)="onImageError($event)"
+          />
+          <span class="status-tag" [class.active-tag]="craft.status === 'ACTIVE'">
+            {{ craft.status === 'ACTIVE' ? '✨ Verified Creation' : craft.status }}
+          </span>
         </div>
 
+        <!-- Making Process Video Reels -->
         @if (reels.length > 0) {
-          <div class="reels-showcase">
-            <h3>🎥 Making Process Reel</h3>
+          <div class="reels-showcase-box">
+            <div class="showcase-header">
+              <h3>🎥 Making Process Video</h3>
+              <span class="reel-count-pill">{{ reels.length }} Reel{{ reels.length > 1 ? 's' : '' }}</span>
+            </div>
+
             @for (reel of reels; track reel.id) {
-              <div class="reel-player-box">
-                <video [src]="resolveMediaUrl(reel.videoUrl)" controls (play)="onVideoPlay(reel)"></video>
-                <div class="reel-meta">
-                  <span>{{ reel.title }}</span>
-                  <div class="reel-actions">
-                    <span>👁️ {{ reel.views || 0 }}</span>
-                    <button class="btn-like" (click)="likeReel(reel)">❤️ {{ reel.likes || 0 }}</button>
+              <div class="craft-reel-player-card">
+                <video
+                  [src]="resolveMediaUrl(reel.videoUrl)"
+                  [poster]="resolveMediaUrl(reel.thumbnailUrl)"
+                  controls
+                  playsinline
+                  (play)="onVideoPlay(reel)"
+                ></video>
+                <div class="craft-reel-info-bar">
+                  <div class="reel-text-stack">
+                    <strong>{{ reel.title }}</strong>
+                    @if (reel.description) {
+                      <small>{{ reel.description }}</small>
+                    }
+                  </div>
+                  <div class="craft-reel-actions">
+                    <span class="reel-stat-pill">👁️ {{ reel.views || 0 }}</span>
+                    <button type="button" class="btn-like-reel" (click)="likeReel(reel)">
+                      ❤️ {{ reel.likes || 0 }}
+                    </button>
                   </div>
                 </div>
               </div>
             }
           </div>
         }
-      </div>
+      </section>
 
-      <!-- RIGHT: Details & Artisan Info -->
-      <div class="craft-info-section">
-        <span class="category-tag">{{ craft.category?.name || 'Handmade Craft' }}</span>
-        <h1 class="craft-title">{{ craft.title }}</h1>
+      <!-- RIGHT COLUMN: Craft Information & Purchase Actions -->
+      <section class="craft-info-section">
+        <div class="category-header-row">
+          <span class="category-pill">{{ craft.category?.name || 'Handmade Heritage' }}</span>
+          <button
+            type="button"
+            class="btn-wishlist-toggle"
+            [class.active]="isWishlisted"
+            (click)="toggleWishlist()"
+            title="Save to Wishlist"
+          >
+            {{ isWishlisted ? '❤️ Saved' : '🤍 Wishlist' }}
+          </button>
+        </div>
 
-        <div class="artisan-badge">
-          <span class="avatar">👨‍🎨</span>
-          <div>
-            <strong>{{ craft.seller?.name || 'CraftBid Artisan' }}</strong>
-            <small>Verified Maker</small>
+        <h1 class="craft-main-title">{{ craft.title }}</h1>
+
+        <!-- Artisan Creator Profile Card -->
+        <div class="artisan-creator-card">
+          <span class="artisan-avatar-icon">👨‍🎨</span>
+          <div class="artisan-meta-stack">
+            <strong>{{ craft.seller?.name || 'Master Artisan' }}</strong>
+            <span>📍 {{ craft.seller?.city || 'India' }} • {{ followerCount }} followers</span>
           </div>
+
+          @if (craft.seller?.id && (!authService.getCurrentUser() || authService.getCurrentUser()?.userId !== craft.seller?.id)) {
+            <button
+              type="button"
+              class="btn-follow-artisan-sm"
+              [class.following]="isFollowing"
+              (click)="toggleFollow()"
+            >
+              {{ isFollowing ? '✓ Following' : '+ Follow' }}
+            </button>
+          }
         </div>
 
-        <div class="price-box">
-          <span class="price-label">Base Price</span>
-          <span class="price-value">{{ formatPrice(craft.basePrice) }}</span>
+        <!-- Live Auction Spotlight (If Live in Auction) -->
+        @if (activeAuction) {
+          <div class="live-auction-alert-box">
+            <div class="alert-icon-pulse">⚡</div>
+            <div class="alert-text-block">
+              <strong>Live Auction Room #{{ activeAuction.id }}</strong>
+              <p>This creation is currently being bid on live! Minimum starting bid: {{ formatPrice(activeAuction.startingPrice) }}</p>
+            </div>
+            <a [routerLink]="['/auctions', activeAuction.id]" class="btn-join-auction-cta">
+              🔨 Bid Live Now →
+            </a>
+          </div>
+        }
+
+        <!-- Price Card -->
+        <div class="craft-price-card">
+          <div class="price-details">
+            <span class="price-label">Base Price</span>
+            <strong class="price-figure">{{ formatPrice(craft.basePrice) }}</strong>
+          </div>
+          <span class="verified-badge">🛡️ Authenticity Guaranteed</span>
         </div>
 
-        <div class="description-box">
-          <h3>About this craft</h3>
-          <p>{{ craft.description }}</p>
+        <!-- Description -->
+        <div class="craft-description-box">
+          <h3>About this Masterpiece</h3>
+          <p>{{ craft.description || 'Authentic Indian handcrafted creation crafted using traditional artisan techniques and sustainable heritage materials.' }}</p>
         </div>
 
-        <div class="action-buttons">
-          <button class="btn-primary-action">🔨 Place Bid in Auction</button>
-          <button class="btn-secondary-action">❤️ Save to Wishlist</button>
+        <!-- Action CTAs -->
+        <div class="craft-actions-cluster">
+          @if (activeAuction) {
+            <a [routerLink]="['/auctions', activeAuction.id]" class="btn-primary-craft-cta auction-btn">
+              ⚡ Join Live Auction Room #{{ activeAuction.id }}
+            </a>
+          } @else {
+            <a [routerLink]="['/auctions']" class="btn-primary-craft-cta">
+              🏺 Browse Live Auctions
+            </a>
+          }
+          <a routerLink="/support" class="btn-secondary-craft-cta">
+            💬 Inquire with Artisan
+          </a>
         </div>
-      </div>
+      </section>
     </div>
   }
-</div>
+</main>
 
 <app-footer></app-footer>

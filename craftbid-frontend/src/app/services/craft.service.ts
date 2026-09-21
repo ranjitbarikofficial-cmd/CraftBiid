@@ -17,6 +17,8 @@ export interface CraftItem {
     name: string;
     email: string;
     phone?: string;
+    city?: string;
+    profileImageUrl?: string;
   };
   category?: {
     id: number;

@@ -1,33 +1,69 @@
+/* =========================================================
+   CRAFT DETAILS PAGE STYLES
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
 .craft-details-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px;
-  min-height: 80vh;
+  padding: 32px 24px 80px 24px;
+  min-height: 85vh;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #1e293b;
 }
 
-.breadcrumb {
-  font-size: 0.9rem;
+/* ==========================================
+   1. BREADCRUMBS
+   ========================================== */
+.breadcrumb-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
   color: #64748b;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
-.breadcrumb a {
+.breadcrumb-bar a {
   color: #ea580c;
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
+.breadcrumb-bar a:hover {
+  color: #c2410c;
+  text-decoration: underline;
+}
+
+.breadcrumb-bar .sep {
+  color: #cbd5e1;
+  font-size: 15px;
+}
+
+.breadcrumb-bar .current {
+  color: #0f172a;
+  font-weight: 600;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==========================================
+   2. MAIN TWO-COLUMN LAYOUT
+   ========================================== */
 .craft-main-layout {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1.15fr 1fr;
   gap: 48px;
+  align-items: start;
 }
 
-@media (max-width: 868px) {
-  .craft-main-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
+/* ==========================================
+   3. LEFT MEDIA SECTION
+   ========================================== */
 .craft-media-section {
   display: flex;
   flex-direction: column;
@@ -36,277 +72,623 @@
 
 .main-image-wrap {
   position: relative;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  background-color: #f1f5f9;
+  background: #f8fafc;
   border: 1px solid #e2e8f0;
-  max-height: 480px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .main-image-wrap img {
   width: 100%;
   height: 100%;
-  max-height: 480px;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
 }
 
-.status-badge {
+.status-tag {
   position: absolute;
   top: 16px;
   right: 16px;
-  background: #10b981;
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 20px;
-}
-
-.reels-showcase h3 {
-  font-size: 1.1rem;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  font-size: 11px;
   font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 12px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.reel-player-box {
-  border-radius: 12px;
-  overflow: hidden;
-  background: #000;
-  border: 1px solid #e2e8f0;
+.status-tag.active-tag {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
 }
 
-.reel-player-box video {
-  width: 100%;
-  max-height: 380px;
-  display: block;
-}
-
-.reel-meta {
-  padding: 12px 16px;
+/* Making Process Video Showcase */
+.reels-showcase-box {
   background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.showcase-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 14px;
 }
 
-.reel-actions {
+.showcase-header h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.reel-count-pill {
+  font-size: 11px;
+  font-weight: 700;
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+  padding: 2px 10px;
+  border-radius: 9999px;
+}
+
+.craft-reel-player-card {
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000000;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 12px;
+}
+
+.craft-reel-player-card:last-child {
+  margin-bottom: 0;
+}
+
+.craft-reel-player-card video {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  display: block;
+}
+
+.craft-reel-info-bar {
+  padding: 12px 16px;
+  background: #0f172a;
+  color: #ffffff;
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
 }
 
-.btn-like {
-  background: #fee2e2;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  color: #ef4444;
+.reel-text-stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
+.reel-text-stack strong {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reel-text-stack small {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.craft-reel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.reel-stat-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.btn-like-reel {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-like-reel:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+/* ==========================================
+   4. RIGHT INFO SECTION
+   ========================================== */
 .craft-info-section {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.category-tag {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #ea580c;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.category-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.craft-title {
-  font-size: 2rem;
+.category-pill {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ea580c;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  padding: 4px 12px;
+  border-radius: 9999px;
+}
+
+.btn-wishlist-toggle {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  font-size: 12px;
   font-weight: 700;
+  color: #475569;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-wishlist-toggle:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.btn-wishlist-toggle.active {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.craft-main-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
   color: #0f172a;
+  line-height: 1.2;
   margin: 0;
 }
 
-.artisan-badge {
+/* Artisan Creator Card */
+.artisan-creator-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 14px;
+  padding: 14px 18px;
   background: #fff7ed;
   border: 1px solid #fed7aa;
-  border-radius: 10px;
+  border-radius: 14px;
 }
 
-.artisan-badge .avatar {
-  font-size: 1.8rem;
+.artisan-avatar-icon {
+  font-size: 28px;
+  background: rgba(234, 88, 12, 0.15);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.artisan-badge strong {
-  display: block;
+.artisan-meta-stack {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.artisan-meta-stack strong {
+  font-size: 14px;
+  font-weight: 700;
   color: #9a3412;
 }
 
-.artisan-badge small {
+.artisan-meta-stack span {
+  font-size: 12px;
   color: #c2410c;
 }
 
-.price-box {
+.btn-follow-artisan-sm {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  border: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-follow-artisan-sm:hover {
+  transform: scale(1.05);
+}
+
+.btn-follow-artisan-sm.following {
+  background: #f1f5f9;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+/* Live Auction Spotlight Box */
+.live-auction-alert-box {
+  background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+  border: 2px solid #ef4444;
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 24px -6px rgba(239, 68, 68, 0.25);
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: #ef4444; }
+  50% { border-color: #ea580c; }
+}
+
+.alert-icon-pulse {
+  font-size: 28px;
+  color: #dc2626;
+  flex-shrink: 0;
+  animation: bounce 1s infinite alternate;
+}
+
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+
+.alert-text-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-text-block strong {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: #dc2626;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.alert-text-block p {
+  font-size: 12px;
+  color: #7f1d1d;
+  margin: 2px 0 0 0;
+}
+
+.btn-join-auction-cta {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 10px 18px;
+  border-radius: 10px;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+  transition: all 0.2s ease;
+}
+
+.btn-join-auction-cta:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Price Card */
+.craft-price-card {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 18px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
+.price-details {
+  display: flex;
+  flex-direction: column;
+}
+
 .price-label {
-  font-size: 0.95rem;
-  color: #64748b;
-}
-
-.price-value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #ea580c;
-}
-
-.description-box h3 {
-  font-size: 1.1rem;
+  font-size: 12px;
   font-weight: 600;
-  color: #0f172a;
-  margin-bottom: 8px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.description-box p {
+.price-figure {
+  font-family: 'Outfit', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: #ea580c;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.verified-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 6px 12px;
+  border-radius: 9999px;
+}
+
+/* Description Box */
+.craft-description-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px 24px;
+}
+
+.craft-description-box h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 10px 0;
+}
+
+.craft-description-box p {
   color: #475569;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
   white-space: pre-line;
 }
 
-.action-buttons {
+/* Action CTAs */
+.craft-actions-cluster {
   display: flex;
-  gap: 16px;
-  margin-top: 12px;
+  gap: 14px;
 }
 
-.btn-primary-action {
-  flex: 1;
-  background: #ea580c;
+.btn-primary-craft-cta {
+  flex: 1.3;
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
   color: #ffffff;
-  border: none;
-  padding: 14px 20px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.25);
-  transition: background 0.15s ease;
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 16px 22px;
+  border-radius: 12px;
+  text-decoration: none;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.35);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.btn-primary-action:hover {
-  background: #c2410c;
+.btn-primary-craft-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(234, 88, 12, 0.45);
 }
 
-.btn-secondary-action {
+.btn-primary-craft-cta.auction-btn {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.35);
+}
+
+.btn-secondary-craft-cta {
+  flex: 1;
   background: #ffffff;
   color: #334155;
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 16px 20px;
+  border-radius: 12px;
   border: 1px solid #cbd5e1;
-  padding: 14px 20px;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.loading-state, .error-container {
+  text-decoration: none;
   text-align: center;
-  padding: 80px 20px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.error-icon {
-  font-size: 3rem;
+.btn-secondary-craft-cta:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+/* ==========================================
+   5. LOADING & ERROR STATES
+   ========================================== */
+.craft-loading-box,
+.craft-error-box {
+  padding: 100px 20px;
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.craft-loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #fed7aa;
+  border-top-color: #ea580c;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 20px auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.craft-loading-box h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+.craft-loading-box p {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+}
+
+.error-glyph {
+  font-size: 54px;
   margin-bottom: 16px;
 }
 
-.btn-back {
-  display: inline-block;
-  margin-top: 16px;
-  background: #ea580c;
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 8px;
-  text-decoration: none;
+.craft-error-box h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 8px 0;
 }
 
-/* ================= RESPONSIVE DESIGN ================= */
+.error-desc {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
 
-/* Tablet Viewport (768px - 1023px) */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .craft-details-container {
-    padding: 24px 20px 60px;
-  }
+.error-actions-group {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
 
+.btn-retry-craft {
+  background: #ea580c;
+  color: #ffffff;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-retry-craft:hover {
+  background: #c2410c;
+}
+
+.btn-browse-marketplace {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-browse-marketplace:hover {
+  background: #e2e8f0;
+}
+
+/* ==========================================
+   6. RESPONSIVE MEDIA QUERIES
+   ========================================== */
+@media (max-width: 900px) {
   .craft-main-layout {
+    grid-template-columns: 1fr;
     gap: 32px;
   }
 
-  .main-image-wrap {
-    max-height: 380px;
-  }
-
-  .main-image-wrap img {
-    max-height: 380px;
+  .craft-main-title {
+    font-size: 26px;
   }
 }
 
-/* Mobile Viewport (320px - 767px) */
-@media (max-width: 767px) {
+@media (max-width: 600px) {
   .craft-details-container {
-    padding: 16px 14px 60px;
+    padding: 16px 14px 60px 14px;
   }
 
-  .breadcrumb {
-    font-size: 0.8rem;
+  .breadcrumb-bar {
+    font-size: 12px;
     margin-bottom: 16px;
   }
 
-  .craft-main-layout {
-    grid-template-columns: 1fr;
-    gap: 24px;
+  .craft-main-title {
+    font-size: 22px;
   }
 
-  .main-image-wrap {
-    max-height: 280px;
-    border-radius: 12px;
+  .price-figure {
+    font-size: 26px;
   }
 
-  .main-image-wrap img {
-    max-height: 280px;
-  }
-
-  .craft-title {
-    font-size: clamp(1.35rem, 6vw, 1.7rem);
-  }
-
-  .price-box {
-    padding: 12px 16px;
-    border-radius: 10px;
-  }
-
-  .price-value {
-    font-size: 1.4rem;
-  }
-
-  .action-buttons {
+  .craft-actions-cluster {
     flex-direction: column;
     gap: 10px;
   }
 
-  .btn-primary-action, .btn-secondary-action {
+  .live-auction-alert-box {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-join-auction-cta {
     width: 100%;
     text-align: center;
-    padding: 12px 16px;
-    font-size: 0.95rem;
   }
 }
