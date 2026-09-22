@@ -493,7 +493,19 @@ export class AuctionDetails implements OnInit, OnDestroy {
             this.refreshData(auctionId);
           },
           error: (err) => {
-            const msg = err.error?.message || err.error || 'Failed to complete auction deposit.';
+            if (err.status === 409 || err.error?.code === 'ALREADY_JOINED') {
+              this.toastService.info('You have already joined this auction.');
+              this.closeJoinModal();
+              this.refreshData(auctionId);
+              return;
+            }
+            if (err.status === 403) {
+              const msg = err.error?.message || 'Artisans cannot join their own auctions.';
+              this.toastService.warning(msg);
+              this.closeJoinModal();
+              return;
+            }
+            const msg = err.error?.message || 'Failed to complete auction deposit. Please try again.';
             this.toastService.error(msg);
           },
         });

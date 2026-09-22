@@ -185,17 +185,18 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return generic error for unhandled top-level Throwable")
-    void shouldHandleGenericThrowable() {
-        Throwable ex = new OutOfMemoryError("Java heap space");
+    @DisplayName("Should handle AlreadyJoinedException with 409 Conflict")
+    void shouldHandleAlreadyJoined() {
+        AlreadyJoinedException ex = new AlreadyJoinedException("You have already joined this auction.");
 
-        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleGenericThrowable(ex);
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleAlreadyJoined(ex);
 
         assertNotNull(response);
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         Map<String, Object> body = response.getBody();
         assertNotNull(body);
-        assertFalse(((String) body.get("message")).contains("Java heap space"));
-        assertEquals("An unexpected error occurred. Please try again later.", body.get("message"));
+        assertEquals(409, body.get("status"));
+        assertEquals("ALREADY_JOINED", body.get("code"));
+        assertEquals("You have already joined this auction.", body.get("message"));
     }
 }

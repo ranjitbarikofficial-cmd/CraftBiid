@@ -151,14 +151,27 @@ public class GlobalExceptionHandler {
                 .body(buildErrorBody(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to process or store the uploaded file. Please try again."));
     }
 
-    // =========================================================================
-    // SECURITY & ACCESS CONTROL
-    // =========================================================================
+    @ExceptionHandler(AlreadyJoinedException.class)
+    public ResponseEntity<Map<String, Object>> handleAlreadyJoined(AlreadyJoinedException ex) {
+        logger.info("User already joined auction: {}", ex.getMessage());
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now().toString());
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("error", "Conflict");
+        body.put("code", ex.getCode());
+        body.put("message", ex.getMessage() != null ? ex.getMessage() : "You have already joined this auction.");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
 
     @ExceptionHandler({AccessDeniedException.class, org.springframework.security.access.AccessDeniedException.class})
     public ResponseEntity<Map<String, Object>> handleAccessDenied(Exception ex) {
         logger.warn("Access denied violation: {}", ex.getMessage());
-        String safeMessage = sanitizeMessage(ex, ex.getMessage(), "Access denied. You do not have permission to perform this action.");
+        String msg = ex.getMessage();
+        String defaultMsg = "Access denied. You do not have permission to perform this action.";
+        String safeMessage = defaultMsg;
+        if (msg != null && !msg.isBlank() && !msg.equalsIgnoreCase("Access is denied") && !isTechnicalMessage(ex, msg)) {
+            safeMessage = msg.trim();
+        }
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(buildErrorBody(HttpStatus.FORBIDDEN, safeMessage));

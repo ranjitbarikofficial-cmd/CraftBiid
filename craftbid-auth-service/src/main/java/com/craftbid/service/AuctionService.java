@@ -9,8 +9,11 @@ import com.craftbid.dto.SubmitAddressRequest;
 import com.craftbid.dto.UpdateOrderStatusRequest;
 import com.craftbid.entity.*;
 import com.craftbid.exception.AccessDeniedException;
+import com.craftbid.exception.AlreadyJoinedException;
 import com.craftbid.repository.*;
 import com.craftbid.websocket.AuctionEventPublisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +26,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class AuctionService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuctionService.class);
 
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
@@ -150,6 +155,9 @@ public class AuctionService {
         User buyer = getUserByIdentifier(identifier);
         Auction auction = getAuctionById(auctionId);
 
+        String method = (request != null && request.getPaymentMethod() != null) ? request.getPaymentMethod().toUpperCase() : "UPI";
+        logger.info("Processing auction join with deposit: auctionId={}, userId={}, method={}", auctionId, buyer.getId(), method);
+
         if (auction.getSeller().getId().equals(buyer.getId())) {
             throw new AccessDeniedException("Artisans cannot join their own auctions");
         }
@@ -158,10 +166,15 @@ public class AuctionService {
             throw new RuntimeException("This auction is not open for joining (Status: " + auction.getStatus() + ")");
         }
 
+        // Check if 24-hour participation window has closed
+        if (auction.getParticipationDeadline() != null && LocalDateTime.now().isAfter(auction.getParticipationDeadline())) {
+            throw new RuntimeException("The 24-hour participation window for this auction has closed.");
+        }
+
         // Check if user already joined
         Optional<AuctionParticipant> existing = participantRepository.findByAuctionAndUser(auction, buyer);
         if (existing.isPresent()) {
-            return existing.get();
+            throw new AlreadyJoinedException("You have already joined this auction.");
         }
 
         int maxLimit = auction.getMaxParticipants() > 0 ? auction.getMaxParticipants() : 10;
@@ -170,6 +183,10 @@ public class AuctionService {
         }
 
         BigDecimal basePrice = auction.getStartingPrice();
+        if (basePrice == null || basePrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid starting price for auction.");
+        }
+
         AuctionParticipant participant = new AuctionParticipant(auction, buyer, basePrice);
         AuctionParticipant saved = participantRepository.save(participant);
 
@@ -186,14 +203,13 @@ public class AuctionService {
             try {
                 notificationService.notifyAuctionParticipationStarted(auction.getCraft().getTitle(), basePrice, auction.getId());
             } catch (Exception e) {
-                System.err.println("⚠️ Notification error on first deposit start: " + e.getMessage());
+                logger.warn("Notification error on first deposit start: {}", e.getMessage());
             }
         }
 
         auction.setCurrentParticipantsCount(auction.getCurrentParticipantsCount() + 1);
 
         // Record payment ledger transaction
-        String method = (request != null && request.getPaymentMethod() != null) ? request.getPaymentMethod() : "UPI";
         paymentService.recordTransaction(
                 buyer,
                 auction.getId(),
@@ -211,7 +227,7 @@ public class AuctionService {
         try {
             notificationService.notifyAuctionJoined(buyer, auction.getCraft().getTitle(), basePrice, auction.getId());
         } catch (Exception e) {
-            System.err.println("⚠️ Notification error on join: " + e.getMessage());
+            logger.warn("Notification error on join: {}", e.getMessage());
         }
 
         // DSA: Update In-Memory Live Auction Heap for O(1) top bid & O(log K) leaderboard
