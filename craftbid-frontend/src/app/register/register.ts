@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-register',
@@ -24,7 +25,8 @@ export class Register {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   togglePasswordVisibility(): void {
@@ -32,6 +34,10 @@ export class Register {
   }
 
   register(): void {
+    if (this.loading) {
+      return;
+    }
+
     this.errorMessage = '';
     this.isAlreadyRegistered = false;
 
@@ -51,6 +57,7 @@ export class Register {
     }
 
     this.loading = true;
+    this.cdr.markForCheck();
 
     const identifier = this.email.trim() ? this.email.trim() : this.phone.trim();
 
@@ -61,46 +68,70 @@ export class Register {
       password: this.password,
     };
 
-    this.authService.register(registerData).subscribe({
-      next: () => {
-        this.loading = false;
+    this.authService
+      .register(registerData)
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: () => {
+          // Navigate to OTP verification with the identifier and password state for seamless auto-login
+          this.router.navigate(['/register-otp'], {
+            queryParams: {
+              identifier: identifier,
+              email: this.email.trim() || undefined,
+              phone: this.phone.trim() || undefined,
+            },
+            state: {
+              password: this.password,
+            },
+          });
+        },
 
-        // Navigate to OTP verification with the identifier and password state for seamless auto-login
-        this.router.navigate(['/register-otp'], {
-          queryParams: {
-            identifier: identifier,
-            email: this.email.trim() || undefined,
-            phone: this.phone.trim() || undefined,
-          },
-          state: {
-            password: this.password,
-          },
-        });
-      },
+        error: (error) => {
+          console.error('Registration failed:', error);
 
-      error: (error) => {
-        console.error('Registration failed:', error);
-        this.loading = false;
+          let msg = 'Registration failed. Please check your details and try again.';
 
-        let msg = 'Registration failed. Please check your details and try again.';
-        if (typeof error.error === 'string') {
-          try {
-            const parsed = JSON.parse(error.error);
-            msg = parsed.message || parsed.error || error.error;
-          } catch {
-            msg = error.error;
+          if (error.status === 0) {
+            msg = 'Unable to connect to CraftBid. Please check your internet connection and try again.';
+          } else if (error.status >= 500) {
+            msg = 'Something went wrong. Please try again later.';
+          } else {
+            // Check structured message from backend
+            if (typeof error.error === 'string') {
+              try {
+                const parsed = JSON.parse(error.error);
+                msg = parsed.message || parsed.error || error.error;
+              } catch {
+                msg = error.error;
+              }
+            } else if (error.error && typeof error.error === 'object') {
+              msg = error.error.message || error.error.error || msg;
+            } else if (error.message) {
+              msg = error.message;
+            }
           }
-        } else if (error.error && typeof error.error === 'object') {
-          msg = error.error.message || error.error.error || msg;
-        } else if (error.message) {
-          msg = error.message;
-        }
 
-        this.errorMessage = msg;
-        if (msg.toLowerCase().includes('already registered')) {
-          this.isAlreadyRegistered = true;
-        }
-      },
-    });
+          this.errorMessage = msg;
+
+          const lowerMsg = (msg || '').toLowerCase();
+          if (
+            lowerMsg.includes('already registered') ||
+            lowerMsg.includes('already exists') ||
+            error.status === 409
+          ) {
+            this.isAlreadyRegistered = true;
+            if (!this.errorMessage.includes('Please login')) {
+              this.errorMessage = 'Email is already registered. Please login.';
+            }
+          }
+
+          this.cdr.markForCheck();
+        },
+      });
   }
 }
