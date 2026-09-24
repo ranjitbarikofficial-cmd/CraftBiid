@@ -112,6 +112,7 @@
                   <th>Shipping Address</th>
                   <th>Status</th>
                   <th>Date</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -135,6 +136,11 @@
                       <span class="status-badge success">{{ o.status }}</span>
                     </td>
                     <td><small>{{ formatDate(o.createdAt) }}</small></td>
+                    <td>
+                      <a [routerLink]="['/orders', o.id]" class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-semibold inline-flex items-center gap-1" style="text-decoration: none;">
+                        Track Order 📦
+                      </a>
+                    </td>
                   </tr>
                 }
               </tbody>

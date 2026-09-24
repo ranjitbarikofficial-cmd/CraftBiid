@@ -20,6 +20,12 @@ public class UpdateArtisanProfileRequest {
     @Pattern(regexp = "^[0-9]{10}$", message = "Phone must be a valid 10-digit number")
     private String phone;
 
+    private String bankAccountNumber;
+    private String bankIfscCode;
+    private String bankAccountName;
+    private String upiId;
+    private String payoutPreference;
+
     public UpdateArtisanProfileRequest() {
     }
 
@@ -61,5 +67,45 @@ public class UpdateArtisanProfileRequest {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getBankAccountNumber() {
+        return bankAccountNumber;
+    }
+
+    public void setBankAccountNumber(String bankAccountNumber) {
+        this.bankAccountNumber = bankAccountNumber;
+    }
+
+    public String getBankIfscCode() {
+        return bankIfscCode;
+    }
+
+    public void setBankIfscCode(String bankIfscCode) {
+        this.bankIfscCode = bankIfscCode;
+    }
+
+    public String getBankAccountName() {
+        return bankAccountName;
+    }
+
+    public void setBankAccountName(String bankAccountName) {
+        this.bankAccountName = bankAccountName;
+    }
+
+    public String getUpiId() {
+        return upiId;
+    }
+
+    public void setUpiId(String upiId) {
+        this.upiId = upiId;
+    }
+
+    public String getPayoutPreference() {
+        return payoutPreference;
+    }
+
+    public void setPayoutPreference(String payoutPreference) {
+        this.payoutPreference = payoutPreference;
     }
 }

@@ -37,6 +37,21 @@ public class AuctionParticipant {
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt = LocalDateTime.now();
 
+    @Column(name = "cancellation_requested_at")
+    private LocalDateTime cancellationRequestedAt;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
+    @Column(name = "cancellation_fee", precision = 12, scale = 2)
+    private BigDecimal cancellationFee = BigDecimal.ZERO;
+
+    @Column(name = "cancellation_refund_amount", precision = 12, scale = 2)
+    private BigDecimal cancellationRefundAmount = BigDecimal.ZERO;
+
+    @Column(name = "cancellation_status", length = 50)
+    private String cancellationStatus;
+
     public AuctionParticipant() {
     }
 
@@ -111,5 +126,45 @@ public class AuctionParticipant {
 
     public void setJoinedAt(LocalDateTime joinedAt) {
         this.joinedAt = joinedAt;
+    }
+
+    public LocalDateTime getCancellationRequestedAt() {
+        return cancellationRequestedAt;
+    }
+
+    public void setCancellationRequestedAt(LocalDateTime cancellationRequestedAt) {
+        this.cancellationRequestedAt = cancellationRequestedAt;
+    }
+
+    public LocalDateTime getCancelledAt() {
+        return cancelledAt;
+    }
+
+    public void setCancelledAt(LocalDateTime cancelledAt) {
+        this.cancelledAt = cancelledAt;
+    }
+
+    public BigDecimal getCancellationFee() {
+        return cancellationFee;
+    }
+
+    public void setCancellationFee(BigDecimal cancellationFee) {
+        this.cancellationFee = cancellationFee;
+    }
+
+    public BigDecimal getCancellationRefundAmount() {
+        return cancellationRefundAmount;
+    }
+
+    public void setCancellationRefundAmount(BigDecimal cancellationRefundAmount) {
+        this.cancellationRefundAmount = cancellationRefundAmount;
+    }
+
+    public String getCancellationStatus() {
+        return cancellationStatus;
+    }
+
+    public void setCancellationStatus(String cancellationStatus) {
+        this.cancellationStatus = cancellationStatus;
     }
 }

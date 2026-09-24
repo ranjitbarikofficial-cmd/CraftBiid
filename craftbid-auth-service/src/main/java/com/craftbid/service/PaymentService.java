@@ -32,6 +32,7 @@ public class PaymentService {
     private final AuctionRepository auctionRepository;
     private final AuctionParticipantRepository participantRepository;
     private final RazorpayService razorpayService;
+    private final CashfreeService cashfreeService;
     private final AuctionEventPublisher eventPublisher;
     private final NotificationService notificationService;
 
@@ -42,6 +43,7 @@ public class PaymentService {
             AuctionRepository auctionRepository,
             AuctionParticipantRepository participantRepository,
             RazorpayService razorpayService,
+            CashfreeService cashfreeService,
             AuctionEventPublisher eventPublisher,
             NotificationService notificationService) {
         this.paymentRepository = paymentRepository;
@@ -50,6 +52,7 @@ public class PaymentService {
         this.auctionRepository = auctionRepository;
         this.participantRepository = participantRepository;
         this.razorpayService = razorpayService;
+        this.cashfreeService = cashfreeService;
         this.eventPublisher = eventPublisher;
         this.notificationService = notificationService;
     }
@@ -82,7 +85,7 @@ public class PaymentService {
             throw new RuntimeException("You have already joined this auction room");
         }
 
-        int maxLimit = auction.getMaxParticipants() > 0 ? auction.getMaxParticipants() : 10;
+        int maxLimit = auction.getMaxParticipants() > 0 ? auction.getMaxParticipants() : 5;
         if (auction.getCurrentParticipantsCount() >= maxLimit) {
             throw new RuntimeException("Auction room is full! Maximum " + maxLimit + " participants reached.");
         }
@@ -459,11 +462,72 @@ public class PaymentService {
 
     @Transactional
     public PaymentTransaction refundAuctionParticipant(User user, Long auctionId, Long craftId, BigDecimal amount, String reason) {
-        Optional<PaymentTransaction> capturedTx = paymentRepository.findByAuctionIdAndUserAndStatus(auctionId, user, "CAPTURED");
-        String rzpPaymentId = capturedTx.map(PaymentTransaction::getRazorpayPaymentId).orElse(null);
+        List<PaymentTransaction> capturedTxs = paymentRepository.findByAuctionIdAndUserAndStatusOrderByCreatedAtDesc(auctionId, user, "CAPTURED");
 
-        Map<String, Object> rzpRefund = razorpayService.processRefund(rzpPaymentId, amount, reason);
-        String refundId = (String) rzpRefund.get("refundId");
+        // Idempotency check: check if user is already refunded for this auction
+        List<Refund> existingRefunds = refundRepository.findByUserAndAuctionId(user, auctionId);
+        BigDecimal alreadyRefunded = existingRefunds.stream()
+                .filter(r -> "COMPLETED".equalsIgnoreCase(r.getStatus()) || "SUCCESS".equalsIgnoreCase(r.getStatus()) || "REFUNDED".equalsIgnoreCase(r.getStatus()))
+                .map(Refund::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (alreadyRefunded.compareTo(amount) >= 0 && amount.compareTo(BigDecimal.ZERO) > 0) {
+            logger.info("User {} already fully refunded ₹{} for auction ID {}", user.getEmail(), alreadyRefunded, auctionId);
+            return capturedTxs.isEmpty() ? null : capturedTxs.get(0);
+        }
+
+        BigDecimal remainingToRefund = amount.subtract(alreadyRefunded);
+        String lastRefundRef = "ref_auto_" + System.currentTimeMillis();
+        String primaryGateway = "CASHFREE";
+
+        if (!capturedTxs.isEmpty()) {
+            for (PaymentTransaction tx : capturedTxs) {
+                if (remainingToRefund.compareTo(BigDecimal.ZERO) <= 0) break;
+                BigDecimal txAmount = tx.getAmount();
+                BigDecimal refundForThisTx = (txAmount != null && txAmount.compareTo(BigDecimal.ZERO) > 0) ? txAmount.min(remainingToRefund) : remainingToRefund;
+
+                String refundRef = null;
+                String gateway = "RAZORPAY";
+                if ("CASHFREE".equalsIgnoreCase(tx.getPaymentMethod()) || (tx.getRazorpayOrderId() != null && tx.getRazorpayOrderId().startsWith("order_cb_"))) {
+                    gateway = "CASHFREE";
+                    primaryGateway = "CASHFREE";
+                    if (cashfreeService != null) {
+                        Map<String, Object> cfRefund = cashfreeService.initiateRefund(tx.getRazorpayOrderId(), refundForThisTx, reason);
+                        refundRef = (String) cfRefund.get("refundId");
+                    }
+                } else if (tx.getRazorpayPaymentId() != null) {
+                    gateway = "RAZORPAY";
+                    primaryGateway = "RAZORPAY";
+                    if (razorpayService != null) {
+                        Map<String, Object> rzpRefund = razorpayService.processRefund(tx.getRazorpayPaymentId(), refundForThisTx, reason);
+                        refundRef = (String) rzpRefund.get("refundId");
+                    }
+                }
+
+                if (refundRef == null) {
+                    refundRef = "ref_auto_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 4);
+                }
+                lastRefundRef = refundRef;
+
+                Refund refund = new Refund(
+                        tx,
+                        user,
+                        auctionId,
+                        refundRef,
+                        refundRef,
+                        refundForThisTx,
+                        "COMPLETED",
+                        reason != null ? reason : "100% Automated Refund"
+                );
+                refundRepository.save(refund);
+
+                tx.setStatus("REFUNDED");
+                tx.setNotes((tx.getNotes() != null ? tx.getNotes() + " | " : "") + "Refunded: " + refundRef + " (" + refundForThisTx + " INR)");
+                paymentRepository.save(tx);
+
+                remainingToRefund = remainingToRefund.subtract(refundForThisTx);
+            }
+        }
 
         PaymentTransaction refundTx = recordTransaction(
                 user,
@@ -471,21 +535,23 @@ public class PaymentService {
                 craftId,
                 amount,
                 "AUTO_REFUND",
-                "RAZORPAY",
-                (reason != null ? reason : "100% Automated Refund") + " (Gateway Ref: " + refundId + ")"
+                primaryGateway,
+                (reason != null ? reason : "100% Automated Refund") + " (Gateway Ref: " + lastRefundRef + ")"
         );
 
-        Refund refund = new Refund(
-                capturedTx.orElse(refundTx),
-                user,
-                auctionId,
-                rzpPaymentId,
-                refundId,
-                amount,
-                "COMPLETED",
-                reason
-        );
-        refundRepository.save(refund);
+        if (capturedTxs.isEmpty()) {
+            Refund refund = new Refund(
+                    refundTx,
+                    user,
+                    auctionId,
+                    lastRefundRef,
+                    lastRefundRef,
+                    amount,
+                    "COMPLETED",
+                    reason != null ? reason : "100% Automated Refund"
+            );
+            refundRepository.save(refund);
+        }
 
         return refundTx;
     }

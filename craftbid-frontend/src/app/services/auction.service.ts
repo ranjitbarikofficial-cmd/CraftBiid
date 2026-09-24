@@ -25,8 +25,10 @@ export interface AuctionItem {
   startTime: string;
   firstDepositPaidAt?: string;
   participationDeadline?: string;
+  prepDeadline?: string;
+  initialWaitDeadline?: string;
   endTime: string;
-  status: 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'LIVE' | 'DIRECT_PURCHASE' | 'ENDED' | 'CANCELLED';
+  status: 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'PREPARATION' | 'LIVE' | 'DIRECT_PURCHASE' | 'ENDED' | 'CANCELLED';
   winningBidder?: {
     id: number;
     name: string;
@@ -76,9 +78,23 @@ export interface AuctionParticipantItem {
   city?: string;
   basePricePaid: number;
   totalAmountPaid: number;
-  status: 'JOINED' | 'ACTIVE' | 'WON' | 'REFUNDED';
+  status: 'JOINED' | 'ACTIVE' | 'WON' | 'REFUNDED' | 'CANCELLED';
   refundAmount?: number;
   joinedAt: string;
+}
+
+export interface CancelParticipationResponse {
+  auctionId: number;
+  participantId: number;
+  totalAmountPaid: number;
+  cancellationFeePercent: number;
+  cancellationFee: number;
+  refundAmount: number;
+  refundTransactionRef: string;
+  status: string;
+  message: string;
+  currentParticipantsCount: number;
+  cancelledAt: string;
 }
 
 export interface AuctionOrderItem {
@@ -223,5 +239,12 @@ export class AuctionService {
 
   registerInterest(auctionId: number): Observable<AuctionItem> {
     return this.http.post<AuctionItem>(`${this.apiUrl}/${auctionId}/interest`, {});
+  }
+
+  cancelParticipation(auctionId: number): Observable<CancelParticipationResponse> {
+    return this.http.post<CancelParticipationResponse>(
+      `${this.apiUrl}/${auctionId}/cancel-participation`,
+      {},
+    );
   }
 }

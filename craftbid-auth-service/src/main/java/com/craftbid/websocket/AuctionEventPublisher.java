@@ -25,7 +25,6 @@ public class AuctionEventPublisher {
         payload.put("timestamp", System.currentTimeMillis());
         payload.put("data", data);
 
-        // Cast to Object to disambiguate from (Object, Map<String, Object> headers) overload
         messagingTemplate.convertAndSend("/topic/auctions/" + auctionId, (Object) payload);
         messagingTemplate.convertAndSend("/topic/auctions", (Object) payload);
     }
@@ -41,5 +40,18 @@ public class AuctionEventPublisher {
         payload.put("data", data);
 
         messagingTemplate.convertAndSend("/topic/users/" + userId, (Object) payload);
+    }
+
+    /**
+     * Broadcast an order status update event to buyer, artisan, and subscribers
+     */
+    public void publishOrderEvent(Long orderId, String eventType, Object data) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("eventType", eventType);
+        payload.put("orderId", orderId);
+        payload.put("timestamp", System.currentTimeMillis());
+        payload.put("data", data);
+
+        messagingTemplate.convertAndSend("/topic/orders/" + orderId, (Object) payload);
     }
 }

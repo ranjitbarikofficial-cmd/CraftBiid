@@ -98,6 +98,29 @@ export const routes: Routes = [
       import('./pages/my-bids/my-bids').then((m) => m.MyBids),
   },
   {
+    path: 'orders/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/order-details/order-details').then((m) => m.OrderDetails),
+  },
+  {
+    path: 'orders/auction/:auctionId',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/order-details/order-details').then((m) => m.OrderDetails),
+  },
+  {
+    path: 'orders/number/:orderNumber',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/order-details/order-details').then((m) => m.OrderDetails),
+  },
+  {
+    path: 'my-orders',
+    redirectTo: 'profile',
+    pathMatch: 'full',
+  },
+  {
     path: 'reels',
     loadComponent: () =>
       import('./pages/reels/reels').then((m) => m.Reels),

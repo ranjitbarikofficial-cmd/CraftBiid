@@ -21,4 +21,10 @@ public interface AuctionParticipantRepository extends JpaRepository<AuctionParti
     List<AuctionParticipant> findByUserOrderByJoinedAtDesc(User user);
 
     long countByAuction(Auction auction);
+
+    long countByAuctionAndStatusNot(Auction auction, String status);
+
+    List<AuctionParticipant> findByAuctionAndStatusNotOrderByJoinedAtAsc(Auction auction, String status);
+
+    List<AuctionParticipant> findByAuctionAndStatusInOrderByJoinedAtAsc(Auction auction, List<String> statuses);
 }

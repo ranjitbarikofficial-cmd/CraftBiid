@@ -83,6 +83,16 @@ public class AuctionController {
         return ResponseEntity.ok(auctionService.joinAuctionWithDeposit(identifier, id, request));
     }
 
+    // Customer Voluntary Cancellation (5% deduction)
+    @PostMapping("/{id}/cancel-participation")
+    public ResponseEntity<CancelParticipationResponseDTO> cancelParticipation(
+            Authentication authentication,
+            @PathVariable Long id) {
+
+        String identifier = authentication.getName();
+        return ResponseEntity.ok(auctionService.cancelParticipation(identifier, id));
+    }
+
     // Register Interest (Does NOT start timer; registers for notifications)
     @PostMapping("/{id}/interest")
     public ResponseEntity<PublicAuctionResponse> registerInterest(

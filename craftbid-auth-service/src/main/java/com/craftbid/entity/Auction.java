@@ -50,7 +50,7 @@ public class Auction {
 
     // --- Dynamic 1-Minute Live Turn & Pay-to-Bid Fields ---
 
-    private int maxParticipants = 10;
+    private int maxParticipants = 5;
 
     private int currentParticipantsCount = 0;
 
@@ -61,6 +61,10 @@ public class Auction {
     private LocalDateTime firstDepositPaidAt; // Timestamp when first participant paid base deposit
 
     private LocalDateTime participationDeadline; // 24-hour participation window deadline (starts on first deposit)
+
+    private LocalDateTime prepDeadline; // 5-minute countdown deadline when 5/5 participants reach before 24h
+
+    private LocalDateTime initialWaitDeadline; // 2-minute initial waiting phase for live auction
 
     private LocalDateTime turnDeadline; // 60-second countdown timestamp
 
@@ -220,6 +224,22 @@ public class Auction {
 
     public void setParticipationDeadline(LocalDateTime participationDeadline) {
         this.participationDeadline = participationDeadline;
+    }
+
+    public LocalDateTime getPrepDeadline() {
+        return prepDeadline;
+    }
+
+    public void setPrepDeadline(LocalDateTime prepDeadline) {
+        this.prepDeadline = prepDeadline;
+    }
+
+    public LocalDateTime getInitialWaitDeadline() {
+        return initialWaitDeadline;
+    }
+
+    public void setInitialWaitDeadline(LocalDateTime initialWaitDeadline) {
+        this.initialWaitDeadline = initialWaitDeadline;
     }
 
     public LocalDateTime getTurnDeadline() {

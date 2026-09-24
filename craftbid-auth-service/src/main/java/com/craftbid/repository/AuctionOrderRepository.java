@@ -14,7 +14,15 @@ public interface AuctionOrderRepository extends JpaRepository<AuctionOrder, Long
 
     Optional<AuctionOrder> findByAuction(Auction auction);
 
+    boolean existsByAuction(Auction auction);
+
+    Optional<AuctionOrder> findByOrderNumber(String orderNumber);
+
     List<AuctionOrder> findByArtisanOrderByCreatedAtDesc(User artisan);
 
     List<AuctionOrder> findByBuyerOrderByCreatedAtDesc(User buyer);
+
+    List<AuctionOrder> findAllByOrderByCreatedAtDesc();
+
+    List<AuctionOrder> findByStatusOrderByCreatedAtDesc(String status);
 }

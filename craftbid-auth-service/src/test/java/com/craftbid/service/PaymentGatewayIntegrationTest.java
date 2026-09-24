@@ -48,6 +48,9 @@ public class PaymentGatewayIntegrationTest {
     private RazorpayService razorpayService;
 
     @Mock
+    private CashfreeService cashfreeService;
+
+    @Mock
     private AuctionEventPublisher eventPublisher;
 
     @Mock
@@ -69,6 +72,7 @@ public class PaymentGatewayIntegrationTest {
                 auctionRepository,
                 participantRepository,
                 razorpayService,
+                cashfreeService,
                 eventPublisher,
                 notificationService
         );
@@ -225,7 +229,7 @@ public class PaymentGatewayIntegrationTest {
         );
         capturedTx.setRazorpayPaymentId("pay_test_9999");
 
-        when(paymentRepository.findByAuctionIdAndUserAndStatus(1L, buyer, "CAPTURED")).thenReturn(Optional.of(capturedTx));
+        when(paymentRepository.findByAuctionIdAndUserAndStatusOrderByCreatedAtDesc(1L, buyer, "CAPTURED")).thenReturn(List.of(capturedTx));
         when(paymentRepository.save(any(PaymentTransaction.class))).thenAnswer(i -> i.getArgument(0));
 
         Map<String, Object> rzpRefundResult = new HashMap<>();

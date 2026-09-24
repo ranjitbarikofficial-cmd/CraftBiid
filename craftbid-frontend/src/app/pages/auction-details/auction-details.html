@@ -18,7 +18,27 @@
 
     <!-- ================= 24-HOUR PARTICIPATION COUNTDOWN BANNER ================= -->
     @if (!auction.liveTurnActive && auction.status !== 'ENDED' && auction.status !== 'CANCELLED') {
-      @if (isWaitingForFirstDeposit()) {
+      @if (isPreparationActive()) {
+        <div class="participation-banner prep-window" style="background: linear-gradient(135deg, #7c2d12, #c2410c); color: #fff; border-radius: 12px; padding: 16px 24px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 14px rgba(194, 65, 12, 0.3);">
+          <div class="p-banner-left" style="display: flex; align-items: center; gap: 16px;">
+            <span class="icon" style="font-size: 2.2rem;">⚡</span>
+            <div>
+              <h3 style="margin: 0 0 4px 0; font-size: 1.25rem; font-weight: 700; color: #fff;">5/5 Full — Live Auction Starting Soon!</h3>
+              <p style="margin: 0; color: #ffedd5; font-size: 0.95rem;">All 5 collector spots filled! The 1-minute live turn bidding room will commence in <strong>{{ prepTimeLeft || '05:00' }}</strong>.</p>
+            </div>
+          </div>
+          <div class="p-banner-right" style="display: flex; gap: 12px; align-items: center;">
+            <div class="p-timer-box" style="background: rgba(0,0,0,0.3); border: 1px solid #f97316; border-radius: 8px; padding: 10px 18px; text-align: center;">
+              <span class="p-timer-label" style="display: block; font-size: 0.75rem; color: #fed7aa; text-transform: uppercase;">Live Starts In</span>
+              <span class="p-timer-val" style="display: block; color: #fff; font-size: 1.4rem; font-weight: 800; font-family: monospace;">{{ prepTimeLeft || '05:00' }}</span>
+            </div>
+            <div class="p-spots-box" style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px 16px; text-align: center;">
+              <span class="spots-count" style="display: block; color: #4ade80; font-size: 1.3rem; font-weight: 800;">5 / 5</span>
+              <span class="spots-label" style="display: block; font-size: 0.75rem; color: #fed7aa; text-transform: uppercase;">FULL</span>
+            </div>
+          </div>
+        </div>
+      } @else if (isWaitingForFirstDeposit()) {
         <div class="participation-banner waiting-start">
           <div class="p-banner-left">
             <span class="icon">⏳</span>
@@ -33,7 +53,7 @@
               <span class="p-timer-val">Starts on 1st Deposit</span>
             </div>
             <div class="p-spots-box">
-              <span class="spots-count">0 / {{ auction.maxParticipants || 10 }}</span>
+              <span class="spots-count">0 / {{ auction.maxParticipants || 5 }}</span>
               <span class="spots-label">Participants</span>
             </div>
           </div>
@@ -53,7 +73,7 @@
               <span class="p-timer-val">{{ participationTimeLeft || '24h remaining' }}</span>
             </div>
             <div class="p-spots-box">
-              <span class="spots-count">{{ participants.length }} / {{ auction.maxParticipants || 10 }}</span>
+              <span class="spots-count">{{ participants.length }} / {{ auction.maxParticipants || 5 }}</span>
               <span class="spots-label">Participants</span>
             </div>
           </div>
@@ -73,18 +93,14 @@
             } @else {
               <span>Final Winning Price: <strong>{{ formatPrice(auction.currentHighestBid) }}</strong>.</span>
             }
-            @if (auctionOrder && auctionOrder.status !== 'PENDING_ADDRESS') {
-              <span> Delivery address confirmed. Status: <strong>{{ auctionOrder.status }}</strong>.</span>
-            } @else {
-              <span> Please enter your full delivery address for artisan dispatch.</span>
-            }
+            <span> Manage delivery, courier tracking, and doorstep dispatch.</span>
           </p>
         </div>
-        @if (!auctionOrder || auctionOrder.status === 'PENDING_ADDRESS') {
-          <button class="btn-address-action" (click)="openAddressModal()">📦 Enter Shipping Address</button>
-        } @else {
-          <span class="badge-confirmed">✅ Address Confirmed ({{ auctionOrder.status }})</span>
-        }
+        <div class="flex items-center gap-2">
+          <a [routerLink]="['/orders/auction', auction.id]" class="btn-address-action" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            📦 Track Order & Shipping
+          </a>
+        </div>
       </div>
     }
 
@@ -155,18 +171,47 @@
         <div class="room-lobby-banner">
           <div class="room-info">
             <span class="room-label">👥 Participation Room</span>
-            <strong>{{ participants.length }} / {{ auction.maxParticipants || 10 }} Spots Filled</strong>
+            <strong>{{ participants.length }} / {{ auction.maxParticipants || 5 }} Spots Filled</strong>
           </div>
 
-          @if (isCurrentUserSeller()) {
-            <span class="badge-seller-owner">👨‍🎨 Your Artisan Creation (Owner)</span>
-          } @else if (currentParticipant) {
-            <span class="badge-joined">✅ Joined (Commitment: {{ formatPrice(currentParticipant.totalAmountPaid) }})</span>
-          } @else if (auction.status !== 'ENDED' && auction.status !== 'CANCELLED') {
-            <button class="btn-join-room" (click)="openJoinModal()">
-              💳 Pay Base Deposit ({{ formatPrice(auction.startingPrice) }}) to Join
-            </button>
-          }
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            @if (isCurrentUserSeller()) {
+              <span class="badge-seller-owner">👨‍🎨 Your Artisan Creation (Owner)</span>
+            } @else if (currentParticipant) {
+              <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                @if (currentParticipant.status === 'CANCELLED') {
+                  <span class="badge-cancelled" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
+                    ❌ Participation Cancelled (Refunded: {{ formatPrice(currentParticipant.refundAmount || 0) }})
+                  </span>
+                } @else {
+                  <span class="badge-joined">✅ Joined (Commitment: {{ formatPrice(currentParticipant.totalAmountPaid) }})</span>
+                  @if (canCancelParticipation()) {
+                    <button
+                      type="button"
+                      class="btn-cancel-participation"
+                      (click)="openCancelModal()"
+                      style="background: #fff; border: 1.5px solid #dc2626; color: #dc2626; padding: 6px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; transition: all 0.2s ease;"
+                    >
+                      ✕ Cancel Participation
+                    </button>
+                  }
+                }
+              </div>
+            } @else if (auction.status !== 'ENDED' && auction.status !== 'CANCELLED' && !isPreparationActive()) {
+              <button
+                type="button"
+                class="btn-interested"
+                (click)="registerInterest()"
+                [disabled]="registeringInterest || hasRegisteredInterest"
+                style="background: #fff; border: 1.5px solid #ea580c; color: #ea580c; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem;"
+              >
+                {{ hasRegisteredInterest ? '✅ Interested (' + auction.interestedCount + ')' : '😍 Interested (' + auction.interestedCount + ')' }}
+              </button>
+              <button class="btn-join-room" (click)="openJoinModal()">
+                💳 Pay Base Deposit ({{ formatPrice(auction.startingPrice) }}) to Join
+              </button>
+            }
+          </div>
         </div>
 
         <!-- 2. 1-MINUTE LIVE TURN COUNTDOWN -->
@@ -257,10 +302,14 @@
                 </div>
               </div>
 
-              @if (currentParticipant) {
+              @if (currentParticipant && currentParticipant.status !== 'CANCELLED') {
                 <button class="btn-place-bid" (click)="placeBid()" [disabled]="bidding">
                   {{ bidding ? 'Authorizing Differential...' : '⚡ Pay ' + formatPrice(differentialToPay) + ' & Place Bid' }}
                 </button>
+              } @else if (currentParticipant && currentParticipant.status === 'CANCELLED') {
+                <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 12px; border-radius: 8px; text-align: center; font-weight: 500; font-size: 0.9rem;">
+                  ❌ Your participation was cancelled. Bidding is disabled.
+                </div>
               } @else {
                 <button class="btn-place-bid join-first" (click)="openJoinModal()">
                   🔒 Pay Base Deposit ({{ formatPrice(auction.startingPrice) }}) to Join & Bid
@@ -348,9 +397,13 @@
         <div class="payment-method-selector">
           <label>Select Payment Method:</label>
           <div class="payment-options">
+            <label class="pay-option" [class.selected]="selectedPaymentMethod === 'CASHFREE'">
+              <input type="radio" name="payMethod" value="CASHFREE" [(ngModel)]="selectedPaymentMethod" />
+              <span>⚡ Cashfree PG (UPI / Cards / NetBanking / Wallets)</span>
+            </label>
             <label class="pay-option" [class.selected]="selectedPaymentMethod === 'UPI'">
               <input type="radio" name="payMethod" value="UPI" [(ngModel)]="selectedPaymentMethod" />
-              <span>📱 UPI (GPay / PhonePe / Paytm / QR)</span>
+              <span>📱 Instant UPI Direct</span>
             </label>
             <label class="pay-option" [class.selected]="selectedPaymentMethod === 'CARD'">
               <input type="radio" name="payMethod" value="CARD" [(ngModel)]="selectedPaymentMethod" />
@@ -416,6 +469,48 @@
         <button class="btn-secondary" (click)="closeAddressModal()">Cancel</button>
         <button class="btn-primary" (click)="submitAddress()" [disabled]="submittingAddress">
           {{ submittingAddress ? 'Saving Address...' : 'Confirm Delivery Address' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ================= CANCEL PARTICIPATION CONFIRMATION MODAL ================= -->
+@if (isCancelModalOpen && auction) {
+  <div class="modal-backdrop" (click)="closeCancelModal()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()" style="max-width: 480px;">
+      <div class="modal-header">
+        <h2>⚠️ Cancel Auction Participation</h2>
+        <button class="btn-close" (click)="closeCancelModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: #374151; font-size: 0.95rem; margin-bottom: 16px;">
+          You will receive a refund after a <strong>5% cancellation fee</strong>.
+        </p>
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #4b5563;">
+            <span>Total Amount Paid:</span>
+            <strong>{{ formatPrice(currentParticipant?.totalAmountPaid || auction.startingPrice || 0) }}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #dc2626;">
+            <span>Cancellation Fee (5%):</span>
+            <strong>- {{ formatPrice(cancellationFee) }}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #fecaca; color: #166534; font-size: 1.05rem;">
+            <span>Refund Amount:</span>
+            <strong style="font-size: 1.15rem;">{{ formatPrice(cancellationRefundAmount) }}</strong>
+          </div>
+        </div>
+        <p style="color: #6b7280; font-size: 0.88rem; text-align: center; margin-bottom: 8px;">
+          Are you sure you want to cancel? Your reserved spot will be released immediately.
+        </p>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn-secondary" (click)="closeCancelModal()" [disabled]="cancellingParticipation">
+          Keep My Spot
+        </button>
+        <button type="button" class="btn-primary" (click)="confirmCancellation()" [disabled]="cancellingParticipation" style="background: #dc2626; border-color: #dc2626;">
+          {{ cancellingParticipation ? 'Processing Cancellation...' : 'Confirm Cancellation' }}
         </button>
       </div>
     </div>

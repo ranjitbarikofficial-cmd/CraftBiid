@@ -202,6 +202,16 @@ export class WebSocketService {
     return this.subscriptions.get(topic)!.asObservable();
   }
 
+  public subscribeToOrder(orderId: number): Observable<WebSocketEvent> {
+    const topic = `/topic/orders/${orderId}`;
+    if (!this.subscriptions.has(topic)) {
+      const subject = new Subject<WebSocketEvent>();
+      this.subscriptions.set(topic, subject);
+    }
+    this.sendSubscribeFrame(topic);
+    return this.subscriptions.get(topic)!.asObservable();
+  }
+
   public unsubscribe(topic: string): void {
     const subId = this.topicToSubId.get(topic);
     if (subId && this.connected && this.socket?.readyState === WebSocket.OPEN) {

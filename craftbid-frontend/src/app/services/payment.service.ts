@@ -118,7 +118,34 @@ export interface RazorpayCheckoutOptions {
   }) => void;
 }
 
+export interface CashfreeOrderResponse {
+  success: boolean;
+  orderId: string;
+  paymentSessionId: string;
+  environment: string;
+  orderAmount: number;
+  orderCurrency: string;
+  auctionId?: number;
+  craftId?: number;
+  craftTitle?: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  type?: string;
+  simulated?: boolean;
+}
+
+export interface CashfreeVerifyPayload {
+  orderId: string;
+  auctionId?: number;
+  craftId?: number;
+  amount: number;
+  type: string;
+  paymentMethod?: string;
+}
+
 declare var Razorpay: any;
+declare var Cashfree: any;
 
 @Injectable({
   providedIn: 'root',
@@ -127,6 +154,99 @@ export class PaymentService {
   private apiUrl = `${getApiBaseUrl()}/api/payments`;
 
   constructor(private http: HttpClient) {}
+
+  // ==========================================
+  // CASHFREE GATEWAY (v2023-08-01)
+  // ==========================================
+
+  /**
+   * Create Cashfree Order on the backend
+   */
+  createCashfreeOrder(
+    amount: number,
+    auctionId?: number,
+    craftId?: number,
+    type = 'PARTICIPATION',
+  ): Observable<CashfreeOrderResponse> {
+    return this.http.post<CashfreeOrderResponse>(`${this.apiUrl}/cashfree/create-order`, {
+      amount,
+      auctionId,
+      craftId,
+      type,
+    });
+  }
+
+  /**
+   * Strictly verify Cashfree Payment on backend and activate participation
+   */
+  verifyCashfreePayment(payload: CashfreeVerifyPayload): Observable<PaymentTransactionItem> {
+    return this.http.post<PaymentTransactionItem>(`${this.apiUrl}/cashfree/verify`, payload);
+  }
+
+  /**
+   * Launch Cashfree JS v3 Modal Checkout
+   */
+  openCashfreeCheckout(
+    order: CashfreeOrderResponse,
+    onSuccess: (verifyPayload: CashfreeVerifyPayload) => void,
+    onDismiss?: () => void,
+    onError?: (err: any) => void,
+  ): void {
+    const orderType = order.type || 'PARTICIPATION';
+
+    if (order.simulated || !order.paymentSessionId || order.paymentSessionId.startsWith('session_sim_')) {
+      const payload: CashfreeVerifyPayload = {
+        orderId: order.orderId,
+        auctionId: order.auctionId,
+        craftId: order.craftId,
+        amount: order.orderAmount,
+        type: orderType,
+        paymentMethod: 'CASHFREE',
+      };
+      onSuccess(payload);
+      return;
+    }
+
+    if (typeof Cashfree === 'undefined') {
+      const err = new Error('Cashfree SDK failed to load. Please check your internet connection.');
+      if (onError) onError(err);
+      return;
+    }
+
+    try {
+      const cashfree = Cashfree({
+        mode: order.environment?.toLowerCase() === 'production' ? 'production' : 'sandbox',
+      });
+
+      cashfree.checkout({
+        paymentSessionId: order.paymentSessionId,
+        redirectTarget: '_modal',
+      }).then((result: any) => {
+        if (result?.error) {
+          if (result.error.message && result.error.message.toLowerCase().includes('close')) {
+            if (onDismiss) onDismiss();
+          } else {
+            if (onError) onError(result.error);
+          }
+          return;
+        }
+
+        const payload: CashfreeVerifyPayload = {
+          orderId: order.orderId,
+          auctionId: order.auctionId,
+          craftId: order.craftId,
+          amount: order.orderAmount,
+          type: orderType,
+          paymentMethod: 'CASHFREE',
+        };
+        onSuccess(payload);
+      }).catch((err: any) => {
+        if (onError) onError(err);
+      });
+    } catch (e) {
+      if (onError) onError(e);
+    }
+  }
 
   /**
    * Create Razorpay Order on the backend

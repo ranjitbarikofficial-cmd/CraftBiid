@@ -47,6 +47,7 @@ public class SecurityHardeningTest {
         BidRepository bidRepository = mock(BidRepository.class);
         AuctionParticipantRepository participantRepository = mock(AuctionParticipantRepository.class);
         RazorpayService razorpayService = mock(RazorpayService.class);
+        CashfreeService cashfreeService = mock(CashfreeService.class);
         AuctionEventPublisher eventPublisher = mock(AuctionEventPublisher.class);
         NotificationService notificationService = mock(NotificationService.class);
 
@@ -57,9 +58,13 @@ public class SecurityHardeningTest {
                 auctionRepository,
                 participantRepository,
                 razorpayService,
+                cashfreeService,
                 eventPublisher,
                 notificationService
         );
+
+        OrderService orderService = mock(OrderService.class);
+        com.craftbid.repository.AuctionInterestRepository auctionInterestRepository = mock(com.craftbid.repository.AuctionInterestRepository.class);
 
         auctionService = new AuctionService(
                 auctionRepository,
@@ -71,7 +76,9 @@ public class SecurityHardeningTest {
                 paymentService,
                 notificationService,
                 eventPublisher,
-                razorpayService
+                razorpayService,
+                orderService,
+                auctionInterestRepository
         );
     }
 

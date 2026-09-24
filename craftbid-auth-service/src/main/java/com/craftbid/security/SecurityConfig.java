@@ -210,8 +210,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/bids/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/auctions/**").authenticated()
 
+                        // Order & Address APIs
+                        .requestMatchers("/api/orders/**").authenticated()
+                        .requestMatchers("/api/addresses/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/shipping/webhook").permitAll()
+
                         // Payment API
                         .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/payments/cashfree/webhook").permitAll()
                         .requestMatchers("/api/payments/admin-stats").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/payments/*/refund").hasRole("ADMIN")
                         .requestMatchers("/api/payments/**").authenticated()

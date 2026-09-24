@@ -10,7 +10,8 @@ import java.time.LocalDateTime;
         @Index(name = "idx_refund_user", columnList = "user_id"),
         @Index(name = "idx_refund_auction", columnList = "auction_id"),
         @Index(name = "idx_refund_rzp_refund_id", columnList = "razorpay_refund_id"),
-        @Index(name = "idx_refund_status", columnList = "status")
+        @Index(name = "idx_refund_status", columnList = "status"),
+        @Index(name = "idx_refund_user_auction", columnList = "user_id, auction_id")
 })
 public class Refund {
 

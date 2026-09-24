@@ -254,7 +254,7 @@
                       <strong class="craft-base-price">Base Price: {{ formatPrice(reel.craft.basePrice) }}</strong>
                       @if (getAuctionForCraft(reel.craft.id)) {
                         <small class="craft-participants-count">
-                          👥 {{ getAuctionForCraft(reel.craft.id)?.currentParticipantsCount || 0 }}/{{ getAuctionForCraft(reel.craft.id)?.maxParticipants || 10 }} Participants
+                          👥 {{ getAuctionForCraft(reel.craft.id)?.currentParticipantsCount || 0 }}/{{ getAuctionForCraft(reel.craft.id)?.maxParticipants || 5 }} Participants
                         </small>
                       }
                     </div>

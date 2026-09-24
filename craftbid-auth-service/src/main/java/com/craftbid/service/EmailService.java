@@ -660,6 +660,28 @@ public class EmailService {
     }
 
     // =====================================================
+    // PARTICIPATION CANCELLED EMAIL
+    // =====================================================
+    public void sendParticipationCancelledEmail(String email, String name, String craftName, BigDecimal totalPaid, BigDecimal cancellationFee, BigDecimal refundAmount, String txnRef, Long auctionId) {
+        String subject = "❌ Participation Cancelled: Refund ₹" + refundAmount + " for " + craftName;
+        String displayName = (name != null && !name.isBlank()) ? name : "CraftBid Member";
+        String html = "<div style='font-family: Arial, sans-serif; max-width: 550px; margin: auto; padding: 24px; background: #faf8f5; border: 1px solid #e8e2d9; border-radius: 12px;'>"
+                + "<h2 style='color: #dc2626; margin: 4px 0; text-align: center;'>❌ Participation Cancelled</h2>"
+                + "<p style='color: #27272a; font-size: 15px;'>Hello <strong>" + displayName + "</strong>,</p>"
+                + "<p style='color: #52525b; font-size: 14px;'>Your participation in the auction for <strong>" + craftName + "</strong> has been cancelled at your request.</p>"
+                + "<div style='background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 16px 0;'>"
+                + "<p style='margin: 4px 0; color: #991b1b;'><strong>Total Amount Paid:</strong> ₹" + totalPaid + "</p>"
+                + "<p style='margin: 4px 0; color: #991b1b;'><strong>Cancellation Fee (5%):</strong> ₹" + cancellationFee + "</p>"
+                + "<p style='margin: 4px 0; color: #166534; font-size: 16px;'><strong>Refund Amount:</strong> ₹" + refundAmount + "</p>"
+                + "<p style='margin: 4px 0; color: #52525b;'><strong>Refund Reference:</strong> " + txnRef + "</p>"
+                + "<p style='margin: 4px 0; color: #52525b;'><strong>Refund Method:</strong> Original Payment Source</p>"
+                + "</div>"
+                + "<p style='color: #71717a; font-size: 12px; text-align: center;'>Refund will be credited back to your original payment method in 3-5 business days.</p>"
+                + "</div>";
+        dispatchEmail(email, subject, html);
+    }
+
+    // =====================================================
     // ARTISAN CRAFT SOLD EMAIL
     // =====================================================
     public void sendArtisanCraftSoldEmail(String email, String artisanName, String craftName, BigDecimal finalAmount, BigDecimal artisanPayout, Long auctionId) {

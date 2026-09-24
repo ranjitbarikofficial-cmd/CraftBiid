@@ -20,5 +20,7 @@ public interface RefundRepository extends JpaRepository<Refund, Long> {
 
     Optional<Refund> findByRazorpayRefundId(String razorpayRefundId);
 
+    List<Refund> findByUserAndAuctionId(User user, Long auctionId);
+
     long countByStatus(String status);
 }

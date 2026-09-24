@@ -84,7 +84,7 @@ public class NotificationService {
 
     public void notifyAuctionParticipationStarted(String craftName, BigDecimal basePrice, Long auctionId) {
         String title = "🏺 Auction Officially Started!";
-        String message = "First deposit paid for \"" + craftName + "\". The 24-hour participation window is now LIVE! Join before the 10 spots fill.";
+        String message = "First deposit paid for \"" + craftName + "\". The 24-hour participation window is now LIVE! Join before the 5 spots fill.";
         String link = "/auctions/" + auctionId;
 
         try {
@@ -95,6 +95,24 @@ public class NotificationService {
                 } catch (Exception ignored) {}
             }
         } catch (Exception ignored) {}
+    }
+
+    public void notifyInterestedUsers(com.craftbid.entity.Auction auction, List<User> interestedUsers) {
+        if (auction == null || interestedUsers == null || interestedUsers.isEmpty()) {
+            return;
+        }
+        String craftTitle = auction.getCraft() != null ? auction.getCraft().getTitle() : "Craft Item";
+        BigDecimal basePrice = auction.getStartingPrice();
+        String title = "🏺 24H Auction Started: " + craftTitle;
+        String message = "The 1st participant has joined the auction for \"" + craftTitle + "\"! The 24-hour participation window is now LIVE. Join now before 5 spots fill!";
+        String link = "/auctions/" + auction.getId();
+
+        for (User user : interestedUsers) {
+            try {
+                createNotification(user, title, message, "AUCTION_PARTICIPATION_STARTED", link);
+                emailService.sendAuctionParticipationStartedEmail(user.getEmail(), user.getName(), craftTitle, basePrice, auction.getId());
+            } catch (Exception ignored) {}
+        }
     }
 
     public void notifyAuctionJoined(User user, String craftName, BigDecimal basePrice, Long auctionId) {
@@ -123,7 +141,7 @@ public class NotificationService {
     public void notifyAuctionWon(User user, String craftName, BigDecimal winningAmount, Long auctionId) {
         String title = "🏆 Congratulations! You Won the Auction!";
         String message = "You won \"" + craftName + "\" for ₹" + winningAmount + "! Please provide your delivery address to dispatch your craft.";
-        String link = "/auctions/" + auctionId;
+        String link = "/orders/auction/" + auctionId;
         createNotification(user, title, message, "AUCTION_WON", link);
         emailService.sendAuctionWonEmail(user.getEmail(), user.getName(), craftName, winningAmount, auctionId);
     }
@@ -136,6 +154,14 @@ public class NotificationService {
         emailService.sendAuctionRefundEmail(user.getEmail(), user.getName(), craftName, refundAmount, txnRef, auctionId);
     }
 
+    public void notifyParticipationCancelled(User user, String craftName, BigDecimal totalPaid, BigDecimal cancellationFee, BigDecimal refundAmount, String txnRef, Long auctionId) {
+        String title = "❌ Participation Cancelled";
+        String message = "Your participation in \"" + craftName + "\" has been cancelled. Refund of ₹" + refundAmount + " (after 5% cancellation fee of ₹" + cancellationFee + ") has been initiated. Ref: " + txnRef;
+        String link = "/auctions/" + auctionId;
+        createNotification(user, title, message, "PARTICIPATION_CANCELLED", link);
+        emailService.sendParticipationCancelledEmail(user.getEmail(), user.getName(), craftName, totalPaid, cancellationFee, refundAmount, txnRef, auctionId);
+    }
+
     public void notifyArtisanCraftSold(User artisan, String craftName, BigDecimal finalAmount, BigDecimal payoutAmount, Long auctionId) {
         String title = "🎉 Craft Sold!";
         String message = "Your craft \"" + craftName + "\" sold at auction for ₹" + finalAmount + "! Your payout is ₹" + payoutAmount + " (after 10% platform fee).";
@@ -144,11 +170,46 @@ public class NotificationService {
         emailService.sendArtisanCraftSoldEmail(artisan.getEmail(), artisan.getName(), craftName, finalAmount, payoutAmount, auctionId);
     }
 
+    public void notifyOrderAddressSubmitted(User artisan, String craftName, Long orderId) {
+        String title = "📍 Delivery Address Confirmed";
+        String message = "The winner has provided their delivery address for \"" + craftName + "\". Please prepare the package dimensions and ship.";
+        String link = "/orders/" + orderId;
+        createNotification(artisan, title, message, "ADDRESS_CONFIRMED", link);
+    }
+
+    public void notifyOrderReadyToShip(User buyer, String craftName, Long orderId) {
+        String title = "📦 Package Ready for Dispatch";
+        String message = "Artisan has packed \"" + craftName + "\" and scheduled shipping.";
+        String link = "/orders/" + orderId;
+        createNotification(buyer, title, message, "READY_TO_SHIP", link);
+    }
+
+    public void notifyOrderShipmentCreated(User buyer, String craftName, String courierName, String trackingNumber, Long orderId) {
+        String title = "🚚 Order Shipped!";
+        String message = "Your craft \"" + craftName + "\" has been shipped via " + courierName + "! AWB / Tracking #: " + trackingNumber;
+        String link = "/orders/" + orderId;
+        createNotification(buyer, title, message, "SHIPMENT_CREATED", link);
+    }
+
+    public void notifyOrderDelivered(User buyer, String craftName, Long orderId) {
+        String title = "🎁 Order Delivered!";
+        String message = "Your craft \"" + craftName + "\" has been delivered. Enjoy your handcrafted treasure!";
+        String link = "/orders/" + orderId;
+        createNotification(buyer, title, message, "ORDER_DELIVERED", link);
+    }
+
     public void notifyOrderShipped(User buyer, String craftName, String trackingNotes, String carrier, Long orderId) {
         String title = "📦 Order Shipped!";
         String message = "Your craft \"" + craftName + "\" has been shipped by the artisan! " + (trackingNotes != null ? "Tracking: " + trackingNotes : "");
-        String link = "/profile";
+        String link = "/orders/" + orderId;
         createNotification(buyer, title, message, "ORDER_SHIPPED", link);
         emailService.sendOrderShippedEmail(buyer.getEmail(), buyer.getName(), craftName, trackingNotes, carrier, orderId);
+    }
+
+    public void notifyArtisanPayoutCompleted(User artisan, String craftName, java.math.BigDecimal payoutAmount, String reference, Long orderId) {
+        String title = "💰 Seller Payout Transferred!";
+        String message = "Your payout of ₹" + payoutAmount + " for \"" + craftName + "\" has been transferred successfully! Reference/UTR: " + reference;
+        String link = "/artisan-dashboard";
+        createNotification(artisan, title, message, "PAYOUT_COMPLETED", link);
     }
 }

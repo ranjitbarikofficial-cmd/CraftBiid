@@ -1,12 +1,9 @@
 package com.craftbid.controller;
 
-import com.craftbid.dto.PaymentRequest;
-import com.craftbid.dto.PaymentStatsDTO;
-import com.craftbid.dto.RazorpayOrderRequest;
-import com.craftbid.dto.RazorpayVerifyRequest;
-import com.craftbid.dto.RefundRequest;
+import com.craftbid.dto.*;
 import com.craftbid.entity.PaymentTransaction;
 import com.craftbid.entity.Refund;
+import com.craftbid.service.CashfreeService;
 import com.craftbid.service.PaymentService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +20,69 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final CashfreeService cashfreeService;
 
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentService paymentService, CashfreeService cashfreeService) {
         this.paymentService = paymentService;
+        this.cashfreeService = cashfreeService;
+    }
+
+    // ==========================================
+    // CASHFREE PAYMENT GATEWAY ENDPOINTS
+    // ==========================================
+
+    /**
+     * Create Cashfree PG Order (v2023-08-01) for Auction Deposit or Direct Purchase.
+     * Generates Cashfree order and returns payment_session_id for Cashfree.js checkout modal.
+     */
+    @PostMapping("/cashfree/create-order")
+    public ResponseEntity<CashfreeOrderResponse> createCashfreeOrder(
+            Authentication authentication,
+            @Valid @RequestBody CashfreeOrderRequest request) {
+
+        String identifier = authentication.getName();
+        CashfreeOrderResponse response = cashfreeService.createOrder(
+                identifier,
+                request.getAmount(),
+                request.getAuctionId(),
+                request.getCraftId(),
+                request.getType()
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Strictly verify Cashfree Order payment status with Cashfree Gateway and enroll Auction Participant.
+     */
+    @PostMapping("/cashfree/verify")
+    public ResponseEntity<PaymentTransaction> verifyCashfreePayment(
+            Authentication authentication,
+            @Valid @RequestBody CashfreeVerifyRequest request) {
+
+        String identifier = authentication.getName();
+        PaymentTransaction tx = cashfreeService.verifyAndRecordCashfreePayment(
+                identifier,
+                request.getOrderId(),
+                request.getAuctionId(),
+                request.getCraftId(),
+                request.getAmount(),
+                request.getType(),
+                request.getPaymentMethod()
+        );
+        return ResponseEntity.ok(tx);
+    }
+
+    /**
+     * Cashfree Server Webhook with HMAC-SHA256 Signature Verification.
+     */
+    @PostMapping("/cashfree/webhook")
+    public ResponseEntity<Map<String, Object>> handleCashfreeWebhook(
+            @RequestBody String rawBody,
+            @RequestHeader(value = "x-webhook-signature", required = false) String signature,
+            @RequestHeader(value = "x-webhook-timestamp", required = false) String timestamp) {
+
+        Map<String, Object> response = cashfreeService.processWebhook(rawBody, signature, timestamp);
+        return ResponseEntity.ok(response);
     }
 
     /**

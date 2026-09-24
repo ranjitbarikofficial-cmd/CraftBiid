@@ -63,6 +63,11 @@ public class ArtisanService {
         profile.setCraftType(request.getCraftType().trim());
         profile.setCity(request.getCity().trim());
         profile.setProfileImageUrl(user.getProfileImageUrl());
+        if (request.getBankAccountNumber() != null) profile.setBankAccountNumber(request.getBankAccountNumber().trim());
+        if (request.getBankIfscCode() != null) profile.setBankIfscCode(request.getBankIfscCode().trim().toUpperCase());
+        if (request.getBankAccountName() != null) profile.setBankAccountName(request.getBankAccountName().trim());
+        if (request.getUpiId() != null) profile.setUpiId(request.getUpiId().trim());
+        if (request.getPayoutPreference() != null) profile.setPayoutPreference(request.getPayoutPreference().trim().toUpperCase());
 
         artisanProfileRepository.save(profile);
 
@@ -99,18 +104,7 @@ public class ArtisanService {
                     return artisanProfileRepository.save(newP);
                 });
 
-        return new ArtisanProfileDTO(
-                profile.getId(),
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getPhone(),
-                profile.getCity(),
-                profile.getShopName(),
-                profile.getCraftType(),
-                user.getProfileImageUrl() != null ? user.getProfileImageUrl() : profile.getProfileImageUrl(),
-                profile.getCreatedAt()
-        );
+        return ArtisanProfileDTO.fromEntity(profile, user);
     }
 
     // =====================================================
@@ -154,21 +148,30 @@ public class ArtisanService {
             profile.setCraftType(request.getCraftType().trim());
         }
 
+        if (request.getBankAccountNumber() != null) {
+            profile.setBankAccountNumber(request.getBankAccountNumber().trim());
+        }
+
+        if (request.getBankIfscCode() != null) {
+            profile.setBankIfscCode(request.getBankIfscCode().trim().toUpperCase());
+        }
+
+        if (request.getBankAccountName() != null) {
+            profile.setBankAccountName(request.getBankAccountName().trim());
+        }
+
+        if (request.getUpiId() != null) {
+            profile.setUpiId(request.getUpiId().trim());
+        }
+
+        if (request.getPayoutPreference() != null && !request.getPayoutPreference().isBlank()) {
+            profile.setPayoutPreference(request.getPayoutPreference().trim().toUpperCase());
+        }
+
         userRepository.save(user);
         artisanProfileRepository.save(profile);
 
-        return new ArtisanProfileDTO(
-                profile.getId(),
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getPhone(),
-                profile.getCity(),
-                profile.getShopName(),
-                profile.getCraftType(),
-                user.getProfileImageUrl() != null ? user.getProfileImageUrl() : profile.getProfileImageUrl(),
-                profile.getCreatedAt()
-        );
+        return ArtisanProfileDTO.fromEntity(profile, user);
     }
 
     // =====================================================

@@ -42,8 +42,13 @@ export class AuctionDetails implements OnInit, OnDestroy {
 
   // Modals & States
   isJoinModalOpen = false;
-  selectedPaymentMethod = 'UPI';
+  selectedPaymentMethod = 'CASHFREE';
   isAddressModalOpen = false;
+  isCancelModalOpen = false;
+  cancellingParticipation = false;
+  cancellationFeePercent = 5;
+  cancellationFee = 0;
+  cancellationRefundAmount = 0;
   addressForm: SubmitAddressPayload = {
     fullName: '',
     streetAddress: '',
@@ -63,6 +68,9 @@ export class AuctionDetails implements OnInit, OnDestroy {
   // 1-minute turn timer state
   secondsRemainingInTurn = 60;
   participationTimeLeft = '';
+  prepTimeLeft = '';
+  registeringInterest = false;
+  hasRegisteredInterest = false;
   timerInterval: any = null;
   pollingInterval: any = null;
   private hasExpiredTriggered = false;
@@ -95,6 +103,7 @@ export class AuctionDetails implements OnInit, OnDestroy {
     this.timerInterval = setInterval(() => {
       this.updateTurnTimer();
       this.updateParticipationCountdown();
+      this.updatePreparationCountdown();
     }, 1000);
   }
 
@@ -154,6 +163,22 @@ export class AuctionDetails implements OnInit, OnDestroy {
       if (this.auction) {
         this.loadParticipants(this.auction.id);
       }
+    } else if (event.eventType === 'auction:participant_cancelled') {
+      if (this.auction) {
+        if (event.data?.currentParticipants !== undefined) {
+          this.auction.currentParticipantsCount = event.data.currentParticipants;
+        }
+        if (event.data?.firstDepositPaidAt !== undefined) {
+          this.auction.firstDepositPaidAt = event.data.firstDepositPaidAt;
+        }
+        if (event.data?.participationDeadline !== undefined) {
+          this.auction.participationDeadline = event.data.participationDeadline;
+        }
+        if (event.data?.status) {
+          this.auction.status = event.data.status;
+        }
+        this.loadParticipants(this.auction.id);
+      }
     } else if (event.eventType === 'auction:participation_started') {
       if (this.auction) {
         if (event.data?.participationDeadline) {
@@ -165,10 +190,20 @@ export class AuctionDetails implements OnInit, OnDestroy {
         this.toastService.info('🏺 The 24-hour participation window has officially started!');
         this.refreshData(this.auction.id);
       }
-    } else if (event.eventType === 'auction:started') {
+    } else if (event.eventType === 'auction:preparation_started') {
+      if (this.auction) {
+        this.auction.status = 'PREPARATION';
+        this.auction.liveTurnActive = false;
+        if (event.data?.prepDeadline) {
+          this.auction.prepDeadline = event.data.prepDeadline;
+        }
+        this.toastService.info('⏳ Room is 5/5 Full! 5-minute countdown started before Live Auction.');
+        this.refreshData(this.auction.id);
+      }
+    } else if (event.eventType === 'auction:started' || event.eventType === 'auction:live_started') {
       if (this.auction) {
         this.auction.liveTurnActive = true;
-        this.auction.status = 'ACTIVE';
+        this.auction.status = 'LIVE';
         if (event.data?.turnDeadline) {
           this.auction.turnDeadline = event.data.turnDeadline;
         }
@@ -338,6 +373,7 @@ export class AuctionDetails implements OnInit, OnDestroy {
       !this.auction?.liveTurnActive &&
       this.auction?.status !== 'ENDED' &&
       this.auction?.status !== 'CANCELLED' &&
+      this.auction?.status !== 'PREPARATION' &&
       (!this.auction?.participationDeadline || (this.auction?.currentParticipantsCount || 0) === 0)
     );
   }
@@ -347,8 +383,17 @@ export class AuctionDetails implements OnInit, OnDestroy {
       !this.auction?.liveTurnActive &&
       this.auction?.status !== 'ENDED' &&
       this.auction?.status !== 'CANCELLED' &&
+      this.auction?.status !== 'PREPARATION' &&
       !!this.auction?.participationDeadline &&
-      (this.auction?.currentParticipantsCount || 0) > 0
+      (this.auction?.currentParticipantsCount || 0) > 0 &&
+      (this.auction?.currentParticipantsCount || 0) < (this.auction?.maxParticipants || 5)
+    );
+  }
+
+  isPreparationActive(): boolean {
+    return (
+      this.auction?.status === 'PREPARATION' ||
+      (!!this.auction?.prepDeadline && new Date(this.auction.prepDeadline).getTime() > Date.now())
     );
   }
 
@@ -356,7 +401,8 @@ export class AuctionDetails implements OnInit, OnDestroy {
     if (
       !this.auction ||
       !this.auction.participationDeadline ||
-      (this.auction.currentParticipantsCount || 0) === 0
+      (this.auction.currentParticipantsCount || 0) === 0 ||
+      this.isPreparationActive()
     ) {
       this.participationTimeLeft = '';
       this.cdr.markForCheck();
@@ -379,6 +425,62 @@ export class AuctionDetails implements OnInit, OnDestroy {
 
     this.participationTimeLeft = `${hours}h ${minutes}m ${seconds}s`;
     this.cdr.markForCheck();
+  }
+
+  updatePreparationCountdown(): void {
+    if (!this.auction || !this.auction.prepDeadline) {
+      this.prepTimeLeft = '';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const deadline = new Date(this.auction.prepDeadline).getTime();
+    const now = Date.now();
+    const diffMs = deadline - now;
+
+    if (diffMs <= 0) {
+      this.prepTimeLeft = '00:00';
+      if (this.auction.status === 'PREPARATION') {
+        this.refreshData(this.auction.id);
+      }
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const minutes = Math.floor(diffMs / (1000 * 60));
+    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+    this.prepTimeLeft = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    this.cdr.markForCheck();
+  }
+
+  registerInterest(): void {
+    if (!this.authService.isLoggedIn()) {
+      this.toastService.warning('Please login to register interest');
+      this.router.navigate(['/login']);
+      return;
+    }
+    if (!this.auction) return;
+    this.registeringInterest = true;
+    this.auctionService
+      .registerInterest(this.auction.id)
+      .pipe(
+        finalize(() => {
+          this.registeringInterest = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (updated) => {
+          this.auction = updated;
+          this.hasRegisteredInterest = true;
+          this.toastService.success('😍 Interest registered! You will receive notification & email alerts when the 24h window starts.');
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          const msg = err.error?.message || 'Failed to register interest.';
+          this.toastService.error(msg);
+        },
+      });
   }
 
   calculateMinNextBid(): void {
@@ -449,6 +551,86 @@ export class AuctionDetails implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  // ==========================================
+  // CANCEL PARTICIPATION (5% DEDUCTION)
+  // ==========================================
+
+  canCancelParticipation(): boolean {
+    if (!this.auction || !this.currentParticipant || !this.currentUser) return false;
+    if (
+      this.currentParticipant.status === 'CANCELLED' ||
+      this.currentParticipant.status === 'REFUNDED' ||
+      this.currentParticipant.status === 'WON'
+    ) {
+      return false;
+    }
+    if (
+      this.auction.status === 'PREPARATION' ||
+      this.auction.status === 'LIVE' ||
+      this.auction.status === 'ENDED' ||
+      this.auction.status === 'CANCELLED' ||
+      this.auction.liveTurnActive
+    ) {
+      return false;
+    }
+    if ((this.auction.currentParticipantsCount || 0) >= (this.auction.maxParticipants || 5)) {
+      return false;
+    }
+    return true;
+  }
+
+  openCancelModal(): void {
+    if (!this.canCancelParticipation()) return;
+    const totalPaid = this.currentParticipant?.totalAmountPaid || this.auction?.startingPrice || 0;
+    this.cancellationFee = Math.round(totalPaid * 0.05 * 100) / 100;
+    this.cancellationRefundAmount = Math.round((totalPaid - this.cancellationFee) * 100) / 100;
+    this.isCancelModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeCancelModal(): void {
+    this.isCancelModalOpen = false;
+    this.cancellingParticipation = false;
+    this.cdr.markForCheck();
+  }
+
+  confirmCancellation(): void {
+    if (!this.auction || !this.canCancelParticipation()) return;
+    this.cancellingParticipation = true;
+    this.cdr.markForCheck();
+
+    this.auctionService
+      .cancelParticipation(this.auction.id)
+      .pipe(
+        finalize(() => {
+          this.cancellingParticipation = false;
+          this.isCancelModalOpen = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.toastService.success(
+            `Participation cancelled. ₹${res.refundAmount} refund initiated.`
+          );
+          if (this.currentParticipant) {
+            this.currentParticipant.status = 'CANCELLED';
+            this.currentParticipant.refundAmount = res.refundAmount;
+          }
+          if (this.auction) {
+            this.auction.currentParticipantsCount = res.currentParticipantsCount;
+            this.refreshData(this.auction.id);
+          }
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          const msg = err.error?.message || 'Failed to cancel participation. Please try again.';
+          this.toastService.error(msg);
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
   confirmJoinAuction(): void {
     if (!this.auction) return;
     if (this.joining) return;
@@ -471,10 +653,80 @@ export class AuctionDetails implements OnInit, OnDestroy {
     const auctionId = this.auction.id;
     const craftId = this.auction.craft?.id;
     const startingPrice = this.auction.startingPrice;
-    const method = this.selectedPaymentMethod || 'UPI';
+    const method = this.selectedPaymentMethod || 'CASHFREE';
 
-    if (method === 'UPI' || method === 'NETBANKING') {
-      // 1. Direct deposit participation flow with selected payment method
+    if (method === 'CASHFREE') {
+      // 1. Primary Cashfree Gateway Flow (UPI / NetBanking / Cards)
+      this.paymentService
+        .createCashfreeOrder(startingPrice, auctionId, craftId, 'PARTICIPATION')
+        .pipe(
+          finalize(() => {
+            this.cdr.markForCheck();
+          })
+        )
+        .subscribe({
+          next: (orderRes) => {
+            this.paymentService.openCashfreeCheckout(
+              orderRes,
+              (verifyPayload) => {
+                // Cashfree payment successful -> verify on backend and enroll
+                this.paymentService
+                  .verifyCashfreePayment(verifyPayload)
+                  .pipe(
+                    finalize(() => {
+                      this.joining = false;
+                      this.cdr.markForCheck();
+                    })
+                  )
+                  .subscribe({
+                    next: () => {
+                      this.closeJoinModal();
+                      this.toastService.success(
+                        `🎉 Payment verified via Cashfree! You have joined Auction #${auctionId}.`
+                      );
+                      this.refreshData(auctionId);
+                    },
+                    error: (err) => {
+                      const msg = err.error?.message || err.error || 'Payment verification failed.';
+                      this.toastService.error(msg);
+                    },
+                  });
+              },
+              () => {
+                // Checkout modal dismissed
+                this.joining = false;
+                this.cdr.markForCheck();
+                this.toastService.info('Cashfree payment window closed.');
+              },
+              (err) => {
+                // Gateway error
+                this.joining = false;
+                this.cdr.markForCheck();
+                this.toastService.error(err?.description || err?.message || 'Cashfree gateway error.');
+              }
+            );
+          },
+          error: (err) => {
+            this.joining = false;
+            this.cdr.markForCheck();
+            if (err.status === 409 || err.error?.code === 'ALREADY_JOINED') {
+              this.toastService.info('You have already joined this auction.');
+              this.closeJoinModal();
+              this.refreshData(auctionId);
+              return;
+            }
+            if (err.status === 403) {
+              const msg = err.error?.message || 'Artisans cannot join their own auctions.';
+              this.toastService.warning(msg);
+              this.closeJoinModal();
+              return;
+            }
+            const msg = err.error?.message || err.error || 'Failed to initialize Cashfree order.';
+            this.toastService.error(msg);
+          },
+        });
+    } else if (method === 'UPI' || method === 'NETBANKING') {
+      // 2. Direct deposit participation flow
       this.auctionService
         .joinAuctionWithDeposit(auctionId, method)
         .pipe(
@@ -510,12 +762,11 @@ export class AuctionDetails implements OnInit, OnDestroy {
           },
         });
     } else {
-      // 2. Gateway checkout flow (Card / Razorpay)
+      // 3. Razorpay Gateway Checkout Flow
       this.paymentService
         .createRazorpayOrder(startingPrice, auctionId, craftId, 'PARTICIPATION')
         .pipe(
           finalize(() => {
-            // If createRazorpayOrder itself fails, finalize ensures joining reset
             this.cdr.markForCheck();
           })
         )
@@ -524,7 +775,6 @@ export class AuctionDetails implements OnInit, OnDestroy {
             this.paymentService.openRazorpayCheckout(
               orderRes,
               (verifyPayload) => {
-                // Payment captured on gateway -> verify signature on backend
                 this.paymentService
                   .verifyRazorpayPayment(verifyPayload)
                   .pipe(
@@ -546,13 +796,11 @@ export class AuctionDetails implements OnInit, OnDestroy {
                   });
               },
               () => {
-                // Modal dismissed / cancelled
                 this.joining = false;
                 this.cdr.markForCheck();
                 this.toastService.info('Payment window closed.');
               },
               (err) => {
-                // Gateway error
                 this.joining = false;
                 this.cdr.markForCheck();
                 this.toastService.error(err?.description || err?.message || 'Payment gateway error.');
@@ -599,26 +847,87 @@ export class AuctionDetails implements OnInit, OnDestroy {
     this.bidding = true;
     this.cdr.markForCheck();
 
-    this.auctionService
-      .placeDifferentialBid(this.auction.id, this.bidAmount)
-      .pipe(
-        finalize(() => {
-          this.bidding = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe({
-        next: () => {
-          this.toastService.success(
-            `🎉 Differential of ${this.formatPrice(this.differentialToPay)} paid! Highest Bid set to ${this.formatPrice(this.bidAmount!)}`
-          );
-          this.refreshData(this.auction!.id);
-        },
-        error: (err) => {
-          const msg = err.error?.message || err.error || 'Failed to place bid.';
-          this.toastService.error(msg);
-        },
-      });
+    const targetBid = this.bidAmount;
+    const diffToPay = this.differentialToPay;
+    const auctionId = this.auction.id;
+    const craftId = this.auction.craft?.id;
+
+    if (this.selectedPaymentMethod === 'CASHFREE' && diffToPay > 0) {
+      this.paymentService
+        .createCashfreeOrder(targetBid, auctionId, craftId, 'DIFFERENTIAL_BID')
+        .pipe(
+          finalize(() => {
+            this.cdr.markForCheck();
+          })
+        )
+        .subscribe({
+          next: (orderRes) => {
+            this.paymentService.openCashfreeCheckout(
+              orderRes,
+              (verifyPayload) => {
+                verifyPayload.type = 'DIFFERENTIAL_BID';
+                this.paymentService
+                  .verifyCashfreePayment(verifyPayload)
+                  .pipe(
+                    finalize(() => {
+                      this.bidding = false;
+                      this.cdr.markForCheck();
+                    })
+                  )
+                  .subscribe({
+                    next: () => {
+                      this.toastService.success(
+                        `🎉 Differential of ${this.formatPrice(diffToPay)} paid via Cashfree! Highest Bid set to ${this.formatPrice(targetBid)}`
+                      );
+                      this.refreshData(auctionId);
+                    },
+                    error: (err) => {
+                      const msg = err.error?.message || err.error || 'Payment verification failed.';
+                      this.toastService.error(msg);
+                    },
+                  });
+              },
+              () => {
+                this.bidding = false;
+                this.cdr.markForCheck();
+                this.toastService.info('Bid payment cancelled.');
+              },
+              (err) => {
+                this.bidding = false;
+                this.cdr.markForCheck();
+                this.toastService.error(err?.description || err?.message || 'Cashfree gateway error.');
+              }
+            );
+          },
+          error: (err) => {
+            this.bidding = false;
+            this.cdr.markForCheck();
+            const msg = err.error?.message || err.error || 'Failed to initialize bid payment.';
+            this.toastService.error(msg);
+          },
+        });
+    } else {
+      this.auctionService
+        .placeDifferentialBid(this.auction.id, this.bidAmount)
+        .pipe(
+          finalize(() => {
+            this.bidding = false;
+            this.cdr.markForCheck();
+          })
+        )
+        .subscribe({
+          next: () => {
+            this.toastService.success(
+              `🎉 Differential of ${this.formatPrice(this.differentialToPay)} confirmed! Highest Bid set to ${this.formatPrice(this.bidAmount!)}`
+            );
+            this.refreshData(this.auction!.id);
+          },
+          error: (err) => {
+            const msg = err.error?.message || err.error || 'Failed to place bid.';
+            this.toastService.error(msg);
+          },
+        });
+    }
   }
 
   // ==========================================

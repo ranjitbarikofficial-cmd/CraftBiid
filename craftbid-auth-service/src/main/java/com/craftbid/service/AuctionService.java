@@ -3,6 +3,7 @@ package com.craftbid.service;
 import com.craftbid.dsa.CircularRingBuffer;
 import com.craftbid.dsa.LiveAuctionHeap;
 import com.craftbid.dto.AuctionParticipantDTO;
+import com.craftbid.dto.CancelParticipationResponseDTO;
 import com.craftbid.dto.CreateAuctionRequest;
 import com.craftbid.dto.JoinAuctionRequest;
 import com.craftbid.dto.SubmitAddressRequest;
@@ -39,6 +40,22 @@ public class AuctionService {
     private final NotificationService notificationService;
     private final AuctionEventPublisher eventPublisher;
     private final RazorpayService razorpayService;
+    private final OrderService orderService;
+    private final AuctionInterestRepository auctionInterestRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${craftbid.commission.platform-rate:10.00}")
+    private BigDecimal platformCommissionRate = new BigDecimal("10.00");
+
+    @org.springframework.beans.factory.annotation.Value("${craftbid.auction.cancellation-fee-percent:5.00}")
+    private BigDecimal cancellationFeePercent = new BigDecimal("5.00");
+
+    public BigDecimal getCancellationFeePercent() {
+        return cancellationFeePercent;
+    }
+
+    public void setCancellationFeePercent(BigDecimal cancellationFeePercent) {
+        this.cancellationFeePercent = cancellationFeePercent;
+    }
 
     // DSA: In-Memory Binary Max-Heap per active auction for O(1) top bid query & O(log K) bid updates
     private final ConcurrentHashMap<Long, LiveAuctionHeap> auctionHeaps = new ConcurrentHashMap<>();
@@ -56,7 +73,9 @@ public class AuctionService {
             PaymentService paymentService,
             NotificationService notificationService,
             AuctionEventPublisher eventPublisher,
-            RazorpayService razorpayService) {
+            RazorpayService razorpayService,
+            OrderService orderService,
+            AuctionInterestRepository auctionInterestRepository) {
 
         this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
@@ -68,6 +87,8 @@ public class AuctionService {
         this.notificationService = notificationService;
         this.eventPublisher = eventPublisher;
         this.razorpayService = razorpayService;
+        this.orderService = orderService;
+        this.auctionInterestRepository = auctionInterestRepository;
     }
 
     private User getUserByIdentifier(String identifier) {
@@ -128,7 +149,7 @@ public class AuctionService {
         auction.setEndTime(startTime.plusDays(30)); // Far buffer until participation starts
         auction.setStatus(AuctionStatus.ACTIVE);
         auction.setTotalBids(0);
-        auction.setMaxParticipants(10);
+        auction.setMaxParticipants(5);
         auction.setCurrentParticipantsCount(0);
         auction.setLiveTurnActive(false);
 
@@ -171,13 +192,7 @@ public class AuctionService {
             throw new RuntimeException("The 24-hour participation window for this auction has closed.");
         }
 
-        // Check if user already joined
-        Optional<AuctionParticipant> existing = participantRepository.findByAuctionAndUser(auction, buyer);
-        if (existing.isPresent()) {
-            throw new AlreadyJoinedException("You have already joined this auction.");
-        }
-
-        int maxLimit = auction.getMaxParticipants() > 0 ? auction.getMaxParticipants() : 10;
+        int maxLimit = auction.getMaxParticipants() > 0 ? auction.getMaxParticipants() : 5;
         if (auction.getCurrentParticipantsCount() >= maxLimit) {
             throw new RuntimeException("Auction room is full! Maximum " + maxLimit + " participants reached.");
         }
@@ -187,7 +202,28 @@ public class AuctionService {
             throw new RuntimeException("Invalid starting price for auction.");
         }
 
-        AuctionParticipant participant = new AuctionParticipant(auction, buyer, basePrice);
+        // Check if user already joined
+        Optional<AuctionParticipant> existing = participantRepository.findByAuctionAndUser(auction, buyer);
+        AuctionParticipant participant;
+        if (existing.isPresent()) {
+            participant = existing.get();
+            if (!"CANCELLED".equals(participant.getStatus())) {
+                throw new AlreadyJoinedException("You have already joined this auction.");
+            }
+            // Re-activate previously cancelled participant
+            participant.setStatus("JOINED");
+            participant.setBasePricePaid(basePrice);
+            participant.setTotalAmountPaid(basePrice);
+            participant.setRefundAmount(BigDecimal.ZERO);
+            participant.setCancellationStatus(null);
+            participant.setCancelledAt(null);
+            participant.setCancellationRequestedAt(null);
+            participant.setCancellationFee(BigDecimal.ZERO);
+            participant.setCancellationRefundAmount(BigDecimal.ZERO);
+            participant.setJoinedAt(LocalDateTime.now());
+        } else {
+            participant = new AuctionParticipant(auction, buyer, basePrice);
+        }
         AuctionParticipant saved = participantRepository.save(participant);
 
         // CRITICAL BUSINESS LOGIC: 24-Hour countdown STARTS ONLY ON FIRST CUSTOMER'S BASE DEPOSIT
@@ -201,6 +237,9 @@ public class AuctionService {
 
             // Notify all interested users and community that the 24-hour participation window has started!
             try {
+                List<User> interestedUsers = auctionInterestRepository.findByAuction(auction)
+                        .stream().map(AuctionInterest::getUser).toList();
+                notificationService.notifyInterestedUsers(auction, interestedUsers);
                 notificationService.notifyAuctionParticipationStarted(auction.getCraft().getTitle(), basePrice, auction.getId());
             } catch (Exception e) {
                 logger.warn("Notification error on first deposit start: {}", e.getMessage());
@@ -208,6 +247,14 @@ public class AuctionService {
         }
 
         auction.setCurrentParticipantsCount(auction.getCurrentParticipantsCount() + 1);
+
+        // 5/5 FULL RULE: When 5th participant pays before 24h, 24h window ends immediately and 5-min prep countdown starts
+        if (auction.getCurrentParticipantsCount() >= maxLimit) {
+            LocalDateTime now = LocalDateTime.now();
+            auction.setStatus(AuctionStatus.PREPARATION);
+            auction.setPrepDeadline(now.plusMinutes(5));
+            auction.setParticipationDeadline(now);
+        }
 
         // Record payment ledger transaction
         paymentService.recordTransaction(
@@ -242,6 +289,10 @@ public class AuctionService {
             joinData.put("maxParticipants", updatedAuction.getMaxParticipants());
             joinData.put("firstDepositPaidAt", updatedAuction.getFirstDepositPaidAt() != null ? updatedAuction.getFirstDepositPaidAt().toString() : null);
             joinData.put("participationDeadline", updatedAuction.getParticipationDeadline() != null ? updatedAuction.getParticipationDeadline().toString() : null);
+            joinData.put("status", updatedAuction.getStatus().name());
+            if (updatedAuction.getPrepDeadline() != null) {
+                joinData.put("prepDeadline", updatedAuction.getPrepDeadline().toString());
+            }
             Map<String, String> pInfo = new HashMap<>();
             pInfo.put("name", buyer.getName());
             pInfo.put("city", buyer.getCity());
@@ -258,6 +309,15 @@ public class AuctionService {
                         "auctionId", auction.getId(),
                         "firstDepositPaidAt", updatedAuction.getFirstDepositPaidAt().toString(),
                         "participationDeadline", updatedAuction.getParticipationDeadline().toString()
+                ));
+            }
+
+            if (updatedAuction.getStatus() == AuctionStatus.PREPARATION && updatedAuction.getPrepDeadline() != null) {
+                eventPublisher.publishAuctionEvent(auction.getId(), "auction:preparation_started", Map.of(
+                        "auctionId", auction.getId(),
+                        "prepDeadline", updatedAuction.getPrepDeadline().toString(),
+                        "status", "PREPARATION",
+                        "secondsRemaining", 300
                 ));
             }
         } catch (Exception ignored) {}
@@ -295,6 +355,10 @@ public class AuctionService {
         // Verify bidder has joined by paying base deposit
         AuctionParticipant participant = participantRepository.findByAuctionAndUser(auction, bidder)
                 .orElseThrow(() -> new AccessDeniedException("You must pay the Base Price deposit of ₹" + auction.getStartingPrice() + " to join this auction before bidding"));
+
+        if ("CANCELLED".equals(participant.getStatus()) || "CANCEL_REQUESTED".equals(participant.getStatus())) {
+            throw new AccessDeniedException("Your participation in this auction has been cancelled. You cannot place bids.");
+        }
 
         BigDecimal minRequiredBid;
         if (auction.getTotalBids() == 0) {
@@ -415,6 +479,18 @@ public class AuctionService {
 
     @Transactional
     public synchronized void evaluateParticipationWindow(Auction auction) {
+        if (auction.getStatus() == AuctionStatus.ENDED || auction.getStatus() == AuctionStatus.CANCELLED) {
+            return;
+        }
+
+        if (auction.getStatus() == AuctionStatus.PREPARATION) {
+            if (auction.getPrepDeadline() != null && !LocalDateTime.now().isBefore(auction.getPrepDeadline())) {
+                // 5-minute preparation period elapsed -> Start Live Auction!
+                startLiveAuction(auction);
+            }
+            return;
+        }
+
         if (auction.getStatus() != AuctionStatus.ACTIVE && auction.getStatus() != AuctionStatus.SCHEDULED) {
             return;
         }
@@ -423,7 +499,12 @@ public class AuctionService {
             return;
         }
 
-        int count = auction.getCurrentParticipantsCount();
+        List<AuctionParticipant> participants = participantRepository.findByAuctionOrderByJoinedAtAsc(auction);
+        List<AuctionParticipant> activeParticipants = participants.stream()
+                .filter(p -> !"CANCELLED".equals(p.getStatus()) && !"CANCEL_REQUESTED".equals(p.getStatus()) && !"REFUNDED".equals(p.getStatus()))
+                .toList();
+
+        int count = activeParticipants.size();
 
         if (count == 0) {
             // Cancel auction
@@ -435,29 +516,27 @@ public class AuctionService {
         } else if (count == 1) {
             // Direct purchase at base price
             auction.setStatus(AuctionStatus.DIRECT_PURCHASE);
-            List<AuctionParticipant> participants = participantRepository.findByAuctionOrderByJoinedAtAsc(auction);
-            if (!participants.isEmpty()) {
-                AuctionParticipant winnerPart = participants.get(0);
-                User winner = winnerPart.getUser();
-                auction.setWinningBidder(winner);
-                auction.setCurrentHighestBid(auction.getStartingPrice());
+            AuctionParticipant winnerPart = activeParticipants.get(0);
+            User winner = winnerPart.getUser();
+            auction.setWinningBidder(winner);
+            auction.setCurrentHighestBid(auction.getStartingPrice());
 
-                winnerPart.setStatus("WON");
-                participantRepository.save(winnerPart);
+            winnerPart.setStatus("WON");
+            participantRepository.save(winnerPart);
 
-                // Financials: 10% fee, 90% payout
-                BigDecimal amount = auction.getStartingPrice();
-                BigDecimal platformFee = amount.multiply(BigDecimal.valueOf(0.10)).setScale(2, RoundingMode.HALF_UP);
-                BigDecimal artisanPayout = amount.subtract(platformFee).setScale(2, RoundingMode.HALF_UP);
-                auction.setAdminFeeAmount(platformFee);
-                auction.setArtisanPayoutAmount(artisanPayout);
+            // Financials: configurable commission rate
+            BigDecimal amount = auction.getStartingPrice();
+            BigDecimal rate = platformCommissionRate != null ? platformCommissionRate : new BigDecimal("10.00");
+            BigDecimal platformFee = amount.multiply(rate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            BigDecimal artisanPayout = amount.subtract(platformFee).setScale(2, RoundingMode.HALF_UP);
+            auction.setAdminFeeAmount(platformFee);
+            auction.setArtisanPayoutAmount(artisanPayout);
 
-                // Create initial order
-                createAuctionOrderRecord(auction, winner, amount, platformFee, artisanPayout);
+            // Create initial order with ADDRESS_REQUIRED & ₹0 shipping
+            createAuctionOrderRecord(auction, winner, amount, platformFee, artisanPayout);
 
-                notificationService.notifyAuctionWon(winner, auction.getCraft().getTitle(), amount, auction.getId());
-                notificationService.notifyArtisanCraftSold(auction.getSeller(), auction.getCraft().getTitle(), amount, artisanPayout, auction.getId());
-            }
+            notificationService.notifyAuctionWon(winner, auction.getCraft().getTitle(), amount, auction.getId());
+            notificationService.notifyArtisanCraftSold(auction.getSeller(), auction.getCraft().getTitle(), amount, artisanPayout, auction.getId());
             auction.setStatus(AuctionStatus.ENDED);
             auctionRepository.save(auction);
 
@@ -469,29 +548,37 @@ public class AuctionService {
                 ));
             } catch (Exception ignored) {}
         } else {
-            // 2 to 10 participants -> Start 1-Minute Live Auction
-            auction.setLiveTurnActive(true);
-            auction.setTurnDeadline(LocalDateTime.now().plusSeconds(60));
-            auction.setLastBidTime(LocalDateTime.now());
-            auctionRepository.save(auction);
+            // 2 to 5 participants -> Start Live Auction!
+            startLiveAuction(auction);
+        }
+    }
 
-            // Notify all participants that live bidding started
-            List<AuctionParticipant> participants = participantRepository.findByAuctionOrderByJoinedAtAsc(auction);
-            for (AuctionParticipant p : participants) {
+    private void startLiveAuction(Auction auction) {
+        auction.setStatus(AuctionStatus.LIVE);
+        auction.setLiveTurnActive(true);
+        auction.setTurnDeadline(LocalDateTime.now().plusMinutes(2)); // Initial 2-minute waiting period
+        auction.setInitialWaitDeadline(LocalDateTime.now().plusMinutes(2));
+        auction.setLastBidTime(LocalDateTime.now());
+        auctionRepository.save(auction);
+
+        // Notify all active participants that live bidding started
+        List<AuctionParticipant> participants = participantRepository.findByAuctionOrderByJoinedAtAsc(auction);
+        for (AuctionParticipant p : participants) {
+            if (!"CANCELLED".equals(p.getStatus()) && !"CANCEL_REQUESTED".equals(p.getStatus())) {
                 try {
                     notificationService.notifyAuctionLiveStarted(p.getUser(), auction.getCraft().getTitle(), auction.getId());
                 } catch (Exception ignored) {}
             }
-
-            try {
-                eventPublisher.publishAuctionEvent(auction.getId(), "auction:started", Map.of(
-                        "auctionId", auction.getId(),
-                        "currentPrice", auction.getCurrentHighestBid(),
-                        "turnDeadline", auction.getTurnDeadline().toString(),
-                        "secondsRemaining", 60
-                ));
-            } catch (Exception ignored) {}
         }
+
+        try {
+            eventPublisher.publishAuctionEvent(auction.getId(), "auction:started", Map.of(
+                    "auctionId", auction.getId(),
+                    "currentPrice", auction.getCurrentHighestBid(),
+                    "turnDeadline", auction.getTurnDeadline().toString(),
+                    "secondsRemaining", 120
+            ));
+        } catch (Exception ignored) {}
     }
 
     // ==========================================
@@ -503,7 +590,7 @@ public class AuctionService {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("Auction not found: " + auctionId));
 
-        if ((auction.getStatus() == AuctionStatus.ACTIVE || auction.getStatus() == AuctionStatus.LIVE) && checkTurnExpiry(auction)) {
+        if ((auction.getStatus() == AuctionStatus.ACTIVE || auction.getStatus() == AuctionStatus.LIVE || auction.getStatus() == AuctionStatus.PREPARATION) && checkTurnExpiry(auction)) {
             finalizeAuction(auction);
         }
 
@@ -511,6 +598,14 @@ public class AuctionService {
     }
 
     private boolean checkTurnExpiry(Auction auction) {
+        if (auction.getStatus() == AuctionStatus.PREPARATION) {
+            if (auction.getPrepDeadline() != null && !LocalDateTime.now().isBefore(auction.getPrepDeadline())) {
+                evaluateParticipationWindow(auction);
+                return false;
+            }
+            return false;
+        }
+
         if (!auction.isLiveTurnActive()) {
             // Check 24-hour participation window
             if (auction.getParticipationDeadline() != null && LocalDateTime.now().isAfter(auction.getParticipationDeadline())) {
@@ -541,6 +636,21 @@ public class AuctionService {
         User winner = auction.getWinningBidder();
         BigDecimal finalWinningAmount = auction.getCurrentHighestBid();
 
+        if (winner == null) {
+            // Initial 2-minute live waiting period expired with no differential bids placed
+            // Tiebreaker: First verified base depositor is selected as winner
+            List<AuctionParticipant> activeParticipants = participantRepository.findByAuctionOrderByJoinedAtAsc(auction).stream()
+                    .filter(p -> !"CANCELLED".equals(p.getStatus()) && !"CANCEL_REQUESTED".equals(p.getStatus()) && !"REFUNDED".equals(p.getStatus()))
+                    .toList();
+            if (!activeParticipants.isEmpty()) {
+                AuctionParticipant firstPart = activeParticipants.get(0);
+                winner = firstPart.getUser();
+                auction.setWinningBidder(winner);
+                finalWinningAmount = auction.getStartingPrice();
+                auction.setCurrentHighestBid(finalWinningAmount);
+            }
+        }
+
         if (winner != null && finalWinningAmount != null) {
             // 10% platform fee & 90% artisan payout
             BigDecimal adminFee = finalWinningAmount.multiply(BigDecimal.valueOf(0.10)).setScale(2, RoundingMode.HALF_UP);
@@ -567,7 +677,7 @@ public class AuctionService {
             // 100% AUTOMATED REFUND FOR ALL OTHER PARTICIPANTS
             List<AuctionParticipant> participants = participantRepository.findByAuctionOrderByJoinedAtAsc(auction);
             for (AuctionParticipant p : participants) {
-                if (!p.getUser().getId().equals(winner.getId())) {
+                if (!p.getUser().getId().equals(winner.getId()) && !"CANCELLED".equals(p.getStatus()) && !"REFUNDED".equals(p.getStatus())) {
                     BigDecimal refundAmt = p.getTotalAmountPaid();
                     p.setStatus("REFUNDED");
                     p.setRefundAmount(refundAmt);
@@ -617,24 +727,7 @@ public class AuctionService {
     }
 
     private void createAuctionOrderRecord(Auction auction, User buyer, BigDecimal winningAmount, BigDecimal platformFee, BigDecimal artisanPayout) {
-        Optional<AuctionOrder> existing = orderRepository.findByAuction(auction);
-        if (existing.isEmpty()) {
-            AuctionOrder order = new AuctionOrder();
-            order.setAuction(auction);
-            order.setBuyer(buyer);
-            order.setArtisan(auction.getSeller());
-            order.setWinningAmount(winningAmount);
-            order.setPlatformFee(platformFee);
-            order.setArtisanPayout(artisanPayout);
-            order.setFullName(buyer.getName());
-            order.setStreetAddress("Pending Buyer Address Submission");
-            order.setCity(buyer.getCity());
-            order.setState("India");
-            order.setPincode("000000");
-            order.setPhone(buyer.getPhone() != null ? buyer.getPhone() : "Pending");
-            order.setStatus("PENDING_ADDRESS");
-            orderRepository.save(order);
-        }
+        orderService.createWinnerOrder(auction, buyer, winningAmount, platformFee, artisanPayout);
     }
 
     // ==========================================
@@ -657,7 +750,8 @@ public class AuctionService {
         AuctionOrder order = orderRepository.findByAuction(auction)
                 .orElseGet(() -> {
                     BigDecimal winningAmount = auction.getCurrentHighestBid();
-                    BigDecimal platformFee = winningAmount.multiply(BigDecimal.valueOf(0.10)).setScale(2, RoundingMode.HALF_UP);
+                    BigDecimal rate = platformCommissionRate != null ? platformCommissionRate : new BigDecimal("10.00");
+                    BigDecimal platformFee = winningAmount.multiply(rate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                     BigDecimal artisanPayout = winningAmount.subtract(platformFee).setScale(2, RoundingMode.HALF_UP);
 
                     AuctionOrder newOrder = new AuctionOrder();
@@ -831,13 +925,14 @@ public class AuctionService {
         auction.setStatus(AuctionStatus.CANCELLED);
         auction.setLiveTurnActive(false);
 
-        // Refund any participants and record ledger transactions
+        // Refund any active participants and record ledger transactions
         List<AuctionParticipant> participants = participantRepository.findByAuctionOrderByJoinedAtAsc(auction);
         for (AuctionParticipant p : participants) {
-            BigDecimal refundAmt = p.getTotalAmountPaid();
-            p.setStatus("REFUNDED");
-            p.setRefundAmount(refundAmt);
-            participantRepository.save(p);
+            if (!"CANCELLED".equals(p.getStatus()) && !"REFUNDED".equals(p.getStatus())) {
+                BigDecimal refundAmt = p.getTotalAmountPaid();
+                p.setStatus("REFUNDED");
+                p.setRefundAmount(refundAmt);
+                participantRepository.save(p);
 
             try {
                 PaymentTransaction refundTx = paymentService.refundAuctionParticipant(
@@ -851,6 +946,7 @@ public class AuctionService {
                 notificationService.notifyRefundProcessed(p.getUser(), auction.getCraft().getTitle(), refundAmt, refundTx.getTransactionRef(), auction.getId());
             } catch (Exception e) {
                 System.err.println("⚠️ Cancellation refund error for user " + p.getUser().getEmail() + ": " + e.getMessage());
+            }
             }
         }
 
@@ -870,8 +966,13 @@ public class AuctionService {
     public Auction registerInterest(String identifier, Long auctionId) {
         User user = getUserByIdentifier(identifier);
         Auction auction = getAuctionById(auctionId);
-        auction.setInterestedCount(auction.getInterestedCount() + 1);
-        Auction saved = auctionRepository.save(auction);
+
+        if (!auctionInterestRepository.existsByAuctionAndUser(auction, user)) {
+            AuctionInterest interest = new AuctionInterest(auction, user);
+            auctionInterestRepository.save(interest);
+            auction.setInterestedCount(auction.getInterestedCount() + 1);
+            auction = auctionRepository.save(auction);
+        }
 
         try {
             notificationService.createNotification(
@@ -883,6 +984,163 @@ public class AuctionService {
             );
         } catch (Exception ignored) {}
 
-        return saved;
+        return auction;
+    }
+
+    // ==========================================
+    // 9. VOLUNTARY PARTICIPANT CANCELLATION (5% Deduction)
+    // ==========================================
+
+    @Transactional
+    public synchronized CancelParticipationResponseDTO cancelParticipation(String identifier, Long auctionId) {
+        User customer = getUserByIdentifier(identifier);
+        Auction auction = getAuctionById(auctionId);
+
+        // 1. Validate Auction is in eligible state
+        if (auction.getStatus() == AuctionStatus.PREPARATION) {
+            throw new IllegalStateException("Cancellation is disabled during the 5-minute preparation phase.");
+        }
+        if (auction.getStatus() == AuctionStatus.LIVE || auction.isLiveTurnActive()) {
+            throw new IllegalStateException("Cancellation is disabled once live auction has started.");
+        }
+        if (auction.getStatus() == AuctionStatus.ENDED || auction.getStatus() == AuctionStatus.CANCELLED) {
+            throw new IllegalStateException("Cancellation is disabled for ended or cancelled auctions.");
+        }
+        if (auction.getStatus() != AuctionStatus.ACTIVE && auction.getStatus() != AuctionStatus.SCHEDULED) {
+            throw new IllegalStateException("Cancellation is not allowed in current auction status: " + auction.getStatus());
+        }
+
+        int maxLimit = auction.getMaxParticipants() > 0 ? auction.getMaxParticipants() : 5;
+        if (auction.getCurrentParticipantsCount() >= maxLimit) {
+            throw new IllegalStateException("Cancellation is disabled once maximum participant capacity (5/5) is reached.");
+        }
+
+        // 2. Fetch and Validate Participant Ownership
+        AuctionParticipant participant = participantRepository.findByAuctionAndUser(auction, customer)
+                .orElseThrow(() -> new IllegalArgumentException("You are not an enrolled participant in this auction."));
+
+        if (!participant.getUser().getId().equals(customer.getId())) {
+            throw new AccessDeniedException("You can only cancel your own participation.");
+        }
+
+        // Prevent seller from cancelling customer
+        if (auction.getSeller().getId().equals(customer.getId())) {
+            throw new AccessDeniedException("Artisans cannot cancel buyer participations.");
+        }
+
+        // 3. Validate Participant Status
+        if ("CANCELLED".equals(participant.getStatus()) || "CANCEL_REQUESTED".equals(participant.getStatus())) {
+            throw new IllegalStateException("Your participation has already been cancelled.");
+        }
+        if ("REFUNDED".equals(participant.getStatus())) {
+            throw new IllegalStateException("Your participation has already been refunded.");
+        }
+        if ("WON".equals(participant.getStatus())) {
+            throw new IllegalStateException("Winning participants cannot cancel participation.");
+        }
+
+        // 4. Calculate 5% Cancellation Fee and 95% Refund Amount using BigDecimal
+        BigDecimal totalPaid = participant.getTotalAmountPaid();
+        if (totalPaid == null || totalPaid.compareTo(BigDecimal.ZERO) <= 0) {
+            totalPaid = participant.getBasePricePaid();
+        }
+        if (totalPaid == null || totalPaid.compareTo(BigDecimal.ZERO) <= 0) {
+            totalPaid = auction.getStartingPrice();
+        }
+
+        BigDecimal feeRate = cancellationFeePercent != null ? cancellationFeePercent : new BigDecimal("5.00");
+        BigDecimal cancellationFee = totalPaid.multiply(feeRate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        BigDecimal refundAmount = totalPaid.subtract(cancellationFee).setScale(2, RoundingMode.HALF_UP);
+
+        LocalDateTime now = LocalDateTime.now();
+        participant.setCancellationRequestedAt(now);
+        participant.setCancellationFee(cancellationFee);
+        participant.setCancellationRefundAmount(refundAmount);
+        participant.setCancellationStatus("CANCELLED");
+        participant.setStatus("CANCELLED");
+        participant.setCancelledAt(now);
+        participant.setRefundAmount(refundAmount);
+        participantRepository.save(participant);
+
+        // 5. Execute Gateway & Ledger Refund for refundAmount
+        PaymentTransaction refundTx;
+        try {
+            refundTx = paymentService.refundAuctionParticipant(
+                    customer,
+                    auction.getId(),
+                    auction.getCraft().getId(),
+                    refundAmount,
+                    "Customer Voluntary Cancellation (5% fee deducted)"
+            );
+        } catch (Exception e) {
+            logger.error("Error executing gateway refund for participant cancellation: {}", e.getMessage(), e);
+            participant.setStatus("REFUND_FAILED");
+            participant.setCancellationStatus("REFUND_FAILED");
+            participantRepository.save(participant);
+            throw new RuntimeException("Refund processing failed. Please contact support or retry.", e);
+        }
+
+        // 6. Recalculate Active Participants Count & Update Auction State
+        long activeCount = participantRepository.countByAuctionAndStatusNot(auction, "CANCELLED");
+        auction.setCurrentParticipantsCount((int) activeCount);
+
+        // RULE 11: If first participant cancels (active count becomes 0), return to waiting for first payment
+        if (activeCount == 0) {
+            auction.setFirstDepositPaidAt(null);
+            auction.setParticipationDeadline(null);
+            auction.setEndTime(null);
+            auction.setStatus(AuctionStatus.SCHEDULED);
+        }
+        // If other active participants exist, original 24-hour deadline remains unchanged!
+
+        Auction updatedAuction = auctionRepository.save(auction);
+
+        // 7. Dispatch Transactional Notification & Email
+        String txnRef = (refundTx != null && refundTx.getTransactionRef() != null) ? refundTx.getTransactionRef() : "CB-REF-" + System.currentTimeMillis();
+        try {
+            notificationService.notifyParticipationCancelled(
+                    customer,
+                    auction.getCraft().getTitle(),
+                    totalPaid,
+                    cancellationFee,
+                    refundAmount,
+                    txnRef,
+                    auction.getId()
+            );
+        } catch (Exception e) {
+            logger.warn("Notification dispatch failed on cancellation: {}", e.getMessage());
+        }
+
+        // 8. Broadcast Real-Time WebSocket Event
+        try {
+            Map<String, Object> cancelData = new HashMap<>();
+            cancelData.put("auctionId", auction.getId());
+            cancelData.put("currentParticipants", updatedAuction.getCurrentParticipantsCount());
+            cancelData.put("maxParticipants", updatedAuction.getMaxParticipants());
+            cancelData.put("firstDepositPaidAt", updatedAuction.getFirstDepositPaidAt() != null ? updatedAuction.getFirstDepositPaidAt().toString() : null);
+            cancelData.put("participationDeadline", updatedAuction.getParticipationDeadline() != null ? updatedAuction.getParticipationDeadline().toString() : null);
+            cancelData.put("cancelledParticipantName", customer.getName());
+            cancelData.put("refundAmount", refundAmount);
+            cancelData.put("status", updatedAuction.getStatus().name());
+
+            eventPublisher.publishAuctionEvent(auction.getId(), "auction:participant_cancelled", cancelData);
+            eventPublisher.publishAuctionEvent(auction.getId(), "auction:joined", cancelData);
+        } catch (Exception e) {
+            logger.warn("WebSocket broadcast failed on cancellation: {}", e.getMessage());
+        }
+
+        return new CancelParticipationResponseDTO(
+                auction.getId(),
+                participant.getId(),
+                totalPaid,
+                feeRate,
+                cancellationFee,
+                refundAmount,
+                txnRef,
+                "CANCELLED",
+                "Participation successfully cancelled. ₹" + refundAmount + " will be refunded to your original payment method after 5% cancellation deduction.",
+                updatedAuction.getCurrentParticipantsCount(),
+                now
+        );
     }
 }

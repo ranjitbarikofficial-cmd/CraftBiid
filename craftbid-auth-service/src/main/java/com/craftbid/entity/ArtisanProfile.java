@@ -41,6 +41,25 @@ public class ArtisanProfile {
     private String profileImageUrl;
 
     // ==========================================
+    // PAYOUT & BENEFICIARY DETAILS
+    // ==========================================
+
+    @Column(name = "bank_account_number", length = 50)
+    private String bankAccountNumber;
+
+    @Column(name = "bank_ifsc_code", length = 20)
+    private String bankIfscCode;
+
+    @Column(name = "bank_account_name", length = 100)
+    private String bankAccountName;
+
+    @Column(name = "upi_id", length = 100)
+    private String upiId;
+
+    @Column(name = "payout_preference", length = 50)
+    private String payoutPreference = "BANK_TRANSFER";
+
+    // ==========================================
     // CREATED DATE
     // ==========================================
 
@@ -112,5 +131,45 @@ public class ArtisanProfile {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getBankAccountNumber() {
+        return bankAccountNumber;
+    }
+
+    public void setBankAccountNumber(String bankAccountNumber) {
+        this.bankAccountNumber = bankAccountNumber;
+    }
+
+    public String getBankIfscCode() {
+        return bankIfscCode;
+    }
+
+    public void setBankIfscCode(String bankIfscCode) {
+        this.bankIfscCode = bankIfscCode;
+    }
+
+    public String getBankAccountName() {
+        return bankAccountName;
+    }
+
+    public void setBankAccountName(String bankAccountName) {
+        this.bankAccountName = bankAccountName;
+    }
+
+    public String getUpiId() {
+        return upiId;
+    }
+
+    public void setUpiId(String upiId) {
+        this.upiId = upiId;
+    }
+
+    public String getPayoutPreference() {
+        return payoutPreference;
+    }
+
+    public void setPayoutPreference(String payoutPreference) {
+        this.payoutPreference = payoutPreference;
     }
 }

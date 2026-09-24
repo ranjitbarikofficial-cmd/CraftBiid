@@ -25,5 +25,7 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
 
     Optional<PaymentTransaction> findByAuctionIdAndUserAndStatus(Long auctionId, User user, String status);
 
+    List<PaymentTransaction> findByAuctionIdAndUserAndStatusOrderByCreatedAtDesc(Long auctionId, User user, String status);
+
     long countByStatus(String status);
 }
