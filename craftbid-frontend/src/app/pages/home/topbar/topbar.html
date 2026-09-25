@@ -25,8 +25,8 @@
     <div class="topbar-actions">
       <!-- Live Auction Indicator -->
       <a routerLink="/auctions" class="live-pill-badge" title="Live 1-Minute Turn Auctions">
-        <span class="pulse-dot"></span>
-        <span class="live-label">LIVE AUCTIONS</span>
+        <span class="pulse-dot" aria-hidden="true"></span>
+        <span class="live-label">Live Auctions</span>
       </a>
 
       @if (isLoggedIn && currentUser) {
@@ -110,7 +110,7 @@
           </a>
         } @else {
           <a routerLink="/artisan" class="action-btn become-btn">
-            Become Artisan
+            Become an Artisan
           </a>
         }
 

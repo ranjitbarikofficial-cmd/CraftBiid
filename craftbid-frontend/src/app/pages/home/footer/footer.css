@@ -69,11 +69,11 @@
   color: #d4d4d8;
 }
 
-.footer-column h5 {
-  font-size: 0.8rem;
+.footer-column h5,
+.footer-column .footer-heading {
+  font-size: var(--text-sm, 0.875rem);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: #ffffff;
   margin-bottom: 20px;
 }
@@ -195,7 +195,8 @@
     margin-bottom: 16px;
   }
 
-  .footer-column h5 {
+  .footer-column h5,
+  .footer-column .footer-heading {
     margin-bottom: 14px;
   }
 

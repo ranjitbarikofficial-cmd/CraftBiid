@@ -18,17 +18,17 @@
         </p>
 
         <div class="hero-cta-group">
-          <a routerLink="/auctions" class="btn-hero-cta">
-            <span class="btn-icon">🔨</span>
+          <a routerLink="/auctions" class="btn-hero btn-hero-primary">
+            <span class="btn-icon" aria-hidden="true">🔨</span>
             <span>Enter Live Auctions</span>
           </a>
-          <a routerLink="/reels" class="btn-hero-cta">
-            <span class="btn-icon">🎬</span>
+          <a routerLink="/reels" class="btn-hero btn-hero-secondary">
+            <span class="btn-icon" aria-hidden="true">🎬</span>
             <span>Watch Craft Reels</span>
           </a>
-          <a [routerLink]="isSeller ? '/artisan-dashboard' : '/artisan'" class="btn-hero-cta">
-            <span class="btn-icon">🎨</span>
-            <span>{{ isSeller ? 'Artisan Studio' : 'Sell Your Craft' }}</span>
+          <a [routerLink]="isSeller ? '/artisan-dashboard' : '/artisan'" class="btn-hero btn-hero-outline">
+            <span class="btn-icon" aria-hidden="true">🎨</span>
+            <span>{{ isSeller ? 'Artisan Studio' : 'Become an Artisan' }}</span>
           </a>
         </div>
 
@@ -60,8 +60,8 @@
                 (error)="onImageError($event)"
               />
               <div class="card-live-indicator">
-                <span class="live-dot-pulse"></span>
-                <span>LIVE AUCTION ROOM</span>
+                <span class="live-dot-pulse" aria-hidden="true"></span>
+                <span>Live Auction Room</span>
               </div>
               <div class="turn-timer-chip">
                 <span>⏱️ Live Turn Bidding</span>
@@ -73,7 +73,7 @@
                 <span class="category-chip">{{ featuredAuction.craft?.category?.name || 'Handmade Craft' }}</span>
                 <span class="room-slots">👥 {{ featuredAuction.totalBids || 0 }} Bids Placed</span>
               </div>
-              <h3>{{ featuredAuction.craft?.title }}</h3>
+              <h2 class="featured-card-title">{{ featuredAuction.craft?.title }}</h2>
               <p class="artisan-credit">By {{ featuredAuction.seller?.name || 'Master Artisan' }}</p>
 
               <div class="card-bid-footer">
@@ -147,7 +147,7 @@
           <a [routerLink]="['/search']" [queryParams]="{ category: category.id }" class="category-card">
             <div class="category-icon-bubble">{{ getCategoryIcon(category.name) }}</div>
             <div class="category-info">
-              <h4>{{ category.name }}</h4>
+              <h3 class="category-card-title">{{ category.name }}</h3>
               <span class="category-cta">Explore craft items →</span>
             </div>
           </a>
@@ -218,7 +218,9 @@
 
               <div class="craft-info-box">
                 <span class="craft-category-tag">{{ craft.category?.name || 'Craft' }}</span>
-                <h3 class="craft-title">{{ craft.title }}</h3>
+                <h3 class="craft-title">
+                  <a [routerLink]="['/crafts', craft.id]" class="craft-title-link">{{ craft.title }}</a>
+                </h3>
                 <p class="craft-artisan-name">👨‍🎨 {{ craft.seller?.name || 'Master Artisan' }}</p>
 
                 <div class="craft-price-row">
@@ -226,7 +228,7 @@
                     <span class="price-label">Base Price</span>
                     <strong class="price-num">{{ formatPrice(craft.basePrice) }}</strong>
                   </div>
-                  <span class="btn-view-craft">View Details →</span>
+                  <span class="btn-view-craft" aria-hidden="true">View Details →</span>
                 </div>
               </div>
             </article>
@@ -237,7 +239,7 @@
           <div class="empty-art-icon">🏺</div>
           <h3>Be the first artisan to showcase your craft!</h3>
           <p>Share your handcrafted art with thousands of collectors across India.</p>
-          <a [routerLink]="isSeller ? '/artisan-dashboard' : '/artisan'" class="btn-hero-primary">
+          <a [routerLink]="isSeller ? '/artisan-dashboard' : '/artisan'" class="btn-hero btn-hero-primary">
             + Upload Craft Creation
           </a>
         </div>
@@ -316,7 +318,7 @@
         </p>
         <div class="banner-actions">
           <a [routerLink]="isSeller ? '/artisan-dashboard' : '/artisan'" class="btn-banner-action">
-            {{ isSeller ? '🚀 Open Artisan Dashboard' : '✨ Start Selling as an Artisan' }}
+            {{ isSeller ? '🚀 Open Artisan Dashboard' : '✨ Become an Artisan' }}
           </a>
         </div>
       </div>
