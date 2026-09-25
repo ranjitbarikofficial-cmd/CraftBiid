@@ -21,18 +21,6 @@
   position: relative;
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
 /* ==========================================
    TOP FLOATING FEED SELECTOR
    ========================================== */
@@ -52,7 +40,7 @@
   background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(12px);
   padding: 4px;
-  border-radius: var(--radius-full, 9999px);
+  border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4);
 }
@@ -60,12 +48,12 @@
 .feed-tab-pill {
   background: transparent;
   border: none;
-  color: #cbd5e1;
+  color: #94a3b8;
   font-family: inherit;
-  font-size: var(--text-sm, 0.875rem);
+  font-size: 13px;
   font-weight: 700;
   padding: 8px 18px;
-  border-radius: var(--radius-full, 9999px);
+  border-radius: 9999px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -86,10 +74,10 @@
   border: 1px solid rgba(234, 88, 12, 0.4);
   color: #fdba74;
   font-family: inherit;
-  font-size: var(--text-xs, 0.75rem);
+  font-size: 12px;
   font-weight: 700;
   padding: 8px 14px;
-  border-radius: var(--radius-full, 9999px);
+  border-radius: 9999px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -128,7 +116,7 @@
   max-height: 85vh;
   min-height: 600px;
   background: #000000;
-  border-radius: var(--radius-xl, 24px);
+  border-radius: 28px;
   position: relative;
   overflow: hidden;
   box-shadow: 
@@ -191,25 +179,58 @@
 
 .shorts-pill {
   font-family: 'Outfit', sans-serif;
-  font-size: var(--text-xs, 0.75rem);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  background: rgba(15, 23, 42, 0.75);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(8px);
-  padding: 4px 12px;
-  border-radius: var(--radius-full, 9999px);
+  padding: 4px 10px;
+  border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #fed7aa;
 }
 
-.live-auction-pulse-tag {
-  font-size: var(--text-xs, 0.75rem);
+.sound-floating-pill {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(234, 88, 12, 0.5);
+  color: #fdba74;
+  font-family: inherit;
+  font-size: 11px;
   font-weight: 700;
-  background: rgba(220, 38, 38, 0.35);
-  color: #fca5a5;
   padding: 4px 12px;
-  border-radius: var(--radius-full, 9999px);
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sound-floating-pill:hover {
+  background: rgba(234, 88, 12, 0.85);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.auto-scroll-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.live-auction-pulse-tag {
+  font-size: 10px;
+  font-weight: 800;
+  background: rgba(220, 38, 38, 0.3);
+  color: #fca5a5;
+  padding: 4px 10px;
+  border-radius: 9999px;
   border: 1px solid rgba(220, 38, 38, 0.6);
   animation: pulse-red 1.5s infinite;
 }
@@ -336,24 +357,20 @@
 .short-sidebar-actions {
   position: absolute;
   right: 14px;
-  bottom: 100px;
+  bottom: 120px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   z-index: 4;
-}
-
-.short-sidebar-actions > * {
-  margin: 0;
 }
 
 .btn-action-bubble {
   background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -390,25 +407,25 @@
 }
 
 .action-glyph {
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1;
 }
 
 .action-count {
-  font-size: var(--text-xs, 0.75rem);
+  font-size: 9px;
   font-weight: 700;
   color: #cbd5e1;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .btn-nav-bubble {
   background: rgba(15, 23, 42, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  color: #cbd5e1;
-  font-size: var(--text-xs, 0.75rem);
+  color: #94a3b8;
+  font-size: 11px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -431,13 +448,13 @@
    ========================================== */
 .short-bottom-overlay {
   position: absolute;
-  left: 16px;
-  right: 68px;
-  bottom: 16px;
+  left: 18px;
+  right: 70px;
+  bottom: 20px;
   z-index: 3;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 /* Artisan Row + Follow */
@@ -448,11 +465,11 @@
 }
 
 .artisan-avatar-bubble {
-  font-size: 18px;
+  font-size: 20px;
   background: rgba(234, 88, 12, 0.25);
   border: 1px solid rgba(234, 88, 12, 0.5);
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -467,7 +484,7 @@
 }
 
 .artisan-name-stack strong {
-  font-size: var(--text-sm, 0.875rem);
+  font-size: 14px;
   font-weight: 700;
   color: #ffffff;
   white-space: nowrap;
@@ -476,10 +493,8 @@
 }
 
 .artisan-city-text {
-  font-size: var(--text-xs, 0.75rem);
-  color: #cbd5e1;
-  font-weight: 500;
-  line-height: 1.3;
+  font-size: 11px;
+  color: #94a3b8;
 }
 
 .btn-follow-artisan {
@@ -487,11 +502,10 @@
   border: none;
   color: #ffffff;
   font-family: inherit;
-  font-size: var(--text-xs, 0.75rem);
+  font-size: 11px;
   font-weight: 700;
   padding: 4px 12px;
-  min-height: 28px;
-  border-radius: var(--radius-full, 9999px);
+  border-radius: 9999px;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -513,20 +527,19 @@
 /* Caption */
 .short-caption-title {
   font-family: 'Outfit', sans-serif;
-  font-size: var(--text-lg, 1.125rem);
+  font-size: 15px;
   font-weight: 700;
   color: #ffffff;
   margin: 0;
-  line-height: 1.35;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  line-height: 1.3;
 }
 
 .short-caption-desc {
-  font-size: var(--text-xs, 0.75rem);
+  font-size: 12px;
   color: #cbd5e1;
   margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.4;
@@ -534,24 +547,24 @@
 
 /* Linked Craft Card */
 .linked-craft-card {
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-md, 12px);
-  padding: 8px 10px;
+  border-radius: 16px;
+  padding: 10px;
   display: grid;
-  grid-template-columns: 46px 1fr;
+  grid-template-columns: 50px 1fr;
   grid-template-rows: auto auto;
-  gap: 6px 10px;
-  margin-top: 2px;
+  gap: 8px 10px;
+  margin-top: 4px;
 }
 
 .linked-craft-card img {
   grid-row: span 2;
-  width: 46px;
-  height: 46px;
+  width: 50px;
+  height: 50px;
   object-fit: cover;
-  border-radius: var(--radius-sm, 6px);
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -562,25 +575,14 @@
 }
 
 .craft-tag-pill {
-  font-size: var(--text-xs, 0.75rem);
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 800;
   color: #fdba74;
-  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
-.linked-craft-title-link {
-  text-decoration: none;
-  color: inherit;
-}
-
-.linked-craft-title-link:hover {
-  text-decoration: underline;
-  color: #fdba74;
-}
-
-.craft-mini-info h3,
-.linked-craft-title {
-  font-size: var(--text-sm, 0.875rem);
+.craft-mini-info h4 {
+  font-size: 12px;
   font-weight: 700;
   color: #ffffff;
   margin: 1px 0;
@@ -590,7 +592,7 @@
 }
 
 .craft-base-price {
-  font-size: var(--text-xs, 0.75rem);
+  font-size: 11px;
   color: #86efac;
 }
 
@@ -601,18 +603,15 @@
 }
 
 .btn-buy-craft {
-  background: rgba(234, 88, 12, 0.25);
-  border: 1px solid rgba(234, 88, 12, 0.5);
+  background: rgba(234, 88, 12, 0.2);
+  border: 1px solid rgba(234, 88, 12, 0.4);
   color: #fdba74;
-  font-size: var(--text-xs, 0.75rem);
+  font-size: 11px;
   font-weight: 700;
   padding: 4px 10px;
-  min-height: 28px;
-  border-radius: var(--radius-sm, 6px);
+  border-radius: 8px;
   text-decoration: none;
   white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
   transition: all 0.2s ease;
 }
 
@@ -624,15 +623,12 @@
 .btn-bid-live-cta {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   color: #ffffff;
-  font-size: var(--text-xs, 0.75rem);
+  font-size: 11px;
   font-weight: 800;
   padding: 4px 10px;
-  min-height: 28px;
-  border-radius: var(--radius-sm, 6px);
+  border-radius: 8px;
   text-decoration: none;
   white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
   transition: all 0.2s ease;
 }
@@ -644,46 +640,24 @@
 
 .craft-participants-count {
   display: block;
-  font-size: var(--text-xs, 0.75rem);
+  font-size: 11px;
   font-weight: 700;
-  color: #fdba74;
+  color: #ea580c;
   margin-top: 2px;
 }
 
 /* Helper Bar */
 .shorts-helper-bar {
   margin-top: 24px;
-  max-width: 540px;
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-full, 9999px);
-  padding: 8px 20px;
+  max-width: 500px;
   text-align: center;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .shorts-helper-bar p {
-  color: #cbd5e1;
-  font-size: var(--text-sm, 0.875rem);
+  color: #64748b;
+  font-size: 12px;
   line-height: 1.5;
   margin: 0;
-}
-
-.helper-label {
-  font-weight: 700;
-  color: #fdba74;
-}
-
-.shorts-helper-bar kbd {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-family: monospace;
-  font-size: var(--text-xs, 0.75rem);
-  font-weight: 700;
-  color: #ffffff;
 }
 
 /* Loading & Empty States */
@@ -691,7 +665,7 @@
 .shorts-empty-box {
   padding: 60px 20px;
   text-align: center;
-  color: #cbd5e1;
+  color: #94a3b8;
 }
 
 .shorts-spinner {
@@ -718,9 +692,9 @@
   background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
   color: #ffffff;
   font-weight: 700;
-  font-size: var(--text-sm, 0.875rem);
+  font-size: 13px;
   padding: 10px 20px;
-  border-radius: var(--radius-md, 12px);
+  border-radius: 12px;
   text-decoration: none;
   border: none;
   cursor: pointer;
@@ -762,18 +736,18 @@
 
   .feed-tab-pill {
     padding: 6px 12px;
-    font-size: var(--text-xs, 0.75rem);
+    font-size: 11px;
   }
 
   .btn-creator-action {
     padding: 6px 10px;
-    font-size: var(--text-xs, 0.75rem);
+    font-size: 11px;
   }
 
   .short-video-card {
     min-height: 480px;
     max-height: calc(100svh - 120px);
-    border-radius: var(--radius-lg, 18px);
+    border-radius: 18px;
   }
 
   .short-top-bar {
@@ -784,7 +758,7 @@
 
   .short-sidebar-actions {
     right: 8px;
-    bottom: 85px;
+    bottom: 95px;
     gap: 8px;
   }
 
@@ -798,13 +772,13 @@
   }
 
   .action-count {
-    font-size: var(--text-xs, 0.75rem);
+    font-size: 8px;
   }
 
   .btn-nav-bubble {
     width: 28px;
     height: 28px;
-    font-size: var(--text-xs, 0.75rem);
+    font-size: 9px;
   }
 
   .short-bottom-overlay {
@@ -821,48 +795,47 @@
   }
 
   .artisan-name-stack strong {
-    font-size: var(--text-xs, 0.75rem);
+    font-size: 12px;
   }
 
   .artisan-city-text {
-    font-size: var(--text-xs, 0.75rem);
+    font-size: 10px;
   }
 
   .btn-follow-artisan {
     padding: 3px 8px;
-    font-size: var(--text-xs, 0.75rem);
+    font-size: 10px;
   }
 
   .short-caption-title {
-    font-size: var(--text-sm, 0.875rem);
+    font-size: 13px;
   }
 
   .short-caption-desc {
-    font-size: var(--text-xs, 0.75rem);
-    -webkit-line-clamp: 1;
+    font-size: 11px;
+    -webkit-line-clamp: 2;
   }
 
   .linked-craft-card {
     padding: 6px 8px;
     gap: 4px 8px;
-    grid-template-columns: 38px 1fr;
-    border-radius: var(--radius-sm, 8px);
+    grid-template-columns: 40px 1fr;
+    border-radius: 12px;
   }
 
   .linked-craft-card img {
-    width: 38px;
-    height: 38px;
-    border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
   }
 
-  .craft-mini-info h3,
-  .linked-craft-title {
-    font-size: var(--text-xs, 0.75rem);
+  .craft-mini-info h4 {
+    font-size: 11px;
   }
 
   .btn-buy-craft, .btn-bid-live-cta {
     padding: 3px 8px;
-    font-size: var(--text-xs, 0.75rem);
+    font-size: 10px;
   }
 
   .shorts-helper-bar {
