@@ -5,9 +5,12 @@
   
   <!-- FLOATING FEED TABS (FOR YOU vs FOLLOWING + CREATE BUTTON) -->
   <header class="reels-header-nav">
-    <div class="feed-tabs-cluster">
+    <h1 class="sr-only">Artisan Craft Reels & Handmade Process Videos</h1>
+    <div class="feed-tabs-cluster" role="tablist" aria-label="Reels feed type">
       <button
         type="button"
+        role="tab"
+        [attr.aria-selected]="feedType === 'for-you'"
         class="feed-tab-pill"
         [class.active]="feedType === 'for-you'"
         (click)="switchFeed('for-you')"
@@ -16,6 +19,8 @@
       </button>
       <button
         type="button"
+        role="tab"
+        [attr.aria-selected]="feedType === 'following'"
         class="feed-tab-pill"
         [class.active]="feedType === 'following'"
         (click)="switchFeed('following')"
@@ -25,7 +30,7 @@
     </div>
 
     <button type="button" class="btn-creator-action" (click)="goToUpload()">
-      <span class="plus-icon">✨</span>
+      <span class="plus-icon" aria-hidden="true">✨</span>
       <span>Upload Craft / Reel</span>
     </button>
   </header>
@@ -112,13 +117,9 @@
 
               <!-- Top Scrim & Badges -->
               <div class="short-top-bar">
-                <span class="shorts-pill">🎥 CRAFT REEL #{{ i + 1 }}</span>
+                <span class="shorts-pill">🎥 Craft Reel #{{ i + 1 }}</span>
                 @if (getAuctionIdForCraft(reel.craft?.id)) {
-                  <span class="live-auction-pulse-tag">⚡ LIVE AUCTION NOW</span>
-                } @else {
-                  <button type="button" class="sound-floating-pill" (click)="toggleMute($event)">
-                    <span>{{ isMuted ? '🔇 Tap for Sound' : '🔊 Sound On' }}</span>
-                  </button>
+                  <span class="live-auction-pulse-tag">⚡ Live Auction Now</span>
                 }
               </div>
 
@@ -128,7 +129,7 @@
               </div>
 
               <!-- Right Vertical Action Sidebar (Shorts / TikTok Style) -->
-              <aside class="short-sidebar-actions">
+              <aside class="short-sidebar-actions" aria-label="Reel actions">
                 <!-- Like Button -->
                 <button
                   type="button"
@@ -136,8 +137,9 @@
                   [class.liked]="isLiked(reel.id)"
                   (click)="likeReel(reel, $event)"
                   title="Like Craft Reel"
+                  aria-label="Like Craft Reel"
                 >
-                  <span class="action-glyph">{{ isLiked(reel.id) ? '❤️' : '🤍' }}</span>
+                  <span class="action-glyph" aria-hidden="true">{{ isLiked(reel.id) ? '❤️' : '🤍' }}</span>
                   <span class="action-count">{{ reel.likes || 0 }}</span>
                 </button>
 
@@ -148,8 +150,9 @@
                   [class.interested]="isInterested(reel.id)"
                   (click)="toggleInterested(reel, $event)"
                   title="Mark as Interested"
+                  aria-label="Mark as Interested"
                 >
-                  <span class="action-glyph">{{ isInterested(reel.id) ? '😍' : '🤍' }}</span>
+                  <span class="action-glyph" aria-hidden="true">{{ isInterested(reel.id) ? '😍' : '🤍' }}</span>
                   <span class="action-count">{{ isInterested(reel.id) ? 'Saved' : 'Interest' }}</span>
                 </button>
 
@@ -159,15 +162,16 @@
                     [routerLink]="['/auctions', getAuctionIdForCraft(reel.craft?.id)]"
                     class="btn-action-bubble bid-action-pulse"
                     title="Join Live Auction"
+                    aria-label="Join Live Auction"
                   >
-                    <span class="action-glyph">🔨</span>
+                    <span class="action-glyph" aria-hidden="true">🔨</span>
                     <span class="action-count">Bid Live</span>
                   </a>
                 }
 
                 <!-- Views Count -->
-                <div class="btn-action-bubble views-only" title="Total Views">
-                  <span class="action-glyph">👁️</span>
+                <div class="btn-action-bubble views-only" title="Total Views" aria-label="Total Views">
+                  <span class="action-glyph" aria-hidden="true">👁️</span>
                   <span class="action-count">{{ reel.views || 0 }}</span>
                 </div>
 
@@ -177,8 +181,9 @@
                   class="btn-action-bubble"
                   (click)="toggleMute($event)"
                   title="Toggle Audio"
+                  [attr.aria-label]="isMuted ? 'Unmute Audio' : 'Mute Audio'"
                 >
-                  <span class="action-glyph">{{ isMuted ? '🔇' : '🔊' }}</span>
+                  <span class="action-glyph" aria-hidden="true">{{ isMuted ? '🔇' : '🔊' }}</span>
                   <span class="action-count">{{ isMuted ? 'Muted' : 'Sound' }}</span>
                 </button>
 
@@ -189,6 +194,7 @@
                   (click)="goToPrevReel()"
                   [disabled]="i === 0"
                   title="Previous Reel"
+                  aria-label="Previous Reel"
                 >
                   ▲
                 </button>
@@ -200,6 +206,7 @@
                   (click)="goToNextReel()"
                   [disabled]="i === reels.length - 1"
                   title="Next Reel"
+                  aria-label="Next Reel"
                 >
                   ▼
                 </button>
@@ -209,7 +216,7 @@
               <div class="short-bottom-overlay">
                 <!-- Artisan Info + Dynamic Follow Button -->
                 <div class="artisan-badge-row">
-                  <span class="artisan-avatar-bubble">👨‍🎨</span>
+                  <span class="artisan-avatar-bubble" aria-hidden="true">👨‍🎨</span>
                   <div class="artisan-name-stack">
                     <strong>{{ reel.artisan?.shopName || 'Master Artisan Studio' }}</strong>
                     <span class="artisan-city-text">
@@ -239,7 +246,7 @@
                 <!-- Linked Craft Purchase / Bid Box -->
                 @if (reel.craft) {
                   <div class="linked-craft-card">
-                    <a [routerLink]="['/crafts', reel.craft.id]" class="linked-craft-img-link">
+                    <a [routerLink]="['/crafts', reel.craft.id]" class="linked-craft-img-link" [attr.aria-label]="reel.craft.title">
                       <img
                         [src]="resolveMediaUrl(reel.craft.imageUrl)"
                         [alt]="reel.craft.title"
@@ -249,7 +256,7 @@
                     <div class="craft-mini-info">
                       <span class="craft-tag-pill">🏺 Featured Craft</span>
                       <a [routerLink]="['/crafts', reel.craft.id]" class="linked-craft-title-link">
-                        <h4>{{ reel.craft.title }}</h4>
+                        <h3 class="linked-craft-title">{{ reel.craft.title }}</h3>
                       </a>
                       <strong class="craft-base-price">Base Price: {{ formatPrice(reel.craft.basePrice) }}</strong>
                       @if (getAuctionForCraft(reel.craft.id)) {
@@ -280,8 +287,8 @@
   </div>
 
   <!-- Navigation Helper Bar -->
-  <aside class="shorts-helper-bar">
-    <p>💡 <strong>Shortcuts:</strong> Use <strong>[↑]</strong> and <strong>[↓]</strong> arrow keys to scroll, <strong>[M]</strong> to mute. Click <strong>+ Follow</strong> to track your favorite master artisans' new craft uploads!</p>
+  <aside class="shorts-helper-bar" aria-label="Keyboard navigation guide">
+    <p>💡 <span class="helper-label">Shortcuts:</span> Use <kbd>↑</kbd> and <kbd>↓</kbd> arrow keys to scroll, <kbd>M</kbd> to toggle audio. Click <strong>+ Follow</strong> to track master artisans' new craft uploads!</p>
   </aside>
 </div>
 
