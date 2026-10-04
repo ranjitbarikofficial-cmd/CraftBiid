@@ -4,11 +4,11 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://craftbiid.onrender.com/api/$1"
+      "dest": "https://craftbid-backend-133430101839.asia-south1.run.app/api/$1"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "https://craftbiid.onrender.com/uploads/$1"
+      "dest": "https://craftbid-backend-133430101839.asia-south1.run.app/uploads/$1"
     },
     {
       "handle": "filesystem"

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { CategoryService, CategoryItem } from '../../services/category.service';
 import { CraftService, CraftItem } from '../../services/craft.service';
+import { resolveMediaUrl } from '../../services/api-config';
 import { Topbar } from '../home/topbar/topbar';
 import { Navbar } from '../home/navbar/navbar';
 import { Footer } from '../home/footer/footer';
@@ -16,6 +17,7 @@ import { Footer } from '../home/footer/footer';
   styleUrl: './categories.css',
 })
 export class Categories implements OnInit {
+  resolveMediaUrl = resolveMediaUrl;
   categories: CategoryItem[] = [];
   selectedCategory: CategoryItem | null = null;
   crafts: CraftItem[] = [];

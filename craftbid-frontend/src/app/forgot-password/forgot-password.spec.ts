@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { getApiBaseUrl } from '../services/api-config';
 
 @Component({
   selector: 'app-forgot-password',
@@ -37,7 +38,7 @@ export class ForgotPassword {
 
     this.http
       .post(
-        'http://localhost:8081/api/auth/forgot-password',
+        `${getApiBaseUrl()}/api/auth/forgot-password`,
         {
           email: this.email.trim(),
         },

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { getApiBaseUrl } from '../services/api-config';
 
 @Component({
   selector: 'app-forgot-password',
@@ -39,7 +40,7 @@ export class ForgotPassword {
     };
 
     this.http
-      .post('/api/auth/forgot-password', data, { responseType: 'text' })
+      .post(`${getApiBaseUrl()}/api/auth/forgot-password`, data, { responseType: 'text' })
       .subscribe({
         next: () => {
           this.loading = false;

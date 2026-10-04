@@ -12,21 +12,19 @@ export function getApiBaseUrl(): string {
       return `http://${host}:8081`;
     }
 
-    // Custom domain production
-    if (host.includes('craftbid.co.in')) {
-      return 'https://api.craftbid.co.in';
-    }
-
-    // Production API endpoint
-    return 'https://api.craftbid.co.in';
+    // Production - Google Cloud Run
+    return 'https://craftbid-backend-133430101839.asia-south1.run.app';
   }
 
-  // Production fallback
-  return 'https://api.craftbid.co.in';
+  // Production fallback - Google Cloud Run
+  return 'https://craftbid-backend-133430101839.asia-south1.run.app';
 }
 
 export function resolveMediaUrl(url: string | null | undefined): string {
-  if (!url) return '';
+  if (!url) {
+    return '';
+  }
+
   if (
     url.startsWith('http://') ||
     url.startsWith('https://') ||
@@ -35,16 +33,18 @@ export function resolveMediaUrl(url: string | null | undefined): string {
   ) {
     return url;
   }
+
   const base = getApiBaseUrl();
+
   return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
 }
 
 export function getWsBaseUrl(): string {
   const httpUrl = getApiBaseUrl();
+
   if (httpUrl.startsWith('https://')) {
     return httpUrl.replace('https://', 'wss://') + '/ws';
   }
+
   return httpUrl.replace('http://', 'ws://') + '/ws';
 }
-
-

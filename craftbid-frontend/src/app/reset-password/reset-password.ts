@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { getApiBaseUrl } from '../services/api-config';
 
 @Component({
   selector: 'app-reset-password',
@@ -73,7 +74,7 @@ export class ResetPassword {
     };
 
     this.http
-      .post('/api/auth/reset-password', data, {
+      .post(`${getApiBaseUrl()}/api/auth/reset-password`, data, {
         responseType: 'text',
       })
       .subscribe({
