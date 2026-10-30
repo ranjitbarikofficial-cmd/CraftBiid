@@ -15,7 +15,7 @@ import { Footer } from '../home/footer/footer';
 })
 export class Founder implements OnInit, OnDestroy {
   founderName = 'Ranjit Barik';
-  founderRole = 'Founder & CEO of CraftBid';
+  founderRole = 'Founder of CraftBid';
   location = 'Bhubaneswar, Odisha, India';
   linkedInUrl = 'https://www.linkedin.com/in/ranjitbarikofficial';
   email = 'support@craftbid.in';
@@ -224,7 +224,7 @@ export class Founder implements OnInit, OnDestroy {
           'name': 'Ranjit Barik',
           'givenName': 'Ranjit',
           'familyName': 'Barik',
-          'jobTitle': 'Founder & CEO',
+          'jobTitle': 'Founder',
           'description':
             "Founder and Developer of CraftBid, India's live handmade craft marketplace connecting artisans and customers through craft reels and live auctions.",
           'url': 'https://craftbid.co.in/founder',
